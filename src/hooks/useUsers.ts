@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersApi } from '@/api/users'
+import { authKeys } from '@/hooks/useAuth'
 import { toast } from 'sonner'
-import type { UpdateUserInput } from '@/types/user'
+import type { UpdateUserInput, User } from '@/types/user'
 
 export const userKeys = {
   all: ['users'] as const,
@@ -29,9 +30,14 @@ export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (updates: UpdateUserInput) => usersApi.updateProfile(updates),
-    onSuccess: (data) => {
+    onSuccess: (data: User) => {
       queryClient.setQueryData(userKeys.detail(data.id), data)
       queryClient.invalidateQueries({ queryKey: userKeys.all })
+      queryClient.setQueryData(authKeys.user, (prev: unknown) =>
+        prev && typeof prev === 'object' && data
+          ? { ...(prev as object), ...data, full_name: data.full_name, org: data.org, role: data.role }
+          : prev
+      )
       toast.success('Profile updated')
     },
     onError: (err: Error) => toast.error(err.message || 'Update failed'),
