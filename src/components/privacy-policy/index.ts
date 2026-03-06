@@ -1,0 +1,6 @@
+export { PrivacyPolicyPage } from './PrivacyPolicyPage'
+export { PolicySection } from './PolicySection'
+export { RetentionTable } from './RetentionTable'
+export { ContactPanel } from './ContactPanel'
+export { SectionDivider } from './SectionDivider'
+export { DataRequestForm } from './DataRequestForm'
