@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCurrentUser, useSignOut } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { Building2, LogOut, Search, User } from 'lucide-react'
+import { Building2, HelpCircle, LogOut, Search, Settings, User } from 'lucide-react'
 
 interface NavbarProps {
   variant?: 'public' | 'dashboard' | 'admin'
@@ -104,6 +104,22 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
                     {variant === 'admin' ? 'Admin' : 'Dashboard'}
                   </Link>
                 </DropdownMenuItem>
+                {variant === 'dashboard' && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/about">
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                        Help
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />

@@ -1,155 +1,187 @@
-import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSavedCompanies } from '@/hooks/useCompanies'
+import {
+  CompanySearchBar,
+  TimeWindowPicker,
+  type TimeWindow,
+  IPIQuickCard,
+  SavedCompaniesPane,
+  type SavedCompanyWithScore,
+  SystemStatusBanner,
+} from '@/components/dashboard'
+import { useSavedCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
 import { useDashboardCards } from '@/hooks/useIPI'
-import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useSystemStatus } from '@/hooks/useSystemStatus'
+import { BarChart3 } from 'lucide-react'
+import type { CompanySearchResult } from '@/types/company'
 
-const PRESETS = [
-  { label: '7D', start: subDays(new Date(), 7), end: new Date() },
-  { label: '30D', start: subDays(new Date(), 30), end: new Date() },
-  { label: '90D', start: subDays(new Date(), 90), end: new Date() },
-]
+const DEFAULT_WINDOW: TimeWindow = {
+  label: '1M',
+  start: subDays(new Date(), 30),
+  end: new Date(),
+}
 
 export function Dashboard() {
-  const [windowPreset, setWindowPreset] = useState(0)
-  const { start, end } = PRESETS[windowPreset]
-  const windowStart = format(start, 'yyyy-MM-dd')
-  const windowEnd = format(end, 'yyyy-MM-dd')
+  const [searchParams] = useSearchParams()
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>(DEFAULT_WINDOW)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
 
-  const { data: saved, isLoading: savedLoading } = useSavedCompanies()
-  const companyIds = useMemo(() => saved?.map((c) => c.id) ?? [], [saved])
-  const { data: cards, isLoading: cardsLoading } = useDashboardCards(
+  const windowStart = format(timeWindow.start, 'yyyy-MM-dd')
+  const windowEnd = format(timeWindow.end, 'yyyy-MM-dd')
+
+  const { data: saved = [], isLoading: savedLoading } = useSavedCompanies()
+  const saveCompany = useSaveCompany()
+  const removeSaved = useRemoveSavedCompany()
+  const companyIds = useMemo(() => (saved ?? []).map((c) => c.id), [saved])
+  const { data: cards = [], isLoading: cardsLoading, refetch: refetchCards } = useDashboardCards(
     companyIds,
     windowStart,
     windowEnd
   )
+  const { data: systemStatus, refetch: refetchStatus } = useSystemStatus()
+
+  const safeCards = Array.isArray(cards) ? cards : []
+  const safeSaved = Array.isArray(saved) ? saved : []
+
+  const savedWithScores: SavedCompanyWithScore[] = useMemo(() => {
+    return safeSaved.map((c) => {
+      const card = safeCards.find((card) => card.company_id === c.id)
+      return {
+        ...c,
+        score: card?.score,
+        lastViewed: card?.window_end,
+      }
+    })
+  }, [safeSaved, safeCards])
+
+  const handleCompanySelect = useCallback(
+    (company: CompanySearchResult) => {
+      saveCompany.mutate(company.id, {
+        onSuccess: () => {
+          setSelectedCompanyId(company.id)
+          refetchCards()
+        },
+      })
+    },
+    [saveCompany, refetchCards]
+  )
+
+  const handleSelectCompany = useCallback((company: SavedCompanyWithScore) => {
+    setSelectedCompanyId(company.id)
+  }, [])
+
+  const handleUnpin = useCallback(
+    (companyId: string) => {
+      removeSaved.mutate(companyId, {
+        onSuccess: () => refetchCards(),
+      })
+    },
+    [removeSaved, refetchCards]
+  )
+
+  const handleRetryStatus = useCallback(() => {
+    refetchStatus()
+  }, [refetchStatus])
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          {PRESETS.map((p, i) => (
-            <Button
-              key={p.label}
-              variant={windowPreset === i ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setWindowPreset(i)}
-            >
-              {p.label}
-            </Button>
-          ))}
-        </div>
+        <TimeWindowPicker value={timeWindow} onChange={setTimeWindow} />
       </div>
 
-      {savedLoading && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-40 rounded-lg" />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
+          <CompanySearchBar
+            onSelect={handleCompanySelect}
+            placeholder="Search company to add..."
+            className="max-w-md"
+            initialQuery={searchParams.get('q') ?? ''}
+          />
 
-      {!savedLoading && (!saved || saved.length === 0) && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
-            <p className="mt-2 text-muted-foreground">No saved companies yet</p>
-            <p className="text-sm text-muted-foreground">Search and save companies to see IPI quick cards here.</p>
-            <Button asChild className="mt-4">
-              <Link to="/dashboard">Search companies</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          {systemStatus && systemStatus.status !== 'ok' && (
+            <SystemStatusBanner
+              status={systemStatus}
+              canRetry
+              onRetry={handleRetryStatus}
+            />
+          )}
 
-      {!savedLoading && saved && saved.length > 0 && (
-        <>
-          {cardsLoading && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {saved.map((c) => (
-                <Skeleton key={c.id} className="h-40 rounded-lg" />
+          {savedLoading && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-48 rounded-lg" />
               ))}
             </div>
           )}
-          {!cardsLoading && cards && cards.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {cards.map((snap) => (
-                <Card key={snap.company_id} className="transition-all hover:shadow-card-hover hover:-translate-y-0.5">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{snap.company_name}</CardTitle>
-                      <Badge direction={snap.direction} change={snap.percent_change} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold">{Math.round(snap.score)}</span>
-                      <span className="text-muted-foreground">IPI</span>
-                    </div>
-                    {snap.top_narratives?.length > 0 && (
-                      <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                        Top: {snap.top_narratives.slice(0, 2).map((n) => n.label).join(', ')}
-                      </p>
-                    )}
-                    <Button asChild variant="outline" size="sm" className="mt-4 w-full">
-                      <Link
-                        to={`/dashboard/company/${snap.company_id}?start=${windowStart}&end=${windowEnd}`}
-                      >
-                        View details
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          {!cardsLoading && (!cards || cards.length === 0) && (
+
+          {!savedLoading && safeSaved.length === 0 && (
             <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No IPI data for the selected window. Try another period.
+              <CardContent className="py-12 text-center">
+                <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
+                <p className="mt-2 text-muted-foreground">No saved companies yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Search and save companies above to see IPI quick cards here.
+                </p>
               </CardContent>
             </Card>
           )}
-        </>
-      )}
+
+          {!savedLoading && safeSaved.length > 0 && (
+            <>
+              {cardsLoading && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {safeSaved.map((c) => (
+                    <Skeleton key={c.id} className="h-48 rounded-lg" />
+                  ))}
+                </div>
+              )}
+              {!cardsLoading && safeCards.length > 0 && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {safeCards.map((snap) => (
+                    <IPIQuickCard
+                      key={snap.company_id}
+                      snapshot={snap}
+                      windowStart={windowStart}
+                      windowEnd={windowEnd}
+                    />
+                  ))}
+                </div>
+              )}
+              {!cardsLoading && safeCards.length === 0 && (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No IPI data for the selected window. Try another period.
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="lg:col-span-1">
+          <SavedCompaniesPane
+            savedCompanies={savedWithScores}
+            onSelectCompany={handleSelectCompany}
+            onUnpin={handleUnpin}
+            selectedCompanyId={selectedCompanyId}
+            windowStart={windowStart}
+            windowEnd={windowEnd}
+          />
+        </div>
+      </div>
 
       <Card className="border-accent/30 bg-accent/5">
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground">
-            <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk 20%. 
+            <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk 20%.
             Adjustable in Settings. All inputs and provenance are logged for audit.
           </p>
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-function Badge({
-  direction,
-  change,
-}: {
-  direction: 'up' | 'down' | 'flat'
-  change: number
-}) {
-  const Icon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Minus
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-        direction === 'up' && 'bg-success/20 text-success',
-        direction === 'down' && 'bg-destructive/20 text-destructive',
-        direction === 'flat' && 'bg-muted text-muted-foreground'
-      )}
-    >
-      <Icon className="h-3 w-3" />
-      {direction !== 'flat' ? `${change > 0 ? '+' : ''}${change.toFixed(1)}%` : '—'}
-    </span>
   )
 }
