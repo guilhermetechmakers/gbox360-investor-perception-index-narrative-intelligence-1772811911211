@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, HelpCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface DrilldownCTAProps {
   onClick?: () => void
@@ -13,6 +14,8 @@ interface DrilldownCTAProps {
   ariaLabel?: string
 }
 
+const DEFAULT_ARIA_LABEL = 'Go to drilldown to see why the IPI moved'
+
 export function DrilldownCTA({
   onClick,
   companyId,
@@ -20,7 +23,7 @@ export function DrilldownCTA({
   windowStart,
   windowEnd,
   provenanceId,
-  ariaLabel = 'Go to drilldown to see why the IPI moved',
+  ariaLabel = DEFAULT_ARIA_LABEL,
 }: DrilldownCTAProps) {
   const narrativeSegment = narrativeId || 'overview'
   const prov = provenanceId ?? `prov-${companyId}-${windowStart}-${windowEnd}`
@@ -32,21 +35,45 @@ export function DrilldownCTA({
   })
   const drilldownUrl = `/dashboard/drilldown/${narrativeSegment}?${params.toString()}`
 
+  const isDisabled = !companyId?.trim()
+
+  if (isDisabled) {
+    return (
+      <Button
+        size="lg"
+        disabled
+        className={cn('w-full sm:w-auto', 'shadow-card')}
+        aria-label={ariaLabel}
+        aria-disabled="true"
+      >
+        <HelpCircle className="h-5 w-5" aria-hidden />
+        <span>Why did this move?</span>
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </Button>
+    )
+  }
+
   return (
     <Button
       asChild
       size="lg"
-      className="w-full sm:w-auto transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+      variant="default"
+      className={cn(
+        'w-full sm:w-auto',
+        'shadow-card transition-shadow duration-200',
+        'hover:shadow-card-hover hover:scale-[1.02]'
+      )}
       aria-label={ariaLabel}
     >
       <Link
         to={drilldownUrl}
         onClick={onClick}
         className="inline-flex items-center justify-center gap-2"
+        aria-label={ariaLabel}
       >
-        <HelpCircle className="h-5 w-5" />
-        Why did this move?
-        <ArrowRight className="h-4 w-4" />
+        <HelpCircle className="h-5 w-5" aria-hidden />
+        <span>Why did this move?</span>
+        <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </Button>
   )
