@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { FileDown, AlertCircle } from 'lucide-react'
+import { FileDown, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NarrativeEvent } from '@/types/admin'
 
@@ -77,8 +77,15 @@ export function AuditArtifactSignerPanel({
                 size="sm"
                 onClick={handleSign}
                 disabled={selected.size === 0 || isSigning}
+                aria-busy={isSigning}
+                aria-label={isSigning ? 'Signing artifacts…' : `Sign and download ${selected.size} selected artifact(s)`}
+                className="gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                <FileDown className="mr-2 h-4 w-4" />
+                {isSigning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <FileDown className="h-4 w-4" aria-hidden />
+                )}
                 {isSigning ? 'Signing…' : `Sign & download (${selected.size})`}
               </Button>
             </div>

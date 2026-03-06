@@ -1,17 +1,39 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { AuditArtifactSignerPanel } from '@/components/admin-dashboard'
 import { AuditArtifactExporterButton } from '@/components/shared/AuditArtifactExporterButton'
 import { PDFPreviewOrDownloadRow } from '@/components/shared/PDFPreviewOrDownloadRow'
+import { EmptyState } from '@/components/profile/EmptyState'
 import { useSignEvents } from '@/hooks/useAdminDashboard'
 import { toast } from 'sonner'
 import { FileDown, ArrowLeft } from 'lucide-react'
 import type { NarrativeEvent } from '@/types/admin'
 import type { ExportIPIArtifactResponse } from '@/types/export'
 import type { IPIViewContext } from '@/types/company-view'
+
+/** Inline form errors for export/filter fields */
+interface FormErrors {
+  companyId?: string
+  timeFrom?: string
+  timeTo?: string
+}
+
+function validateExportForm(companyId: string, timeFrom: string, timeTo: string): FormErrors {
+  const errors: FormErrors = {}
+  const trimmed = (companyId ?? '').trim()
+  if (!trimmed) {
+    errors.companyId = 'Company ID is required for export.'
+  }
+  if (timeFrom && timeTo && timeFrom > timeTo) {
+    errors.timeFrom = 'From date must be before or equal to To date.'
+    errors.timeTo = 'To date must be after or equal to From date.'
+  }
+  return errors
+}
 
 /** Mock NarrativeEvents for MVP - replace with API when available */
 const MOCK_EVENTS: NarrativeEvent[] = []
@@ -31,9 +53,16 @@ export function AuditExports() {
   const [timeFrom, setTimeFrom] = useState('')
   const [timeTo, setTimeTo] = useState('')
   const [recentExports, setRecentExports] = useState<ExportIPIArtifactResponse[]>([])
+  const [formErrors, setFormErrors] = useState<FormErrors>({})
 
   const signEvents = useSignEvents()
   const events = MOCK_EVENTS
+
+  const validateForm = useCallback(() => {
+    const errors = validateExportForm(companyId, timeFrom, timeTo)
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }, [companyId, timeFrom, timeTo])
 
   const viewContext: IPIViewContext = useMemo(
     () => ({
@@ -104,29 +133,65 @@ export function AuditExports() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Company ID</label>
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <Label htmlFor="audit-export-company-id">Company ID</Label>
               <Input
+                id="audit-export-company-id"
                 placeholder="e.g. AAPL"
                 value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
+                onChange={(e) => {
+                  setCompanyId(e.target.value)
+                  if (formErrors.companyId) setFormErrors((prev) => ({ ...prev, companyId: undefined }))
+                }}
+                onBlur={() => validateForm()}
+                aria-invalid={!!formErrors.companyId}
+                aria-describedby={formErrors.companyId ? 'audit-export-company-id-error' : undefined}
               />
+              {formErrors.companyId && (
+                <p id="audit-export-company-id-error" className="text-sm text-destructive" role="alert">
+                  {formErrors.companyId}
+                </p>
+              )}
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">From</label>
+            <div className="space-y-2">
+              <Label htmlFor="audit-export-time-from">From</Label>
               <Input
+                id="audit-export-time-from"
                 type="date"
                 value={timeFrom}
-                onChange={(e) => setTimeFrom(e.target.value)}
+                onChange={(e) => {
+                  setTimeFrom(e.target.value)
+                  if (formErrors.timeFrom) setFormErrors((prev) => ({ ...prev, timeFrom: undefined, timeTo: undefined }))
+                }}
+                onBlur={() => validateForm()}
+                aria-invalid={!!formErrors.timeFrom}
+                aria-describedby={formErrors.timeFrom ? 'audit-export-time-from-error' : undefined}
               />
+              {formErrors.timeFrom && (
+                <p id="audit-export-time-from-error" className="text-sm text-destructive" role="alert">
+                  {formErrors.timeFrom}
+                </p>
+              )}
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">To</label>
+            <div className="space-y-2">
+              <Label htmlFor="audit-export-time-to">To</Label>
               <Input
+                id="audit-export-time-to"
                 type="date"
                 value={timeTo}
-                onChange={(e) => setTimeTo(e.target.value)}
+                onChange={(e) => {
+                  setTimeTo(e.target.value)
+                  if (formErrors.timeTo) setFormErrors((prev) => ({ ...prev, timeFrom: undefined, timeTo: undefined }))
+                }}
+                onBlur={() => validateForm()}
+                aria-invalid={!!formErrors.timeTo}
+                aria-describedby={formErrors.timeTo ? 'audit-export-time-to-error' : undefined}
               />
+              {formErrors.timeTo && (
+                <p id="audit-export-time-to-error" className="text-sm text-destructive" role="alert">
+                  {formErrors.timeTo}
+                </p>
+              )}
             </div>
           </div>
           <AuditArtifactExporterButton
@@ -146,28 +211,34 @@ export function AuditExports() {
           </p>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-sm font-medium mb-2 block">Company ID</label>
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <Label htmlFor="audit-filter-company-id">Company ID</Label>
             <Input
+              id="audit-filter-company-id"
               placeholder="e.g. AAPL"
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value)}
+              aria-label="Company ID for event filters"
             />
           </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">From</label>
+          <div className="space-y-2">
+            <Label htmlFor="audit-filter-time-from">From</Label>
             <Input
+              id="audit-filter-time-from"
               type="date"
               value={timeFrom}
               onChange={(e) => setTimeFrom(e.target.value)}
+              aria-label="Filter events from date"
             />
           </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">To</label>
+          <div className="space-y-2">
+            <Label htmlFor="audit-filter-time-to">To</Label>
             <Input
+              id="audit-filter-time-to"
               type="date"
               value={timeTo}
               onChange={(e) => setTimeTo(e.target.value)}
+              aria-label="Filter events to date"
             />
           </div>
         </CardContent>
@@ -193,7 +264,7 @@ export function AuditExports() {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {recentExports.length > 0 ? (
+          {(recentExports ?? []).length > 0 ? (
             <div className="space-y-3">
               {(recentExports ?? []).map((exp, idx) => {
                 const meta = exp.artifactMeta ?? {
@@ -218,9 +289,16 @@ export function AuditExports() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No recent exports. Use &quot;IPI Artifact Export&quot; above or select NarrativeEvents and click &quot;Sign & download&quot; to generate.
-            </p>
+            <EmptyState
+              icon={<FileDown className="h-6 w-6 text-muted-foreground" aria-hidden />}
+              title="No recent exports"
+              description="Use &quot;IPI Artifact Export&quot; above to generate signed JSON and PDF artifacts, or select NarrativeEvents and click &quot;Sign & download&quot; to create signed artifacts."
+              action={
+                <p className="text-xs text-muted-foreground">
+                  Generated artifacts include raw payload refs, calculation inputs, weights, and integrity hashes.
+                </p>
+              }
+            />
           )}
         </CardContent>
       </Card>
