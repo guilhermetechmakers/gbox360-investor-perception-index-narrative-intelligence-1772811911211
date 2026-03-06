@@ -1,0 +1,2124 @@
+âš ï¸ CRITICAL EXECUTION RULES - READ FIRST âš ï¸
+âŒ NEVER run: npm run dev, npm start, yarn dev, pnpm dev, or ANY development server
+âŒ NEVER run: long-running processes, servers, or commands that don't exit
+âŒ NEVER test the application by starting it
+âœ… ALLOWED: npm install, npm run build, npm run test (if needed)
+âœ… YOUR TASK: Create/modify files only, then STOP and EXIT immediately
+âš ï¸ The MCP server handles all testing and validation separately
+
+You are an expert full-stack developer proficient in TypeScript, React, Next.js, and modern UI/UX frameworks (Tailwind CSS, Shadcn UI, Radix UI).
+
+=== DESIGN REFERENCE (MANDATORY) ===
+# Modern Design Best Practices
+
+## Philosophy
+
+Create unique, memorable experiences while maintaining consistency through modern design principles. Every project should feel distinct yet professional, innovative yet intuitive.
+
+---
+
+## Landing Pages & Marketing Sites
+
+### Hero Sections
+**Go beyond static backgrounds:**
+- Animated gradients with subtle movement
+- Particle systems or geometric shapes floating
+- Interactive canvas backgrounds (Three.js, WebGL)
+- Video backgrounds with proper fallbacks
+- Parallax scrolling effects
+- Gradient mesh animations
+- Morphing blob animations
+
+
+### Layout Patterns
+**Use modern grid systems:**
+- Bento grids (asymmetric card layouts)
+- Masonry layouts for varied content
+- Feature sections with diagonal cuts or curves
+- Overlapping elements with proper z-index
+- Split-screen designs with scroll-triggered reveals
+
+**Avoid:** Traditional 3-column equal grids
+
+### Scroll Animations
+**Engage users as they scroll:**
+- Fade-in and slide-up animations for sections
+- Scroll-triggered parallax effects
+- Progress indicators for long pages
+- Sticky elements that transform on scroll
+- Horizontal scroll sections for portfolios
+- Text reveal animations (word by word, letter by letter)
+- Number counters animating into view
+
+**Avoid:** Static pages with no scroll interaction
+
+### Call-to-Action Areas
+**Make CTAs impossible to miss:**
+- Gradient buttons with hover effects
+- Floating action buttons with micro-interactions
+- Animated borders or glowing effects
+- Scale/lift on hover
+- Interactive elements that respond to mouse position
+- Pulsing indicators for primary actions
+
+---
+
+## Dashboard Applications
+
+### Layout Structure
+**Always use collapsible side navigation:**
+- Sidebar that can collapse to icons only
+- Smooth transition animations between states
+- Persistent navigation state (remember user preference)
+- Mobile: drawer that slides in/out
+- Desktop: sidebar with expand/collapse toggle
+- Icons visible even when collapsed
+
+**Structure:**
+```
+/dashboard (layout wrapper with sidebar)
+  /dashboard/overview
+  /dashboard/analytics
+  /dashboard/settings
+  /dashboard/users
+  /dashboard/projects
+```
+
+All dashboard pages should be nested inside the dashboard layout, not separate routes.
+
+### Data Tables
+**Modern table design:**
+- Sticky headers on scroll
+- Row hover states with subtle elevation
+- Sortable columns with clear indicators
+- Pagination with items-per-page control
+- Search/filter with instant feedback
+- Selection checkboxes with bulk actions
+- Responsive: cards on mobile, table on desktop
+- Loading skeletons, not spinners
+- Empty states with illustrations or helpful text
+
+**Use modern table libraries:**
+- TanStack Table (React Table v8)
+- AG Grid for complex data
+- Data Grid from MUI (if using MUI)
+
+### Charts & Visualizations
+**Use the latest charting libraries:**
+- Recharts (for React, simple charts)
+- Chart.js v4 (versatile, well-maintained)
+- Apache ECharts (advanced, interactive)
+- D3.js (custom, complex visualizations)
+- Tremor (for dashboards, built on Recharts)
+
+**Chart best practices:**
+- Animated transitions when data changes
+- Interactive tooltips with detailed info
+- Responsive sizing
+- Color scheme matching design system
+- Legend placement that doesn't obstruct data
+- Loading states while fetching data
+
+### Dashboard Cards
+**Metric cards should stand out:**
+- Gradient backgrounds or colored accents
+- Trend indicators (↑ ↓ with color coding)
+- Sparkline charts for historical data
+- Hover effects revealing more detail
+- Icon representing the metric
+- Comparison to previous period
+
+---
+
+## Color & Visual Design
+
+### Color Palettes
+**Create depth with gradients:**
+- Primary gradient (not just solid primary color)
+- Subtle background gradients
+- Gradient text for headings
+- Gradient borders on cards
+- Elevated surfaces for depth
+
+**Color usage:**
+- 60-30-10 rule (dominant, secondary, accent)
+- Consistent semantic colors (success, warning, error)
+- Accessible contrast ratios (WCAG AA minimum)
+
+### Typography
+**Create hierarchy through contrast:**
+- Large, bold headings (48-72px for heroes)
+- Clear size differences between levels
+- Variable font weights (300, 400, 600, 700)
+- Letter spacing for small caps
+- Line height 1.5-1.7 for body text
+- Inter, Poppins, or DM Sans for modern feel
+
+### Shadows & Depth
+**Layer UI elements:**
+- Multi-layer shadows for realistic depth
+- Colored shadows matching element color
+- Elevated states on hover
+- Neumorphism for special elements (sparingly)
+
+---
+
+## Interactions & Micro-animations
+
+### Button Interactions
+**Every button should react:**
+- Scale slightly on hover (1.02-1.05)
+- Lift with shadow on hover
+- Ripple effect on click
+- Loading state with spinner or progress
+- Disabled state clearly visible
+- Success state with checkmark animation
+
+### Card Interactions
+**Make cards feel alive:**
+- Lift on hover with increased shadow
+- Subtle border glow on hover
+- Tilt effect following mouse (3D transform)
+- Smooth transitions (200-300ms)
+- Click feedback for interactive cards
+
+### Form Interactions
+**Guide users through forms:**
+- Input focus states with border color change
+- Floating labels that animate up
+- Real-time validation with inline messages
+- Success checkmarks for valid inputs
+- Error states with shake animation
+- Password strength indicators
+- Character count for text areas
+
+### Page Transitions
+**Smooth between views:**
+- Fade + slide for page changes
+- Skeleton loaders during data fetch
+- Optimistic UI updates
+- Stagger animations for lists
+- Route transition animations
+
+---
+
+## Mobile Responsiveness
+
+### Mobile-First Approach
+**Design for mobile, enhance for desktop:**
+- Touch targets minimum 44x44px
+- Generous padding and spacing
+- Sticky bottom navigation on mobile
+- Collapsible sections for long content
+- Swipeable cards and galleries
+- Pull-to-refresh where appropriate
+
+### Responsive Patterns
+**Adapt layouts intelligently:**
+- Hamburger menu → full nav bar
+- Card grid → stack on mobile
+- Sidebar → drawer
+- Multi-column → single column
+- Data tables → card list
+- Hide/show elements based on viewport
+
+---
+
+## Loading & Empty States
+
+### Loading States
+**Never leave users wondering:**
+- Skeleton screens matching content layout
+- Progress bars for known durations
+- Animated placeholders
+- Spinners only for short waits (<3s)
+- Stagger loading for multiple elements
+- Shimmer effects on skeletons
+
+### Empty States
+**Make empty states helpful:**
+- Illustrations or icons
+- Helpful copy explaining why it's empty
+- Clear CTA to add first item
+- Examples or suggestions
+- No "no data" text alone
+
+---
+
+## Unique Elements to Stand Out
+
+### Distinctive Features
+**Add personality:**
+- Custom cursor effects on landing pages
+- Animated page numbers or section indicators
+- Unusual hover effects (magnification, distortion)
+- Custom scrollbars
+- Glassmorphism for overlays
+- Animated SVG icons
+- Typewriter effects for hero text
+- Confetti or celebration animations for actions
+
+### Interactive Elements
+**Engage users:**
+- Drag-and-drop interfaces
+- Sliders and range controls
+- Toggle switches with animations
+- Progress steps with animations
+- Expandable/collapsible sections
+- Tabs with slide indicators
+- Image comparison sliders
+- Interactive demos or playgrounds
+
+---
+
+## Consistency Rules
+
+### Maintain Consistency
+**What should stay consistent:**
+- Spacing scale (4px, 8px, 16px, 24px, 32px, 48px, 64px)
+- Border radius values
+- Animation timing (200ms, 300ms, 500ms)
+- Color system (primary, secondary, accent, neutrals)
+- Typography scale
+- Icon style (outline vs filled)
+- Button styles across the app
+- Form element styles
+
+### What Can Vary
+**Project-specific customization:**
+- Color palette (different colors, same system)
+- Layout creativity (grids, asymmetry)
+- Illustration style
+- Animation personality
+- Feature-specific interactions
+- Hero section design
+- Card styling variations
+- Background patterns or textures
+
+---
+
+## Technical Excellence
+
+### Performance
+- Optimize images (WebP, lazy loading)
+- Code splitting for faster loads
+- Debounce search inputs
+- Virtualize long lists
+- Minimize re-renders
+- Use proper memoization
+
+### Accessibility
+- Keyboard navigation throughout
+- ARIA labels where needed
+- Focus indicators visible
+- Screen reader friendly
+- Sufficient color contrast
+- Respect reduced motion preferences
+
+---
+
+## Key Principles
+
+1. **Be Bold** - Don't be afraid to try unique layouts and interactions
+2. **Be Consistent** - Use the same patterns for similar functions
+3. **Be Responsive** - Design works beautifully on all devices
+4. **Be Fast** - Animations are smooth, loading is quick
+5. **Be Accessible** - Everyone can use what you build
+6. **Be Modern** - Use current design trends and technologies
+7. **Be Unique** - Each project should have its own personality
+8. **Be Intuitive** - Users shouldn't need instructions
+
+
+---
+
+# Project-Specific Customizations
+
+**IMPORTANT: This section contains the specific design requirements for THIS project. The guidelines above are universal best practices - these customizations below take precedence for project-specific decisions.**
+
+## User Design Requirements
+
+# Gbox360 — Development Blueprint
+
+## Project Concept
+Gbox360 is an explainable narrative intelligence platform that transforms constrained external signals (news, social, earnings transcripts) into a transparent, auditable Investor Perception Index (IPI). The MVP enables authenticated users to select a company and time window, view a current IPI score, see directional movement, and drill down to the top narratives and underlying events that drove changes. The system preserves raw payloads, normalizes them into an append-only canonical NarrativeEvent model, applies lightweight topic classification, authority weighting, and credibility/risk proxies, and produces signed audit artifacts for traceable export.
+
+Vision: deliver a board-credible, audit-first narrative index that surfaces “what changed” and “why” for investors and corporate stakeholders, enabling fast, trustworthy decision-making.
+
+AI app description: Optional use of embeddings (OpenAI) for lightweight topic classification/clustering to improve narrative grouping where rule-based methods are insufficient. All AI usage is explainable and optional; raw payloads and deterministic heuristics remain primary.
+
+## Problem Statement
+- Core problems:
+  - Investors and executives lack an auditable, explainable signal capturing how external narratives influence market perception.
+  - Existing sentiment dashboards are opaque, noisy, and poorly traceable to raw sources.
+  - Teams need quick root-cause insights (which narratives/events drove perception shifts) with provenance and replayability.
+- Who experiences these problems:
+  - Institutional PMs, research analysts, corporate IR teams, small boutiques, and compliance/auditors.
+- Why these problems matter:
+  - Decisions based on opaque or untraceable signals risk misallocation, reputational damage, or regulatory issues.
+  - Lack of provenance inhibits trust and slows investigative workflows.
+- Current gaps:
+  - No compact, auditable index that links scores to specific NarrativeEvents and raw payloads.
+  - Limited tooling for ingestion idempotency, replay, append-only storage, and signed export artifacts.
+  - Insufficient lightweight credibility/risk signals integrated into index calculations.
+
+## Solution
+- How the app addresses the problems:
+  - Ingests constrained external sources and preserves raw payloads for audit.
+  - Normalizes into an immutable NarrativeEvent model with provenance pointers.
+  - Computes a transparent IPI (Narrative 40%, Credibility 40%, Risk 20%) with explicit provisional weights and logs inputs used.
+  - Surfaces top narratives, shows directional changes, and provides a drill-down UI listing traceable events and raw payloads.
+  - Provides admin tools for ingestion monitoring, replay, DLQ handling, and signed audit exports.
+- Approach and methodology:
+  - Append-only event store + provenance retention.
+  - Deterministic normalization pipeline with idempotency (external id + content hash dedupe).
+  - Lightweight classification (rule-based first; optional embeddings).
+  - Time-decay persistence metric for narrative scoring and authority weighting tiers.
+  - Explainable scoring with explicit logging of input vectors and weight versions.
+- Key differentiators:
+  - Audit-first design (raw payload preservation, signing with KMS).
+  - Canonical NarrativeEvent model enabling replay and deterministic recalculation.
+  - No black-box sentiment dashboards; explicit, provisional weights and visible inputs.
+- Value creation:
+  - Faster, auditable insights into investor perception moves.
+  - Trust and compliance readiness via exportable signed artifacts.
+  - Operational visibility for ingestion health and data provenance.
+
+## Requirements
+
+### 1. Pages (UI Screens)
+List of pages with purpose, key sections/components, and contribution.
+
+- Email Verification Page
+  - Purpose: Instruct users to verify their email after signup.
+  - Components: Confirmation message, rate-limited Resend button, Change Email inline modal, Support link.
+  - Contribution: Ensures verified accounts; reduces signup friction and provides support flow.
+
+- Password Reset Page
+  - Purpose: Request and perform password resets.
+  - Components: Request Reset form (email + CTA + toast), Reset Form (token-based: new password, confirm, strength meter), security notes about token expiry.
+  - Contribution: Secure account recovery; preserves security posture.
+
+- User Management (Admin)
+  - Purpose: Administer users, roles, and support actions.
+  - Components: Searchable user table, user detail panel (activity, disable, resend verification), bulk actions (CSV import/export), link to audit logs.
+  - Contribution: Central support and compliance controls for admins.
+
+- 404 Not Found
+  - Purpose: Friendly error page for invalid routes.
+  - Components: Message, Dashboard/Home CTA, quick company search fallback.
+  - Contribution: Keeps users oriented and recoverable from navigation errors.
+
+- 500 Server Error
+  - Purpose: Show server fault and diagnostic ID.
+  - Components: Error message, Retry button, Contact Support link, request ID + timestamp.
+  - Contribution: Provides actionable diagnostic info for support and users.
+
+- Admin Dashboard
+  - Purpose: Operational landing for ingestion and system health.
+  - Components: Ingestion status panel, system health metrics (queue depth, errors), user activity overview, quick links (User Management, Raw Payload Browser, Ingest Monitor), admin notifications.
+  - Contribution: Enables operators to monitor and act on ingestion reliability and SLA issues.
+
+- Landing Page
+  - Purpose: Public marketing describing product value and conversion.
+  - Components: Hero with CTA (Sign up / Request demo), How It Works 3-step, sample IPI snapshot, feature highlight cards, trust/compliance blurb, footer.
+  - Contribution: Drives user acquisition and communicates audit-first value prop.
+
+- Signup Page
+  - Purpose: Register new users.
+  - Components: Form (name, email, password, org, role, invite code), OAuth (Google optional), password strength meter, terms checkbox, primary CTA.
+  - Contribution: Onboards users with role capture for personalization and enterprise invite flows.
+
+- Login Page
+  - Purpose: Authenticate existing users.
+  - Components: Email/password, remember-me, OAuth placeholder, forgot password link, demo access.
+  - Contribution: Entry point to product; includes security notices.
+
+- Dashboard (Authenticated)
+  - Purpose: Primary landing showing company selector and IPI quick-cards.
+  - Components: Global header (search/autocomplete, avatar), company selector, time-window selector, IPI quick card grid (score, direction, sparkline, top narratives), saved companies pane, system status banner.
+  - Contribution: Fast selection-to-insight path; entry point to drilldowns.
+
+- Company View (IPI Detail)
+  - Purpose: Detailed IPI view per company/time window.
+  - Components: Company header, IPI summary panel (large score, % change, breakdown pie), top 3 narratives list, timeline view, Why Did This Move CTA, export snapshot button, related companies panel.
+  - Contribution: Shows explainable IPI and entry to drilldown/audit export.
+
+- Drilldown — Why Did This Move?
+  - Purpose: Explain narrative contribution with event traceability.
+  - Components: Narrative header (persistence, contribution), events list (paginated), raw payload modal, replay/timeline controls, filters, audit export button.
+  - Contribution: Provides root-cause, raw evidence, and exportable audit artifacts.
+
+- Settings & Preferences
+  - Purpose: User configuration and provisional weight experimentation.
+  - Components: Profile, notification prefs, IPI weight scenario toggles/sliders (provisional), data & privacy controls, developer/API keys placeholder.
+  - Contribution: User personalization; transparency on provisional weights.
+
+- User Profile
+  - Purpose: Personal overview.
+  - Components: Avatar card, saved companies, recent activity, account actions.
+  - Contribution: Quick access to saved views and activity.
+
+- About & Help
+  - Purpose: Methodology explanation and support.
+  - Components: Methodology section (NarrativeEvent schema, IPI breakdown), FAQ, support form, roadmap teaser.
+  - Contribution: Builds trust, clarifies methodology, and supports users.
+
+- Raw Payload Browser & Audit Export (Admin)
+  - Purpose: Inspect raw payloads and generate signed artifacts.
+  - Components: Payload search/filters, payload list, payload viewer (JSON), replay control, export artifact builder, retention controls.
+  - Contribution: Enables audit, replay, and compliance exports.
+
+- Ingest Monitor
+  - Purpose: Operational ingestion pipeline view.
+  - Components: Source tiles (last fetch, items, errors), pipeline DAG, recent error log, manual trigger for transcript import.
+  - Contribution: Operational control for ingestion reliability.
+
+- Privacy Policy & Terms of Service
+  - Purpose: Legal pages.
+  - Components: Full text, retention tables, contact info.
+  - Contribution: Legal compliance and user transparency.
+
+- Loading / Success / Toast Components (Shared)
+  - Purpose: UI micro-components for status feedback.
+  - Components: Skeletons, loading spinners, toasts, success banners.
+  - Contribution: Smooth UX and error/confirmation signaling.
+
+### 2. Features
+Core features with technical notes.
+
+- User Authentication
+  - Secure signup/login, email verification, JWT access + refresh tokens, optional OAuth (Google).
+  - Implementation: bcrypt/argon2 hashing, HttpOnly secure cookies for refresh tokens, revocation list, rate limits, account lockout on failed attempts, CSRF protection, audit logging for auth events.
+
+- User Profile & Account Management
+  - Profile CRUD, saved companies, preferences JSON, account export/delete, 2FA toggle placeholder.
+  - Implementation: Re-auth for sensitive ops, GDPR export generating ZIP, input validation and sanitization.
+
+- Company Selection & Time Window Controls
+  - Debounced autocomplete with fuzzy search, recent/saved list, presets + custom range.
+  - Implementation: Postgres + search index (e.g., pg_trgm or Elasticsearch); API suggestions endpoint; frontend typeahead with <150ms target.
+
+- Simplified IPI Calculation
+  - IPI = 0.4*Narrative + 0.4*Credibility + 0.2*Risk; directional change; top narrative contributions.
+  - Implementation: Aggregation service that reads narrative aggregates, applies static provisional weights (config-driven), logs input vectors and weight version; cache computed results for fast retrieval; endpoint returns contributions and provenance ids.
+
+- Drilldown & Traceability UI
+  - Paginated NarrativeEvent listing, raw payload viewer, timeline replay, filters, export builder.
+  - Implementation: Backend paginated endpoints, raw payload retrieval from append-only store, signed artifact generation using KMS, export job queue with email notification on completion.
+
+- Resilient Ingestion Pipeline
+  - Fetchers for NewsAPI and X/Twitter (read-only), admin batch transcript uploader (S3), normalizer to NarrativeEvent.
+  - Implementation: Scheduled worker processes, rate-limit-aware fetchers with exponential backoff, idempotency via external_id + content_hash, DLQ with manual replay; store raw payloads in append-only raw_payload table and normalized events with pointer to raw_payload_id.
+
+- Canonical NarrativeEvent Model
+  - Immutable schema capturing event_id, raw_payload_id, source, platform, speaker_entity, speaker_role, audience_class, raw_text, ingestion_timestamp, original_timestamp, metadata JSON, authority_score, credibility_flags.
+  - Implementation: Append-only DB table, indexes for company/ticker and timestamps, replay capability to rebuild aggregates.
+
+- Topic Classification & Narrative Persistence
+  - Rule-based keywords + optional embedding clustering; time-decayed persistence metric (configurable half-life).
+  - Implementation: Keyword rules stored as config; optional OpenAI embeddings for clustering (batched); persistence computed as decayed count/time-weighted metric; authority weighting applied during aggregation.
+
+- Credibility Proxy & Risk Signals
+  - Heuristics for credibility (repetition across authoritative sources, management language consistency) and risk flags via keywords.
+  - Implementation: Detectors run during normalization or lightweight async re-score; outputs normalized 0-1 scores stored per event and narrative.
+
+- Audit Export & Artifact Generation
+  - Signed JSON + human-readable PDF artifacts that include raw payload refs, calculation inputs, weights and integrity hashes.
+  - Implementation: Use KMS to sign artifacts; include content hashes (SHA256) per payload; store generated artifact metadata and TTL; authorize exports.
+
+- Admin Operations & Monitoring
+  - Role-based access, replay controls, DLQ inspection, ingestion metrics.
+  - Implementation: RBAC (Admin, Operator, Auditor), admin UI dashboards, logs/traces, audit log writes for admin actions with justification.
+
+- Email Notifications & System Alerts
+  - Transactional emails for verification, password resets, export ready, ingestion failure alerts.
+  - Implementation: SendGrid templates; retry & bounce handling; manage user's notification prefs and unsubscribe; include mailing metrics.
+
+- Exportable Audit Artifacts
+  - Generate and sign artifacts on-demand for a selected company/time window or filtered events.
+  - Implementation: Background export job, integrity verification, production of JSON + PDF (template), download link emailed, signed with KMS.
+
+### 3. User Journeys
+Step-by-step flows per user type.
+
+- New User (Investor)
+  1. Visit Landing → Click Sign up.
+  2. Fill signup form → Create account → System sends verification email (SendGrid).
+  3. Email Verification Page instructs to check inbox; can resend or change email.
+  4. Verify email → First login → Onboarding explains IPI formula and provisional weights.
+  5. Dashboard: search company → select company + time window.
+  6. Dashboard shows IPI quick-card → Click View details → Company View shows IPI and top narratives.
+  7. Click "Why did this move?" → Drilldown lists NarrativeEvents → Open raw payloads and replay timeline.
+  8. Optionally export audit artifact → Background job generates signed JSON+PDF → get email with download link.
+
+- Returning User (Analyst)
+  1. Login → Dashboard populated with saved companies.
+  2. Choose company + custom time window → view IPI and narrative breakdown.
+  3. Drilldown events → use filters (source, authority) to refine events.
+  4. Generate export for compliance or reporting; download artifact.
+
+- Admin / Operator
+  1. Admin login (MFA placeholder) → Admin Dashboard.
+  2. Monitor Ingest Monitor: see source rate-limit warnings, queue depth, recent errors.
+  3. Inspect DLQ via Raw Payload Browser → replay idempotently or mark for retention/purge.
+  4. Manage users via User Management: resend verification, disable account, export user list.
+  5. Review export artifact logs and audit logs for compliance.
+
+- Auditor
+  1. Receive audit invitation link → Sign in (read-only scope).
+  2. Use Company View and Drilldown to inspect signed exported artifacts.
+  3. Validate raw payload hashes and weight versions; raise issues via support form.
+
+- Support Flow (User with unverified email)
+  1. From Email Verification Page use Change Email modal or Resend action (rate-limited).
+  2. If problem persists, contact support via link → submit issue.
+
+## UI Guide
+---
+
+(Refer to Visual Style section below for comprehensive design system. Apply consistently across all pages and components.)
+
+## Visual Style
+
+### Color Palette:
+- Primary background: #FBFBFC
+- Map/background overlay: #F3F4F6
+- Primary text: #111827
+- Secondary text / meta: #6B7280
+- Borders / dividers: #E5E7EB
+- Card background / surfaces: #FFFFFF
+- Accent (callouts / badges): #FF6B4A
+- Accent (interactive / primary CTA): #0F172A
+- Accent (focus / subtle highlights): #93C5FD
+- Muted success/credibility accent: #10B981
+
+### Typography & Layout:
+- Font family: Inter / SF Pro / system-ui
+- Hierarchy:
+  - H1: 48–56px, 700
+  - H2: 24–32px, 600–700
+  - Body: 16px, 400, 1.4–1.6 line-height
+  - Micro/meta: 12–14px, color #6B7280
+  - Numeric stats: 28–36px, 700
+- Spacing & grid:
+  - Centered container, 12-column responsive grid
+  - Vertical rhythm 48–64px between major sections
+  - Card padding 20–28px; controls 12–16px
+  - Left-aligned text, visual center hero cards over map
+
+### Key Design Elements
+Card Design:
+- White surfaces (#FFFFFF), 1px border (#E5E7EB), soft shadow (0 12px 30px rgba(15,23,42,0.06))
+- Corner radius 10–12px; hover: stronger shadow + -4px translateY
+- Internal hierarchy: thumbnail, title, numeric badge, metadata row, CTA; chips in #FF6B4A
+
+Navigation:
+- Top horizontal bar, brand left, nav links center/left, auth actions right
+- Active state: subtle underline or heavier weight + #FF6B4A dot
+- Auth CTAs: primary pill #0F172A (white text), secondary outlined #E5E7EB
+
+Data Visualization:
+- Minimal single-tone line/area charts; primary lines #0F172A or #FF6B4A
+- Secondary lines #6B7280 at 20–30% opacity
+- Light grid lines #F3F4F6; markers in #FF6B4A; tooltip cards for markers
+
+Interactive Elements:
+- Buttons: primary pill (#0F172A), secondary white with border (#E5E7EB)
+- Inputs: 1px rounded borders (#E5E7EB), padding 10–12px, placeholder #9CA3AF, focus glow #93C5FD
+- Transitions: micro-interactions 150–220ms, panel expand 300ms
+- Accessibility: high contrast text, visible focus rings (#93C5FD)
+
+### Design Philosophy
+- Modern, trust-focused minimalism
+- Corporate-professional aesthetic
+- Spatial calm and hierarchy with generous whitespace
+- Transparent, explainable UI cues (provenance chips, raw-payload cards)
+- UX goals: fast scannability, effortless drill-downs, enterprise polish
+
+Implementation Notes:
+- Enforce tokens, spacing, typography, and component styles via a shared design system (Figma + component library). Ensure UI kit assets (logo variants, icons, templates) are integrated.
+
+## Instructions to AI Development Tool
+1. Refer to Project Concept, Problem Statement, and Solution to understand the "why".
+2. Ensure all features and pages directly solve the identified problems and map to the scope.
+3. Verify completeness: every page/component must adhere to specified UI Guide and Visual Style.
+4. Audit exports and IPI calculation must log exact inputs, weights, and provenance metadata.
+5. Implement append-only raw payload storage, idempotency checks, and replay mechanics for ingestion.
+6. Use KMS for signing artifacts; include integrity hashes for raw payloads.
+7. Rate-limit and retry for external fetchers; expose ingestion metrics on Admin Dashboard.
+8. Ensure security: hashed passwords, JWT + refresh tokens with revocation, rate limiting, CSRF protection, and auth/audit logs.
+9. Maintain clear feature flags and config for provisional weights; surface “provisional” in UI.
+10. Provide sample dataset and component kit to support deterministic UI and backend integration tests.
+
+PROJECT CONTEXT:
+- Project: Gbox360 — Investor Perception Index & Narrative Intelligence
+- MVP Goals: Log in → select company & time window → view simplified IPI → drill down to events and export signed artifacts.
+- Data Intake:
+  - One news source (NewsAPI)
+  - One social source (X/Twitter read-only)
+  - Batch earnings transcripts (S3)
+  - Preserve raw payloads, ensure retry/idempotency
+- Canonical Narrative Model:
+  - Immutable NarrativeEvent schema with append-only storage and replay support
+- Simplified Intelligence:
+  - No sentiment dashboards
+  - Topic classification (rule-based or embeddings)
+  - Narrative persistence via time-decay
+  - Authority weighting (Analyst > Media > Retail)
+  - Credibility proxies and a simple risk proxy
+  - IPI weights: Narrative 40%, Credibility 40%, Risk 20% (provisional)
+- End-to-End Flow:
+  - User selects company/time window → system displays IPI + top narratives → “Why did this move?” drilldown shows events and raw payloads → export signed artifact
+
+ASSETS & INTEGRATIONS:
+- Email: SendGrid
+- Optional embeddings: OpenAI embeddings
+- News feed: NewsAPI
+- Social feed: X / Twitter read-only API
+- Transcript storage: S3-compatible object storage
+- KMS: AWS KMS (or equivalent) for signing artifacts and securing keys
+- UI assets: Brand logo variants, Figma UI kit, SVG icon set, sample raw payload dataset, NarrativeEvent schema docs, PDF export template
+
+USER FLOWS (condensed)
+- Auth flows (signup → verify → login)
+- Core flow (Dashboard → select company/time window → Company View → Drilldown → Export)
+- Admin flows (Admin Dashboard → Ingest Monitor → Raw Payload Browser → Replay/DLQ → User Management)
+- Auditor/read-only review via signed artifacts and raw payload verification
+
+End of blueprint.
+
+## Implementation Notes
+
+When implementing this project:
+
+1. **Follow Universal Guidelines**: Use the design best practices documented above as your foundation
+2. **Apply Project Customizations**: Implement the specific design requirements stated in the "User Design Requirements" section
+3. **Priority Order**: Project-specific requirements override universal guidelines when there's a conflict
+4. **Color System**: Extract and implement color values as CSS custom properties in RGB format
+5. **Typography**: Define font families, sizes, and weights based on specifications
+6. **Spacing**: Establish consistent spacing scale following the design system
+7. **Components**: Style all Shadcn components to match the design aesthetic
+8. **Animations**: Use Motion library for transitions matching the design personality
+9. **Responsive Design**: Ensure mobile-first responsive implementation
+
+## Implementation Checklist
+
+- [ ] Review universal design guidelines above
+- [ ] Extract project-specific color palette and define CSS variables
+- [ ] Configure Tailwind theme with custom colors
+- [ ] Set up typography system (fonts, sizes, weights)
+- [ ] Define spacing and sizing scales
+- [ ] Create component variants matching design
+- [ ] Implement responsive breakpoints
+- [ ] Add animations and transitions
+- [ ] Ensure accessibility standards
+- [ ] Validate against user design requirements
+
+---
+
+**Remember: Always reference this file for design decisions. Do not use generic or placeholder designs.**
+
+
+*IMPORTANT*: For every page or component refer to # Modern Design Best Practices
+
+## Philosophy
+
+Create unique, memorable experiences while maintaining consistency through modern design principles. Every project should feel distinct yet professional, innovative yet intuitive.
+
+---
+
+## Landing Pages & Marketing Sites
+
+### Hero Sections
+**Go beyond static backgrounds:**
+- Animated gradients with subtle movement
+- Particle systems or geometric shapes floating
+- Interactive canvas backgrounds (Three.js, WebGL)
+- Video backgrounds with proper fallbacks
+- Parallax scrolling effects
+- Gradient mesh animations
+- Morphing blob animations
+
+
+### Layout Patterns
+**Use modern grid systems:**
+- Bento grids (asymmetric card layouts)
+- Masonry layouts for varied content
+- Feature sections with diagonal cuts or curves
+- Overlapping elements with proper z-index
+- Split-screen designs with scroll-triggered reveals
+
+**Avoid:** Traditional 3-column equal grids
+
+### Scroll Animations
+**Engage users as they scroll:**
+- Fade-in and slide-up animations for sections
+- Scroll-triggered parallax effects
+- Progress indicators for long pages
+- Sticky elements that transform on scroll
+- Horizontal scroll sections for portfolios
+- Text reveal animations (word by word, letter by letter)
+- Number counters animating into view
+
+**Avoid:** Static pages with no scroll interaction
+
+### Call-to-Action Areas
+**Make CTAs impossible to miss:**
+- Gradient buttons with hover effects
+- Floating action buttons with micro-interactions
+- Animated borders or glowing effects
+- Scale/lift on hover
+- Interactive elements that respond to mouse position
+- Pulsing indicators for primary actions
+
+---
+
+## Dashboard Applications
+
+### Layout Structure
+**Always use collapsible side navigation:**
+- Sidebar that can collapse to icons only
+- Smooth transition animations between states
+- Persistent navigation state (remember user preference)
+- Mobile: drawer that slides in/out
+- Desktop: sidebar with expand/collapse toggle
+- Icons visible even when collapsed
+
+**Structure:**
+```
+/dashboard (layout wrapper with sidebar)
+  /dashboard/overview
+  /dashboard/analytics
+  /dashboard/settings
+  /dashboard/users
+  /dashboard/projects
+```
+
+All dashboard pages should be nested inside the dashboard layout, not separate routes.
+
+### Data Tables
+**Modern table design:**
+- Sticky headers on scroll
+- Row hover states with subtle elevation
+- Sortable columns with clear indicators
+- Pagination with items-per-page control
+- Search/filter with instant feedback
+- Selection checkboxes with bulk actions
+- Responsive: cards on mobile, table on desktop
+- Loading skeletons, not spinners
+- Empty states with illustrations or helpful text
+
+**Use modern table libraries:**
+- TanStack Table (React Table v8)
+- AG Grid for complex data
+- Data Grid from MUI (if using MUI)
+
+### Charts & Visualizations
+**Use the latest charting libraries:**
+- Recharts (for React, simple charts)
+- Chart.js v4 (versatile, well-maintained)
+- Apache ECharts (advanced, interactive)
+- D3.js (custom, complex visualizations)
+- Tremor (for dashboards, built on Recharts)
+
+**Chart best practices:**
+- Animated transitions when data changes
+- Interactive tooltips with detailed info
+- Responsive sizing
+- Color scheme matching design system
+- Legend placement that doesn't obstruct data
+- Loading states while fetching data
+
+### Dashboard Cards
+**Metric cards should stand out:**
+- Gradient backgrounds or colored accents
+- Trend indicators (↑ ↓ with color coding)
+- Sparkline charts for historical data
+- Hover effects revealing more detail
+- Icon representing the metric
+- Comparison to previous period
+
+---
+
+## Color & Visual Design
+
+### Color Palettes
+**Create depth with gradients:**
+- Primary gradient (not just solid primary color)
+- Subtle background gradients
+- Gradient text for headings
+- Gradient borders on cards
+- Elevated surfaces for depth
+
+**Color usage:**
+- 60-30-10 rule (dominant, secondary, accent)
+- Consistent semantic colors (success, warning, error)
+- Accessible contrast ratios (WCAG AA minimum)
+
+### Typography
+**Create hierarchy through contrast:**
+- Large, bold headings (48-72px for heroes)
+- Clear size differences between levels
+- Variable font weights (300, 400, 600, 700)
+- Letter spacing for small caps
+- Line height 1.5-1.7 for body text
+- Inter, Poppins, or DM Sans for modern feel
+
+### Shadows & Depth
+**Layer UI elements:**
+- Multi-layer shadows for realistic depth
+- Colored shadows matching element color
+- Elevated states on hover
+- Neumorphism for special elements (sparingly)
+
+---
+
+## Interactions & Micro-animations
+
+### Button Interactions
+**Every button should react:**
+- Scale slightly on hover (1.02-1.05)
+- Lift with shadow on hover
+- Ripple effect on click
+- Loading state with spinner or progress
+- Disabled state clearly visible
+- Success state with checkmark animation
+
+### Card Interactions
+**Make cards feel alive:**
+- Lift on hover with increased shadow
+- Subtle border glow on hover
+- Tilt effect following mouse (3D transform)
+- Smooth transitions (200-300ms)
+- Click feedback for interactive cards
+
+### Form Interactions
+**Guide users through forms:**
+- Input focus states with border color change
+- Floating labels that animate up
+- Real-time validation with inline messages
+- Success checkmarks for valid inputs
+- Error states with shake animation
+- Password strength indicators
+- Character count for text areas
+
+### Page Transitions
+**Smooth between views:**
+- Fade + slide for page changes
+- Skeleton loaders during data fetch
+- Optimistic UI updates
+- Stagger animations for lists
+- Route transition animations
+
+---
+
+## Mobile Responsiveness
+
+### Mobile-First Approach
+**Design for mobile, enhance for desktop:**
+- Touch targets minimum 44x44px
+- Generous padding and spacing
+- Sticky bottom navigation on mobile
+- Collapsible sections for long content
+- Swipeable cards and galleries
+- Pull-to-refresh where appropriate
+
+### Responsive Patterns
+**Adapt layouts intelligently:**
+- Hamburger menu → full nav bar
+- Card grid → stack on mobile
+- Sidebar → drawer
+- Multi-column → single column
+- Data tables → card list
+- Hide/show elements based on viewport
+
+---
+
+## Loading & Empty States
+
+### Loading States
+**Never leave users wondering:**
+- Skeleton screens matching content layout
+- Progress bars for known durations
+- Animated placeholders
+- Spinners only for short waits (<3s)
+- Stagger loading for multiple elements
+- Shimmer effects on skeletons
+
+### Empty States
+**Make empty states helpful:**
+- Illustrations or icons
+- Helpful copy explaining why it's empty
+- Clear CTA to add first item
+- Examples or suggestions
+- No "no data" text alone
+
+---
+
+## Unique Elements to Stand Out
+
+### Distinctive Features
+**Add personality:**
+- Custom cursor effects on landing pages
+- Animated page numbers or section indicators
+- Unusual hover effects (magnification, distortion)
+- Custom scrollbars
+- Glassmorphism for overlays
+- Animated SVG icons
+- Typewriter effects for hero text
+- Confetti or celebration animations for actions
+
+### Interactive Elements
+**Engage users:**
+- Drag-and-drop interfaces
+- Sliders and range controls
+- Toggle switches with animations
+- Progress steps with animations
+- Expandable/collapsible sections
+- Tabs with slide indicators
+- Image comparison sliders
+- Interactive demos or playgrounds
+
+---
+
+## Consistency Rules
+
+### Maintain Consistency
+**What should stay consistent:**
+- Spacing scale (4px, 8px, 16px, 24px, 32px, 48px, 64px)
+- Border radius values
+- Animation timing (200ms, 300ms, 500ms)
+- Color system (primary, secondary, accent, neutrals)
+- Typography scale
+- Icon style (outline vs filled)
+- Button styles across the app
+- Form element styles
+
+### What Can Vary
+**Project-specific customization:**
+- Color palette (different colors, same system)
+- Layout creativity (grids, asymmetry)
+- Illustration style
+- Animation personality
+- Feature-specific interactions
+- Hero section design
+- Card styling variations
+- Background patterns or textures
+
+---
+
+## Technical Excellence
+
+### Performance
+- Optimize images (WebP, lazy loading)
+- Code splitting for faster loads
+- Debounce search inputs
+- Virtualize long lists
+- Minimize re-renders
+- Use proper memoization
+
+### Accessibility
+- Keyboard navigation throughout
+- ARIA labels where needed
+- Focus indicators visible
+- Screen reader friendly
+- Sufficient color contrast
+- Respect reduced motion preferences
+
+---
+
+## Key Principles
+
+1. **Be Bold** - Don't be afraid to try unique layouts and interactions
+2. **Be Consistent** - Use the same patterns for similar functions
+3. **Be Responsive** - Design works beautifully on all devices
+4. **Be Fast** - Animations are smooth, loading is quick
+5. **Be Accessible** - Everyone can use what you build
+6. **Be Modern** - Use current design trends and technologies
+7. **Be Unique** - Each project should have its own personality
+8. **Be Intuitive** - Users shouldn't need instructions
+
+
+---
+
+# Project-Specific Customizations
+
+**IMPORTANT: This section contains the specific design requirements for THIS project. The guidelines above are universal best practices - these customizations below take precedence for project-specific decisions.**
+
+## User Design Requirements
+
+# Gbox360 — Development Blueprint
+
+## Project Concept
+Gbox360 is an explainable narrative intelligence platform that transforms constrained external signals (news, social, earnings transcripts) into a transparent, auditable Investor Perception Index (IPI). The MVP enables authenticated users to select a company and time window, view a current IPI score, see directional movement, and drill down to the top narratives and underlying events that drove changes. The system preserves raw payloads, normalizes them into an append-only canonical NarrativeEvent model, applies lightweight topic classification, authority weighting, and credibility/risk proxies, and produces signed audit artifacts for traceable export.
+
+Vision: deliver a board-credible, audit-first narrative index that surfaces “what changed” and “why” for investors and corporate stakeholders, enabling fast, trustworthy decision-making.
+
+AI app description: Optional use of embeddings (OpenAI) for lightweight topic classification/clustering to improve narrative grouping where rule-based methods are insufficient. All AI usage is explainable and optional; raw payloads and deterministic heuristics remain primary.
+
+## Problem Statement
+- Core problems:
+  - Investors and executives lack an auditable, explainable signal capturing how external narratives influence market perception.
+  - Existing sentiment dashboards are opaque, noisy, and poorly traceable to raw sources.
+  - Teams need quick root-cause insights (which narratives/events drove perception shifts) with provenance and replayability.
+- Who experiences these problems:
+  - Institutional PMs, research analysts, corporate IR teams, small boutiques, and compliance/auditors.
+- Why these problems matter:
+  - Decisions based on opaque or untraceable signals risk misallocation, reputational damage, or regulatory issues.
+  - Lack of provenance inhibits trust and slows investigative workflows.
+- Current gaps:
+  - No compact, auditable index that links scores to specific NarrativeEvents and raw payloads.
+  - Limited tooling for ingestion idempotency, replay, append-only storage, and signed export artifacts.
+  - Insufficient lightweight credibility/risk signals integrated into index calculations.
+
+## Solution
+- How the app addresses the problems:
+  - Ingests constrained external sources and preserves raw payloads for audit.
+  - Normalizes into an immutable NarrativeEvent model with provenance pointers.
+  - Computes a transparent IPI (Narrative 40%, Credibility 40%, Risk 20%) with explicit provisional weights and logs inputs used.
+  - Surfaces top narratives, shows directional changes, and provides a drill-down UI listing traceable events and raw payloads.
+  - Provides admin tools for ingestion monitoring, replay, DLQ handling, and signed audit exports.
+- Approach and methodology:
+  - Append-only event store + provenance retention.
+  - Deterministic normalization pipeline with idempotency (external id + content hash dedupe).
+  - Lightweight classification (rule-based first; optional embeddings).
+  - Time-decay persistence metric for narrative scoring and authority weighting tiers.
+  - Explainable scoring with explicit logging of input vectors and weight versions.
+- Key differentiators:
+  - Audit-first design (raw payload preservation, signing with KMS).
+  - Canonical NarrativeEvent model enabling replay and deterministic recalculation.
+  - No black-box sentiment dashboards; explicit, provisional weights and visible inputs.
+- Value creation:
+  - Faster, auditable insights into investor perception moves.
+  - Trust and compliance readiness via exportable signed artifacts.
+  - Operational visibility for ingestion health and data provenance.
+
+## Requirements
+
+### 1. Pages (UI Screens)
+List of pages with purpose, key sections/components, and contribution.
+
+- Email Verification Page
+  - Purpose: Instruct users to verify their email after signup.
+  - Components: Confirmation message, rate-limited Resend button, Change Email inline modal, Support link.
+  - Contribution: Ensures verified accounts; reduces signup friction and provides support flow.
+
+- Password Reset Page
+  - Purpose: Request and perform password resets.
+  - Components: Request Reset form (email + CTA + toast), Reset Form (token-based: new password, confirm, strength meter), security notes about token expiry.
+  - Contribution: Secure account recovery; preserves security posture.
+
+- User Management (Admin)
+  - Purpose: Administer users, roles, and support actions.
+  - Components: Searchable user table, user detail panel (activity, disable, resend verification), bulk actions (CSV import/export), link to audit logs.
+  - Contribution: Central support and compliance controls for admins.
+
+- 404 Not Found
+  - Purpose: Friendly error page for invalid routes.
+  - Components: Message, Dashboard/Home CTA, quick company search fallback.
+  - Contribution: Keeps users oriented and recoverable from navigation errors.
+
+- 500 Server Error
+  - Purpose: Show server fault and diagnostic ID.
+  - Components: Error message, Retry button, Contact Support link, request ID + timestamp.
+  - Contribution: Provides actionable diagnostic info for support and users.
+
+- Admin Dashboard
+  - Purpose: Operational landing for ingestion and system health.
+  - Components: Ingestion status panel, system health metrics (queue depth, errors), user activity overview, quick links (User Management, Raw Payload Browser, Ingest Monitor), admin notifications.
+  - Contribution: Enables operators to monitor and act on ingestion reliability and SLA issues.
+
+- Landing Page
+  - Purpose: Public marketing describing product value and conversion.
+  - Components: Hero with CTA (Sign up / Request demo), How It Works 3-step, sample IPI snapshot, feature highlight cards, trust/compliance blurb, footer.
+  - Contribution: Drives user acquisition and communicates audit-first value prop.
+
+- Signup Page
+  - Purpose: Register new users.
+  - Components: Form (name, email, password, org, role, invite code), OAuth (Google optional), password strength meter, terms checkbox, primary CTA.
+  - Contribution: Onboards users with role capture for personalization and enterprise invite flows.
+
+- Login Page
+  - Purpose: Authenticate existing users.
+  - Components: Email/password, remember-me, OAuth placeholder, forgot password link, demo access.
+  - Contribution: Entry point to product; includes security notices.
+
+- Dashboard (Authenticated)
+  - Purpose: Primary landing showing company selector and IPI quick-cards.
+  - Components: Global header (search/autocomplete, avatar), company selector, time-window selector, IPI quick card grid (score, direction, sparkline, top narratives), saved companies pane, system status banner.
+  - Contribution: Fast selection-to-insight path; entry point to drilldowns.
+
+- Company View (IPI Detail)
+  - Purpose: Detailed IPI view per company/time window.
+  - Components: Company header, IPI summary panel (large score, % change, breakdown pie), top 3 narratives list, timeline view, Why Did This Move CTA, export snapshot button, related companies panel.
+  - Contribution: Shows explainable IPI and entry to drilldown/audit export.
+
+- Drilldown — Why Did This Move?
+  - Purpose: Explain narrative contribution with event traceability.
+  - Components: Narrative header (persistence, contribution), events list (paginated), raw payload modal, replay/timeline controls, filters, audit export button.
+  - Contribution: Provides root-cause, raw evidence, and exportable audit artifacts.
+
+- Settings & Preferences
+  - Purpose: User configuration and provisional weight experimentation.
+  - Components: Profile, notification prefs, IPI weight scenario toggles/sliders (provisional), data & privacy controls, developer/API keys placeholder.
+  - Contribution: User personalization; transparency on provisional weights.
+
+- User Profile
+  - Purpose: Personal overview.
+  - Components: Avatar card, saved companies, recent activity, account actions.
+  - Contribution: Quick access to saved views and activity.
+
+- About & Help
+  - Purpose: Methodology explanation and support.
+  - Components: Methodology section (NarrativeEvent schema, IPI breakdown), FAQ, support form, roadmap teaser.
+  - Contribution: Builds trust, clarifies methodology, and supports users.
+
+- Raw Payload Browser & Audit Export (Admin)
+  - Purpose: Inspect raw payloads and generate signed artifacts.
+  - Components: Payload search/filters, payload list, payload viewer (JSON), replay control, export artifact builder, retention controls.
+  - Contribution: Enables audit, replay, and compliance exports.
+
+- Ingest Monitor
+  - Purpose: Operational ingestion pipeline view.
+  - Components: Source tiles (last fetch, items, errors), pipeline DAG, recent error log, manual trigger for transcript import.
+  - Contribution: Operational control for ingestion reliability.
+
+- Privacy Policy & Terms of Service
+  - Purpose: Legal pages.
+  - Components: Full text, retention tables, contact info.
+  - Contribution: Legal compliance and user transparency.
+
+- Loading / Success / Toast Components (Shared)
+  - Purpose: UI micro-components for status feedback.
+  - Components: Skeletons, loading spinners, toasts, success banners.
+  - Contribution: Smooth UX and error/confirmation signaling.
+
+### 2. Features
+Core features with technical notes.
+
+- User Authentication
+  - Secure signup/login, email verification, JWT access + refresh tokens, optional OAuth (Google).
+  - Implementation: bcrypt/argon2 hashing, HttpOnly secure cookies for refresh tokens, revocation list, rate limits, account lockout on failed attempts, CSRF protection, audit logging for auth events.
+
+- User Profile & Account Management
+  - Profile CRUD, saved companies, preferences JSON, account export/delete, 2FA toggle placeholder.
+  - Implementation: Re-auth for sensitive ops, GDPR export generating ZIP, input validation and sanitization.
+
+- Company Selection & Time Window Controls
+  - Debounced autocomplete with fuzzy search, recent/saved list, presets + custom range.
+  - Implementation: Postgres + search index (e.g., pg_trgm or Elasticsearch); API suggestions endpoint; frontend typeahead with <150ms target.
+
+- Simplified IPI Calculation
+  - IPI = 0.4*Narrative + 0.4*Credibility + 0.2*Risk; directional change; top narrative contributions.
+  - Implementation: Aggregation service that reads narrative aggregates, applies static provisional weights (config-driven), logs input vectors and weight version; cache computed results for fast retrieval; endpoint returns contributions and provenance ids.
+
+- Drilldown & Traceability UI
+  - Paginated NarrativeEvent listing, raw payload viewer, timeline replay, filters, export builder.
+  - Implementation: Backend paginated endpoints, raw payload retrieval from append-only store, signed artifact generation using KMS, export job queue with email notification on completion.
+
+- Resilient Ingestion Pipeline
+  - Fetchers for NewsAPI and X/Twitter (read-only), admin batch transcript uploader (S3), normalizer to NarrativeEvent.
+  - Implementation: Scheduled worker processes, rate-limit-aware fetchers with exponential backoff, idempotency via external_id + content_hash, DLQ with manual replay; store raw payloads in append-only raw_payload table and normalized events with pointer to raw_payload_id.
+
+- Canonical NarrativeEvent Model
+  - Immutable schema capturing event_id, raw_payload_id, source, platform, speaker_entity, speaker_role, audience_class, raw_text, ingestion_timestamp, original_timestamp, metadata JSON, authority_score, credibility_flags.
+  - Implementation: Append-only DB table, indexes for company/ticker and timestamps, replay capability to rebuild aggregates.
+
+- Topic Classification & Narrative Persistence
+  - Rule-based keywords + optional embedding clustering; time-decayed persistence metric (configurable half-life).
+  - Implementation: Keyword rules stored as config; optional OpenAI embeddings for clustering (batched); persistence computed as decayed count/time-weighted metric; authority weighting applied during aggregation.
+
+- Credibility Proxy & Risk Signals
+  - Heuristics for credibility (repetition across authoritative sources, management language consistency) and risk flags via keywords.
+  - Implementation: Detectors run during normalization or lightweight async re-score; outputs normalized 0-1 scores stored per event and narrative.
+
+- Audit Export & Artifact Generation
+  - Signed JSON + human-readable PDF artifacts that include raw payload refs, calculation inputs, weights and integrity hashes.
+  - Implementation: Use KMS to sign artifacts; include content hashes (SHA256) per payload; store generated artifact metadata and TTL; authorize exports.
+
+- Admin Operations & Monitoring
+  - Role-based access, replay controls, DLQ inspection, ingestion metrics.
+  - Implementation: RBAC (Admin, Operator, Auditor), admin UI dashboards, logs/traces, audit log writes for admin actions with justification.
+
+- Email Notifications & System Alerts
+  - Transactional emails for verification, password resets, export ready, ingestion failure alerts.
+  - Implementation: SendGrid templates; retry & bounce handling; manage user's notification prefs and unsubscribe; include mailing metrics.
+
+- Exportable Audit Artifacts
+  - Generate and sign artifacts on-demand for a selected company/time window or filtered events.
+  - Implementation: Background export job, integrity verification, production of JSON + PDF (template), download link emailed, signed with KMS.
+
+### 3. User Journeys
+Step-by-step flows per user type.
+
+- New User (Investor)
+  1. Visit Landing → Click Sign up.
+  2. Fill signup form → Create account → System sends verification email (SendGrid).
+  3. Email Verification Page instructs to check inbox; can resend or change email.
+  4. Verify email → First login → Onboarding explains IPI formula and provisional weights.
+  5. Dashboard: search company → select company + time window.
+  6. Dashboard shows IPI quick-card → Click View details → Company View shows IPI and top narratives.
+  7. Click "Why did this move?" → Drilldown lists NarrativeEvents → Open raw payloads and replay timeline.
+  8. Optionally export audit artifact → Background job generates signed JSON+PDF → get email with download link.
+
+- Returning User (Analyst)
+  1. Login → Dashboard populated with saved companies.
+  2. Choose company + custom time window → view IPI and narrative breakdown.
+  3. Drilldown events → use filters (source, authority) to refine events.
+  4. Generate export for compliance or reporting; download artifact.
+
+- Admin / Operator
+  1. Admin login (MFA placeholder) → Admin Dashboard.
+  2. Monitor Ingest Monitor: see source rate-limit warnings, queue depth, recent errors.
+  3. Inspect DLQ via Raw Payload Browser → replay idempotently or mark for retention/purge.
+  4. Manage users via User Management: resend verification, disable account, export user list.
+  5. Review export artifact logs and audit logs for compliance.
+
+- Auditor
+  1. Receive audit invitation link → Sign in (read-only scope).
+  2. Use Company View and Drilldown to inspect signed exported artifacts.
+  3. Validate raw payload hashes and weight versions; raise issues via support form.
+
+- Support Flow (User with unverified email)
+  1. From Email Verification Page use Change Email modal or Resend action (rate-limited).
+  2. If problem persists, contact support via link → submit issue.
+
+## UI Guide
+---
+
+(Refer to Visual Style section below for comprehensive design system. Apply consistently across all pages and components.)
+
+## Visual Style
+
+### Color Palette:
+- Primary background: #FBFBFC
+- Map/background overlay: #F3F4F6
+- Primary text: #111827
+- Secondary text / meta: #6B7280
+- Borders / dividers: #E5E7EB
+- Card background / surfaces: #FFFFFF
+- Accent (callouts / badges): #FF6B4A
+- Accent (interactive / primary CTA): #0F172A
+- Accent (focus / subtle highlights): #93C5FD
+- Muted success/credibility accent: #10B981
+
+### Typography & Layout:
+- Font family: Inter / SF Pro / system-ui
+- Hierarchy:
+  - H1: 48–56px, 700
+  - H2: 24–32px, 600–700
+  - Body: 16px, 400, 1.4–1.6 line-height
+  - Micro/meta: 12–14px, color #6B7280
+  - Numeric stats: 28–36px, 700
+- Spacing & grid:
+  - Centered container, 12-column responsive grid
+  - Vertical rhythm 48–64px between major sections
+  - Card padding 20–28px; controls 12–16px
+  - Left-aligned text, visual center hero cards over map
+
+### Key Design Elements
+Card Design:
+- White surfaces (#FFFFFF), 1px border (#E5E7EB), soft shadow (0 12px 30px rgba(15,23,42,0.06))
+- Corner radius 10–12px; hover: stronger shadow + -4px translateY
+- Internal hierarchy: thumbnail, title, numeric badge, metadata row, CTA; chips in #FF6B4A
+
+Navigation:
+- Top horizontal bar, brand left, nav links center/left, auth actions right
+- Active state: subtle underline or heavier weight + #FF6B4A dot
+- Auth CTAs: primary pill #0F172A (white text), secondary outlined #E5E7EB
+
+Data Visualization:
+- Minimal single-tone line/area charts; primary lines #0F172A or #FF6B4A
+- Secondary lines #6B7280 at 20–30% opacity
+- Light grid lines #F3F4F6; markers in #FF6B4A; tooltip cards for markers
+
+Interactive Elements:
+- Buttons: primary pill (#0F172A), secondary white with border (#E5E7EB)
+- Inputs: 1px rounded borders (#E5E7EB), padding 10–12px, placeholder #9CA3AF, focus glow #93C5FD
+- Transitions: micro-interactions 150–220ms, panel expand 300ms
+- Accessibility: high contrast text, visible focus rings (#93C5FD)
+
+### Design Philosophy
+- Modern, trust-focused minimalism
+- Corporate-professional aesthetic
+- Spatial calm and hierarchy with generous whitespace
+- Transparent, explainable UI cues (provenance chips, raw-payload cards)
+- UX goals: fast scannability, effortless drill-downs, enterprise polish
+
+Implementation Notes:
+- Enforce tokens, spacing, typography, and component styles via a shared design system (Figma + component library). Ensure UI kit assets (logo variants, icons, templates) are integrated.
+
+## Instructions to AI Development Tool
+1. Refer to Project Concept, Problem Statement, and Solution to understand the "why".
+2. Ensure all features and pages directly solve the identified problems and map to the scope.
+3. Verify completeness: every page/component must adhere to specified UI Guide and Visual Style.
+4. Audit exports and IPI calculation must log exact inputs, weights, and provenance metadata.
+5. Implement append-only raw payload storage, idempotency checks, and replay mechanics for ingestion.
+6. Use KMS for signing artifacts; include integrity hashes for raw payloads.
+7. Rate-limit and retry for external fetchers; expose ingestion metrics on Admin Dashboard.
+8. Ensure security: hashed passwords, JWT + refresh tokens with revocation, rate limiting, CSRF protection, and auth/audit logs.
+9. Maintain clear feature flags and config for provisional weights; surface “provisional” in UI.
+10. Provide sample dataset and component kit to support deterministic UI and backend integration tests.
+
+PROJECT CONTEXT:
+- Project: Gbox360 — Investor Perception Index & Narrative Intelligence
+- MVP Goals: Log in → select company & time window → view simplified IPI → drill down to events and export signed artifacts.
+- Data Intake:
+  - One news source (NewsAPI)
+  - One social source (X/Twitter read-only)
+  - Batch earnings transcripts (S3)
+  - Preserve raw payloads, ensure retry/idempotency
+- Canonical Narrative Model:
+  - Immutable NarrativeEvent schema with append-only storage and replay support
+- Simplified Intelligence:
+  - No sentiment dashboards
+  - Topic classification (rule-based or embeddings)
+  - Narrative persistence via time-decay
+  - Authority weighting (Analyst > Media > Retail)
+  - Credibility proxies and a simple risk proxy
+  - IPI weights: Narrative 40%, Credibility 40%, Risk 20% (provisional)
+- End-to-End Flow:
+  - User selects company/time window → system displays IPI + top narratives → “Why did this move?” drilldown shows events and raw payloads → export signed artifact
+
+ASSETS & INTEGRATIONS:
+- Email: SendGrid
+- Optional embeddings: OpenAI embeddings
+- News feed: NewsAPI
+- Social feed: X / Twitter read-only API
+- Transcript storage: S3-compatible object storage
+- KMS: AWS KMS (or equivalent) for signing artifacts and securing keys
+- UI assets: Brand logo variants, Figma UI kit, SVG icon set, sample raw payload dataset, NarrativeEvent schema docs, PDF export template
+
+USER FLOWS (condensed)
+- Auth flows (signup → verify → login)
+- Core flow (Dashboard → select company/time window → Company View → Drilldown → Export)
+- Admin flows (Admin Dashboard → Ingest Monitor → Raw Payload Browser → Replay/DLQ → User Management)
+- Auditor/read-only review via signed artifacts and raw payload verification
+
+End of blueprint.
+
+## Implementation Notes
+
+When implementing this project:
+
+1. **Follow Universal Guidelines**: Use the design best practices documented above as your foundation
+2. **Apply Project Customizations**: Implement the specific design requirements stated in the "User Design Requirements" section
+3. **Priority Order**: Project-specific requirements override universal guidelines when there's a conflict
+4. **Color System**: Extract and implement color values as CSS custom properties in RGB format
+5. **Typography**: Define font families, sizes, and weights based on specifications
+6. **Spacing**: Establish consistent spacing scale following the design system
+7. **Components**: Style all Shadcn components to match the design aesthetic
+8. **Animations**: Use Motion library for transitions matching the design personality
+9. **Responsive Design**: Ensure mobile-first responsive implementation
+
+## Implementation Checklist
+
+- [ ] Review universal design guidelines above
+- [ ] Extract project-specific color palette and define CSS variables
+- [ ] Configure Tailwind theme with custom colors
+- [ ] Set up typography system (fonts, sizes, weights)
+- [ ] Define spacing and sizing scales
+- [ ] Create component variants matching design
+- [ ] Implement responsive breakpoints
+- [ ] Add animations and transitions
+- [ ] Ensure accessibility standards
+- [ ] Validate against user design requirements
+
+---
+
+**Remember: Always reference this file for design decisions. Do not use generic or placeholder designs.**
+ for bestpractices and # Company Selection & Time Window Controls
+
+## Overview
+Build a cohesive, enterprise-grade feature set that enables users to search, select, and persist companies, paired with flexible time-window controls to drive the Investor Perception Index (IPI) workflows. The system should deliver a fast, accessible, and explainable experience: debounced autocomplete with fuzzy matching, recent/saved companies per user, predefined time-window presets plus a customizable range, and robust safety guards for data handling. The feature set powers two key pages: a Dashboard (primary authenticated landing) and a Company View (IPI Detail) with drill-down capability to answer “Why did this move?”.
+
+## Components to Build
+
+- CompanySelector
+  - Purpose: Searchable company picker with auto-complete, recent/saved companies, keyboard navigation, and accessible ARIA roles.
+  - Tech: Debounced input, fuzzy matching, typeahead suggestions, pagination for suggestions, per-user cached recents.
+  - Data: Ticker, name, exchange, metadata (industry, region), current IPI anchor if available.
+  - Behaviors:
+    - Debounce input ~250ms; fetch suggestions with query, page, and limit.
+    - Show top N suggestions with highlight for matched substring.
+    - Allow keyboard navigation (Arrow Up/Down), Enter selects; Escape closes.
+    - Persist recent selections locally and on server (per user) with a "Recent" section.
+    - Allow saving a company to “Saved” or to a user’s portfolio with a single action; reflect saved state instantly.
+  - Safety: Guard all array operations with Array.isArray(results) and use data ?? [] from API calls.
+
+- TimeWindowControls
+  - Purpose: Provide preset ranges and a custom date/time range, synchronizing with IPI calculations.
+  - Presets: 1D, 1W, 1M, 3M, YTD, 1Y, All (with sensible defaults).
+  - Custom range:
+    - Start Date/End Date pickers with validation (start <= end, within allowed bounds).
+    - Quick toggle to apply or clear range.
+  - UI: Clear, apply, and reset controls; show current range in summary chip(s).
+  - Accessibility: keyboard accessible date inputs; appropriate ARIA labels.
+
+- Dashboard (page_core_006)
+  - Summary: Authenticated landing page where users select a company and time window, view saved companies, and see IPI quick-summaries.
+  - Widgets:
+    - Left/Top: CompanySelector with recent and saved indicators.
+    - Right/Main: IPI quick-summary cards (current value, directional change arrow up/down, timestamp) per selected company and range.
+    - Saved Companies Shelf: horizontally scrollable or grid-based gallery of saved companies with quick actions (select, remove).
+    - Drill-down entry points: "Why did this move?" CTA per IPI summary.
+  - Data flow: On company select or time window change, fetch and display:
+    - Current IPI value and direction
+    - Top narratives or placeholders if not enough data
+    - Lightweight timeline snippet or sparkline
+  - Performance: Prefetch commonly accessed company data; cache recent results per user.
+
+- Company View (IPI Detail) (page_core_007)
+  - Purpose: Detail view for the selected company showing current IPI, directional change, top 3 narratives, timeline, and CTA to delve into 'Why did this move?'.
+  - Layout:
+    - Hero card: Company name, ticker, and current IPI with directional indicator.
+    - Top Narratives: 3 cards/list items with short summaries and provenance chips.
+    - Timeline: Horizontal/vertical timeline of events contributing to the move; interactive markers.
+    - Drill-down CTA: "Why did this move?" opens a detailed drill-down panel or navigates to a dedicated drill-down view with underlying events.
+  - Data: IPI current value, direction, contributing events with sources; raw payloads for audit.
+  - Accessibility: keyboard navigable timeline; screen reader friendly labeling.
+
+- API/Backend Integration
+  - Endpoints to support:
+    - GET /api/companies/suggest?query=...&page=...&limit=... (with debounced, paginated suggestions)
+    - GET /api/companies/recent (per-user recent)
+    - POST /api/companies/save (save a company to user profile)
+    - GET /api/ipi/current?companyId=...&start=...&end=... (IPI summary for range)
+    - GET /api/ipi/details?companyId=...&start=...&end=... (top narratives, timeline)
+  - Data shape handling:
+    - Always validate: const list = Array.isArray(response?.data) ? response.data : [];
+    - Use data ?? [] for any fetch results that could be null.
+  - Performance: server-side caching for frequent company suggestions; per-user cache for recent results.
+
+## Implementation Requirements
+
+### Frontend
+- Debounced Autocomplete
+  - Debounce input to ~250ms.
+  - Typeahead with fuzzy matching for name/ticker.
+  - Guard all results: const suggestions = (data?.suggestions ?? []) as Array<Suggestion>.
+  - Render: ranked suggestions with matched substring highlighting; show ticker and name; include optional industry.
+  - Pagination: support next/previous page via API; render controls with ARIA attributes.
+  - Keyboard: navigate suggestions with arrows, select with Enter, clear with Esc.
+  - Accessibility: ARIA roles for list, option, and listbox; announce updates to screen readers.
+
+- Company Cards & Saved State
+  - Represent saved/unsaved status; toggle with optimistic UI update.
+  - Persist saved state on backend; fallback to local cache if offline.
+  - Input validation: sanitize any user-provided company identifiers before usage.
+
+- TimeWindowControls
+  - Implement presets with clear labels and numeric ranges.
+  - Custom range inputs with validation and error messaging.
+  - Persist selected range to UI state and pass to IPI fetch calls.
+
+- Dashboard & Company View Pages
+  - Use a shared, well-typed data layer with strict PropTypes/TypeScript interfaces.
+  - Ensure all array operations guard against null/undefined: (items ?? []).map(...), Array.isArray(items) ? items.map(...) : [].
+  - Use useState<T[]>([]) for any array state; initialize with empty arrays.
+  - Data loading states: skeletons or placeholders during fetch; error states with retry.
+  - Drilling into "Why did this move?" navigates to a detail panel or route with preserved state.
+  - All charts, timelines, and narrative lists adhere to the design system and accessibility guidelines.
+
+### Backend
+- Database & Search
+  - Tables: companies(id, ticker, name, exchange, metadata JSONB, created_at, updated_at)
+  - Full-text search index: tsvector on name, ticker, alias fields for fast suggestions.
+  - API: endpoints for suggestions, recent, save actions; ensure input validation and sanitization to prevent injection.
+  - Results: Always return data in shapes expected by frontend; use null-safe patterns.
+
+- Ingestion & Safety
+  - Implement ingestion endpoints for external signals (news/social/earnings transcripts) as per MVP; ensure idempotency and retry logic.
+  - Audit: persist raw payloads for each event; ensure immutable write-once semantics for canonical narrative events.
+
+### Integration
+- State Management
+  - Centralized data layer sharing: Company data, IPI state, and time window selections propagated to dashboard and detail views.
+  - Ensure that selecting a company or time window triggers dependent data fetches (IPI, narratives, timelines) consistently.
+
+- Error Handling
+  - Graceful fallbacks for missing data: display empty-state messages with guidance.
+  - Retry policies with exponential backoff for transient backend errors.
+
+- Security
+  - Authenticated endpoints; protect company data and user-specific saves.
+  - Input validation and escaping on both client and server sides.
+  - Use per-user access tokens or session-based auth as per project conventions.
+
+## User Experience Flow
+
+- Entry
+  - User lands on Dashboard (page_core_006) after login.
+  - The top area presents CompanySelector (with a “Recent” and “Saved” sections) and TimeWindowControls (predefined presets and a custom range button).
+  - The main area shows a current IPI quick-summary for the selected company and range, plus a Saved Companies shelf.
+
+- Interactions
+  - User types in CompanySelector; autocomplete suggestions appear; user selects a company via keyboard or mouse.
+  - User toggles time-window presets or defines a custom range; the IPI quick-summary updates in real-time.
+  - User clicks on a saved company to quickly switch to that company and range state.
+  - User clicks to drill down: “Why did this move?” → navigates to Company View (IPI Detail) showing current IPI, direction, top 3 narratives, and a timeline.
+  - User can read details and use the drill-down again to explore underlying events.
+
+- Edge Cases
+  - No results for a query: show friendly empty state with tips to broaden search.
+  - Large company lists: paginate suggestions; ensure performance under 100k–unbounded indices.
+  - Network hiccups: show retry actions and cached results when offline.
+
+## Technical Specifications
+
+- Data Models
+  - Company:
+    - id: UUID
+    - ticker: string
+    - name: string
+    - exchange: string
+    - metadata: JSONB
+    - createdAt: timestamp
+    - updatedAt: timestamp
+  - SavedCompany (User-specific):
+    - userId: UUID
+    - companyId: UUID
+    - savedAt: timestamp
+  - RecentCompany (per-user cache / session):
+    - userId: UUID
+    - companyId: UUID
+    - lastViewed: timestamp
+  - IPIResult:
+    - companyId: UUID
+    - windowStart: date
+    - windowEnd: date
+    - value: float
+    - direction: 'up'|'down'|'flat'
+    - updatedAt: timestamp
+  - NarrativeEvent:
+    - id: UUID
+    - companyId: UUID
+    - source: string
+    - speaker: string
+    - audience: string
+    - rawText: text
+    - timestamp: timestamp
+    - payload: JSONB
+
+- API Endpoints
+  - GET /api/companies/suggest?query=&page=&limit=
+  - GET /api/companies/recent
+  - POST /api/companies/save (companyId, action=save|unsave)
+  - GET /api/ipi/current?companyId=&start=&end=
+  - GET /api/ipi/details?companyId=&start=&end=
+  - GET /api/ipi/timeline?companyId=&start=&end=
+  - GET /api/auth/me (for user identity, if needed)
+
+- Security
+  - JWT-based or session-auth for API requests.
+  - Validate all inputs on server: query strings, IDs, dates.
+  - Escape/serialize all user-generated content before rendering.
+
+- Validation
+  - Debounce and throttle input to prevent abuse.
+  - Ensure date range validation on client and server; reject invalid ranges with clear messages.
+  - Validate array shapes and required fields before mapping/computations.
+
+## Acceptance Criteria
+
+- [ ] Autocomplete: Debounced search returns suggestions within ~150ms for typical 100k+ company sets; suggestions render with accurate highlighting and keyboard navigation.
+- [ ] Safety: All array-like results are guarded: (items ?? []).map(...) and Array.isArray(items) ? items.map(...) : [] across UI layers.
+- [ ] State defaults: All array states are initialized with useState<Type[]>([]) in React components.
+- [ ] Data integrity: API responses validated server-side; client handles missing data gracefully without crashes.
+- [ ] UX: Time window presets function correctly; custom range is validated; saved and recent sections persist and reflect updates instantly.
+- [ ] Dashboard: Current IPI value, direction, and top narratives render for the selected company and range; loading and error states are graceful.
+- [ ] Drill-down: “Why did this move?” navigates to IPI Detail with correct context and underlying events.
+- [ ] Accessibility: All interactive elements are keyboard accessible; ARIA roles assigned to lists, listitems, and combobox; focus-visible styling present.
+
+## UI/UX Guidelines
+Apply the project's design system:
+- Use the defined color palette and typography tokens.
+- Maintain card-based surfaces with subtle borders and soft shadows.
+- Ensure clear visual hierarchy: large numerals for IPI values, readable metadata, and distinct narrative chips.
+- Favor restrained motion: slide/fade transitions for panels, ~180ms durations.
+- Prioritize fast scannability, enterprise polish, and explainable UI cues (provenance chips, raw payloads, and drill-down affordances).
+- Ensure accessible contrast and focus states across all interactive elements.
+
+---
+
+## Visual Style
+(See provided visual style guidelines in the prompt for exact tokens. Implement UI components that strictly adhere to these colors, typography, spacing, and element treatments.)
+
+- Color Palette, Typography, Spacing, and Card/Navigation guidelines must be implemented as described.
+- Data Visualization should be minimalistic: clean lines, light grids, and neutral background surfaces with accent signals for IPI direction and narratives.
+
+---
+
+## Mandatory Coding Standards — Runtime Safety
+
+CRITICAL: Follow these rules in ALL generated code to prevent runtime crashes.
+
+1. Supabase query results:
+   - Always use nullish coalescing — const items = data ?? [].
+2. Array methods (.map, .filter, .reduce, etc.):
+   - Never call on a value that could be null/undefined/non-array.
+   - Guard with (items ?? []).map(...) or Array.isArray(items) ? items.map(...) : [].
+3. React useState for arrays/objects:
+   - Always initialize with the correct type — useState<Type[]>([]) for arrays.
+4. API response shapes:
+   - Always validate — const list = Array.isArray(response?.data) ? response.data : [].
+5. Optional chaining:
+   - Use obj?.property?.nested when accessing nested API responses or DB results.
+6. Destructuring with defaults:
+   - const { items = [], count = 0 } = response ?? {}.
+
+---
+
+PROJECT CONTEXT:
+TARGET FEATURE: Company Selection & Time Window Controls
+- Debounced autocomplete with typeahead and fuzzy matching.
+- Backend: Companies index (Postgres + search index) with ticker, name, and metadata; endpoint for suggestions with pagination.
+- Performance: Autocomplete <150ms typical for 100k company set; caching of recent results per user.
+- Validation: Secure input handling to prevent injection.
+- Accessibility: Keyboard navigation and ARIA roles for lists.
+
+Associated Pages:
+- page_core_006 (Dashboard)
+- page_core_007 (Company View)
+
+Description:
+Gbox360 — Investor Perception Index & Narrative Intelligence — users select a company and time window to view the current IPI, directional change, top narratives, and drill-down into why the move happened, with a data-driven narrative model and audit-ready data lineage.
+
+Generate the complete, detailed prompt now for an AI development tool to implement this feature. for style.
+
+CRITICAL DESIGN REQUIREMENTS:
+- You MUST follow ALL design principles and patterns specified in the Design Reference above
+- Do NOT deviate from the design specifications without explicit user permission
+- Implement ALL visual design elements (colors, typography, spacing, shadows, animations) as specified
+- Follow the layout patterns and component designs exactly as documented
+- Ensure all interactions and micro-animations match the reference specifications
+
+CRITICAL TECHNICAL REQUIREMENTS:
+- React 18.3.1, React Router 6.30.1
+- Tailwind CSS v3 with tailwind.config.js and custom keyframes
+- @tailwindcss/typography plugin for rich text content
+- Tailwind CSS animations (NOT Motion library or framer-motion)
+- Sonner for toasts
+- Recharts for data visualization
+- Native fetch() with API utilities in src/lib/api.ts
+- Design system with CSS custom properties
+- Use RGB color values for theming
+- When Supabase is configured: use Edge Functions for LLM and server-only logic; never expose API keys in the client
+
+=== TASK ===
+# Company Selection & Time Window Controls
+
+## Overview
+Build a cohesive, enterprise-grade feature set that enables users to search, select, and persist companies, paired with flexible time-window controls to drive the Investor Perception Index (IPI) workflows. The system should deliver a fast, accessible, and explainable experience: debounced autocomplete with fuzzy matching, recent/saved companies per user, predefined time-window presets plus a customizable range, and robust safety guards for data handling. The feature set powers two key pages: a Dashboard (primary authenticated landing) and a Company View (IPI Detail) with drill-down capability to answer “Why did this move?”.
+
+## Components to Build
+
+- CompanySelector
+  - Purpose: Searchable company picker with auto-complete, recent/saved companies, keyboard navigation, and accessible ARIA roles.
+  - Tech: Debounced input, fuzzy matching, typeahead suggestions, pagination for suggestions, per-user cached recents.
+  - Data: Ticker, name, exchange, metadata (industry, region), current IPI anchor if available.
+  - Behaviors:
+    - Debounce input ~250ms; fetch suggestions with query, page, and limit.
+    - Show top N suggestions with highlight for matched substring.
+    - Allow keyboard navigation (Arrow Up/Down), Enter selects; Escape closes.
+    - Persist recent selections locally and on server (per user) with a "Recent" section.
+    - Allow saving a company to “Saved” or to a user’s portfolio with a single action; reflect saved state instantly.
+  - Safety: Guard all array operations with Array.isArray(results) and use data ?? [] from API calls.
+
+- TimeWindowControls
+  - Purpose: Provide preset ranges and a custom date/time range, synchronizing with IPI calculations.
+  - Presets: 1D, 1W, 1M, 3M, YTD, 1Y, All (with sensible defaults).
+  - Custom range:
+    - Start Date/End Date pickers with validation (start <= end, within allowed bounds).
+    - Quick toggle to apply or clear range.
+  - UI: Clear, apply, and reset controls; show current range in summary chip(s).
+  - Accessibility: keyboard accessible date inputs; appropriate ARIA labels.
+
+- Dashboard (page_core_006)
+  - Summary: Authenticated landing page where users select a company and time window, view saved companies, and see IPI quick-summaries.
+  - Widgets:
+    - Left/Top: CompanySelector with recent and saved indicators.
+    - Right/Main: IPI quick-summary cards (current value, directional change arrow up/down, timestamp) per selected company and range.
+    - Saved Companies Shelf: horizontally scrollable or grid-based gallery of saved companies with quick actions (select, remove).
+    - Drill-down entry points: "Why did this move?" CTA per IPI summary.
+  - Data flow: On company select or time window change, fetch and display:
+    - Current IPI value and direction
+    - Top narratives or placeholders if not enough data
+    - Lightweight timeline snippet or sparkline
+  - Performance: Prefetch commonly accessed company data; cache recent results per user.
+
+- Company View (IPI Detail) (page_core_007)
+  - Purpose: Detail view for the selected company showing current IPI, directional change, top 3 narratives, timeline, and CTA to delve into 'Why did this move?'.
+  - Layout:
+    - Hero card: Company name, ticker, and current IPI with directional indicator.
+    - Top Narratives: 3 cards/list items with short summaries and provenance chips.
+    - Timeline: Horizontal/vertical timeline of events contributing to the move; interactive markers.
+    - Drill-down CTA: "Why did this move?" opens a detailed drill-down panel or navigates to a dedicated drill-down view with underlying events.
+  - Data: IPI current value, direction, contributing events with sources; raw payloads for audit.
+  - Accessibility: keyboard navigable timeline; screen reader friendly labeling.
+
+- API/Backend Integration
+  - Endpoints to support:
+    - GET /api/companies/suggest?query=...&page=...&limit=... (with debounced, paginated suggestions)
+    - GET /api/companies/recent (per-user recent)
+    - POST /api/companies/save (save a company to user profile)
+    - GET /api/ipi/current?companyId=...&start=...&end=... (IPI summary for range)
+    - GET /api/ipi/details?companyId=...&start=...&end=... (top narratives, timeline)
+  - Data shape handling:
+    - Always validate: const list = Array.isArray(response?.data) ? response.data : [];
+    - Use data ?? [] for any fetch results that could be null.
+  - Performance: server-side caching for frequent company suggestions; per-user cache for recent results.
+
+## Implementation Requirements
+
+### Frontend
+- Debounced Autocomplete
+  - Debounce input to ~250ms.
+  - Typeahead with fuzzy matching for name/ticker.
+  - Guard all results: const suggestions = (data?.suggestions ?? []) as Array<Suggestion>.
+  - Render: ranked suggestions with matched substring highlighting; show ticker and name; include optional industry.
+  - Pagination: support next/previous page via API; render controls with ARIA attributes.
+  - Keyboard: navigate suggestions with arrows, select with Enter, clear with Esc.
+  - Accessibility: ARIA roles for list, option, and listbox; announce updates to screen readers.
+
+- Company Cards & Saved State
+  - Represent saved/unsaved status; toggle with optimistic UI update.
+  - Persist saved state on backend; fallback to local cache if offline.
+  - Input validation: sanitize any user-provided company identifiers before usage.
+
+- TimeWindowControls
+  - Implement presets with clear labels and numeric ranges.
+  - Custom range inputs with validation and error messaging.
+  - Persist selected range to UI state and pass to IPI fetch calls.
+
+- Dashboard & Company View Pages
+  - Use a shared, well-typed data layer with strict PropTypes/TypeScript interfaces.
+  - Ensure all array operations guard against null/undefined: (items ?? []).map(...), Array.isArray(items) ? items.map(...) : [].
+  - Use useState<T[]>([]) for any array state; initialize with empty arrays.
+  - Data loading states: skeletons or placeholders during fetch; error states with retry.
+  - Drilling into "Why did this move?" navigates to a detail panel or route with preserved state.
+  - All charts, timelines, and narrative lists adhere to the design system and accessibility guidelines.
+
+### Backend
+- Database & Search
+  - Tables: companies(id, ticker, name, exchange, metadata JSONB, created_at, updated_at)
+  - Full-text search index: tsvector on name, ticker, alias fields for fast suggestions.
+  - API: endpoints for suggestions, recent, save actions; ensure input validation and sanitization to prevent injection.
+  - Results: Always return data in shapes expected by frontend; use null-safe patterns.
+
+- Ingestion & Safety
+  - Implement ingestion endpoints for external signals (news/social/earnings transcripts) as per MVP; ensure idempotency and retry logic.
+  - Audit: persist raw payloads for each event; ensure immutable write-once semantics for canonical narrative events.
+
+### Integration
+- State Management
+  - Centralized data layer sharing: Company data, IPI state, and time window selections propagated to dashboard and detail views.
+  - Ensure that selecting a company or time window triggers dependent data fetches (IPI, narratives, timelines) consistently.
+
+- Error Handling
+  - Graceful fallbacks for missing data: display empty-state messages with guidance.
+  - Retry policies with exponential backoff for transient backend errors.
+
+- Security
+  - Authenticated endpoints; protect company data and user-specific saves.
+  - Input validation and escaping on both client and server sides.
+  - Use per-user access tokens or session-based auth as per project conventions.
+
+## User Experience Flow
+
+- Entry
+  - User lands on Dashboard (page_core_006) after login.
+  - The top area presents CompanySelector (with a “Recent” and “Saved” sections) and TimeWindowControls (predefined presets and a custom range button).
+  - The main area shows a current IPI quick-summary for the selected company and range, plus a Saved Companies shelf.
+
+- Interactions
+  - User types in CompanySelector; autocomplete suggestions appear; user selects a company via keyboard or mouse.
+  - User toggles time-window presets or defines a custom range; the IPI quick-summary updates in real-time.
+  - User clicks on a saved company to quickly switch to that company and range state.
+  - User clicks to drill down: “Why did this move?” → navigates to Company View (IPI Detail) showing current IPI, direction, top 3 narratives, and a timeline.
+  - User can read details and use the drill-down again to explore underlying events.
+
+- Edge Cases
+  - No results for a query: show friendly empty state with tips to broaden search.
+  - Large company lists: paginate suggestions; ensure performance under 100k–unbounded indices.
+  - Network hiccups: show retry actions and cached results when offline.
+
+## Technical Specifications
+
+- Data Models
+  - Company:
+    - id: UUID
+    - ticker: string
+    - name: string
+    - exchange: string
+    - metadata: JSONB
+    - createdAt: timestamp
+    - updatedAt: timestamp
+  - SavedCompany (User-specific):
+    - userId: UUID
+    - companyId: UUID
+    - savedAt: timestamp
+  - RecentCompany (per-user cache / session):
+    - userId: UUID
+    - companyId: UUID
+    - lastViewed: timestamp
+  - IPIResult:
+    - companyId: UUID
+    - windowStart: date
+    - windowEnd: date
+    - value: float
+    - direction: 'up'|'down'|'flat'
+    - updatedAt: timestamp
+  - NarrativeEvent:
+    - id: UUID
+    - companyId: UUID
+    - source: string
+    - speaker: string
+    - audience: string
+    - rawText: text
+    - timestamp: timestamp
+    - payload: JSONB
+
+- API Endpoints
+  - GET /api/companies/suggest?query=&page=&limit=
+  - GET /api/companies/recent
+  - POST /api/companies/save (companyId, action=save|unsave)
+  - GET /api/ipi/current?companyId=&start=&end=
+  - GET /api/ipi/details?companyId=&start=&end=
+  - GET /api/ipi/timeline?companyId=&start=&end=
+  - GET /api/auth/me (for user identity, if needed)
+
+- Security
+  - JWT-based or session-auth for API requests.
+  - Validate all inputs on server: query strings, IDs, dates.
+  - Escape/serialize all user-generated content before rendering.
+
+- Validation
+  - Debounce and throttle input to prevent abuse.
+  - Ensure date range validation on client and server; reject invalid ranges with clear messages.
+  - Validate array shapes and required fields before mapping/computations.
+
+## Acceptance Criteria
+
+- [ ] Autocomplete: Debounced search returns suggestions within ~150ms for typical 100k+ company sets; suggestions render with accurate highlighting and keyboard navigation.
+- [ ] Safety: All array-like results are guarded: (items ?? []).map(...) and Array.isArray(items) ? items.map(...) : [] across UI layers.
+- [ ] State defaults: All array states are initialized with useState<Type[]>([]) in React components.
+- [ ] Data integrity: API responses validated server-side; client handles missing data gracefully without crashes.
+- [ ] UX: Time window presets function correctly; custom range is validated; saved and recent sections persist and reflect updates instantly.
+- [ ] Dashboard: Current IPI value, direction, and top narratives render for the selected company and range; loading and error states are graceful.
+- [ ] Drill-down: “Why did this move?” navigates to IPI Detail with correct context and underlying events.
+- [ ] Accessibility: All interactive elements are keyboard accessible; ARIA roles assigned to lists, listitems, and combobox; focus-visible styling present.
+
+## UI/UX Guidelines
+Apply the project's design system:
+- Use the defined color palette and typography tokens.
+- Maintain card-based surfaces with subtle borders and soft shadows.
+- Ensure clear visual hierarchy: large numerals for IPI values, readable metadata, and distinct narrative chips.
+- Favor restrained motion: slide/fade transitions for panels, ~180ms durations.
+- Prioritize fast scannability, enterprise polish, and explainable UI cues (provenance chips, raw payloads, and drill-down affordances).
+- Ensure accessible contrast and focus states across all interactive elements.
+
+---
+
+## Visual Style
+(See provided visual style guidelines in the prompt for exact tokens. Implement UI components that strictly adhere to these colors, typography, spacing, and element treatments.)
+
+- Color Palette, Typography, Spacing, and Card/Navigation guidelines must be implemented as described.
+- Data Visualization should be minimalistic: clean lines, light grids, and neutral background surfaces with accent signals for IPI direction and narratives.
+
+---
+
+## Mandatory Coding Standards — Runtime Safety
+
+CRITICAL: Follow these rules in ALL generated code to prevent runtime crashes.
+
+1. Supabase query results:
+   - Always use nullish coalescing — const items = data ?? [].
+2. Array methods (.map, .filter, .reduce, etc.):
+   - Never call on a value that could be null/undefined/non-array.
+   - Guard with (items ?? []).map(...) or Array.isArray(items) ? items.map(...) : [].
+3. React useState for arrays/objects:
+   - Always initialize with the correct type — useState<Type[]>([]) for arrays.
+4. API response shapes:
+   - Always validate — const list = Array.isArray(response?.data) ? response.data : [].
+5. Optional chaining:
+   - Use obj?.property?.nested when accessing nested API responses or DB results.
+6. Destructuring with defaults:
+   - const { items = [], count = 0 } = response ?? {}.
+
+---
+
+PROJECT CONTEXT:
+TARGET FEATURE: Company Selection & Time Window Controls
+- Debounced autocomplete with typeahead and fuzzy matching.
+- Backend: Companies index (Postgres + search index) with ticker, name, and metadata; endpoint for suggestions with pagination.
+- Performance: Autocomplete <150ms typical for 100k company set; caching of recent results per user.
+- Validation: Secure input handling to prevent injection.
+- Accessibility: Keyboard navigation and ARIA roles for lists.
+
+Associated Pages:
+- page_core_006 (Dashboard)
+- page_core_007 (Company View)
+
+Description:
+Gbox360 — Investor Perception Index & Narrative Intelligence — users select a company and time window to view the current IPI, directional change, top narratives, and drill-down into why the move happened, with a data-driven narrative model and audit-ready data lineage.
+
+Generate the complete, detailed prompt now for an AI development tool to implement this feature.
+
+=== SUCCESS CRITERIA ===
+# Success Criteria Checklist
+
+## Code Quality
+
+### TypeScript
+- [ ] No TypeScript errors (`tsc --noEmit` passes)
+- [ ] All functions and components have proper type definitions
+- [ ] No `any` types used (use `unknown` if type is truly unknown)
+- [ ] Props interfaces defined for all components
+- [ ] API responses have type definitions
+
+### Code Standards
+- [ ] All imports use path aliases (@/ prefix)
+- [ ] Components follow the established naming convention
+- [ ] Files are organized in correct directories
+- [ ] No unused imports or variables
+- [ ] Consistent code formatting
+
+## Component Implementation
+
+### UI Components
+- [ ] Use shadcn/ui components (Button, Card, Input, etc.) instead of building from scratch
+- [ ] All interactive elements have hover states
+- [ ] Components use the `cn()` utility for class merging
+- [ ] Proper TypeScript props interfaces defined
+- [ ] Components are responsive (mobile, tablet, desktop)
+
+### Animations
+- [ ] Motion library used for all animations (NOT framer-motion)
+- [ ] Page transitions implemented with fade/slide
+- [ ] Interactive elements have whileHover/whileTap animations
+- [ ] List items use stagger animations where appropriate
+- [ ] Animations respect `prefers-reduced-motion`
+
+### Icons
+- [ ] Lucide React icons used consistently
+- [ ] Icons have consistent sizing (h-4 w-4, h-5 w-5, h-6 w-6)
+- [ ] Icon colors match design system (text-primary, text-muted-foreground)
+
+## Data Management
+
+### React Query
+- [ ] All data fetching uses React Query hooks
+- [ ] Query keys follow the established pattern
+- [ ] Mutations invalidate related queries
+- [ ] Loading and error states handled
+- [ ] Optimistic updates implemented where appropriate
+
+### Forms
+- [ ] Forms use react-hook-form
+- [ ] Validation uses Zod schemas
+- [ ] Error messages display properly
+- [ ] Form submission shows loading state
+- [ ] Success/error feedback via toast notifications
+
+### API Layer
+- [ ] API functions in src/api/ directory
+- [ ] Axios used for HTTP requests
+- [ ] Proper error handling with try/catch
+- [ ] Auth tokens handled by interceptors
+- [ ] Type-safe API function signatures
+
+## User Experience
+
+### Notifications
+- [ ] Sonner toasts used for all notifications
+- [ ] Success actions show success toast
+- [ ] Errors show descriptive error messages
+- [ ] Loading states show toast.loading()
+
+### Loading States
+- [ ] Skeleton loaders shown during data fetch
+- [ ] Buttons show loading state during submission
+- [ ] Disabled state applied during async operations
+
+### Error Handling
+- [ ] Network errors caught and displayed
+- [ ] User-friendly error messages (no stack traces)
+- [ ] Fallback UI for error states
+- [ ] No unhandled promise rejections
+
+## Navigation
+
+### Route Accessibility
+- [ ] All pages have routes defined in router configuration
+- [ ] Every page is accessible through navigation (menu, sidebar, or direct URL)
+- [ ] Main pages (Dashboard, Home, Settings, etc.) accessible from primary navigation
+- [ ] Secondary pages accessible through contextual navigation or direct links
+- [ ] Deep-linked pages have breadcrumbs or back navigation
+- [ ] 404/Not Found page implemented for invalid routes
+- [ ] Protected routes have proper authentication checks
+- [ ] Navigation state persists across page refreshes where appropriate
+
+### Navigation UX
+- [ ] Active route highlighted in navigation menu
+- [ ] Clear visual hierarchy in navigation structure
+- [ ] Mobile navigation is accessible and usable
+- [ ] Navigation items have hover/focus states
+- [ ] Nested routes show parent-child relationships
+- [ ] User can always return to main areas (Dashboard/Home)
+
+## Styling
+
+### Tailwind CSS
+- [ ] Tailwind v3 classes used
+- [ ] HSL color variables from design system
+- [ ] Custom CSS properties used where defined
+- [ ] Responsive breakpoints: mobile-first approach
+- [ ] Dark mode support via CSS variables
+
+### Design System
+- [ ] Colors use theme variables (primary, secondary, accent)
+- [ ] Spacing uses Tailwind scale (p-4, gap-6, etc.)
+- [ ] Border radius uses theme values (rounded-lg)
+- [ ] Shadows use theme values (shadow-card)
+- [ ] Typography follows Inter font system
+
+## Accessibility
+
+- [ ] Semantic HTML elements used
+- [ ] Buttons have descriptive labels
+- [ ] Forms have proper labels
+- [ ] Focus states visible on interactive elements
+- [ ] Color contrast meets WCAG standards
+
+## Performance
+
+- [ ] No console.log statements in production code
+- [ ] No console errors in browser
+- [ ] Images optimized (WebP, lazy loading)
+- [ ] Large lists use virtualization if needed
+- [ ] React Query cache configured appropriately
+
+## Testing Readiness
+
+- [ ] Components structured for easy testing
+- [ ] Business logic separated from presentation
+- [ ] Mock-friendly API layer
+- [ ] No hardcoded values that should be configurable
+- [ ] Environment variables properly configured
+
+## Final Checks
+
+- [ ] Code builds without errors (`npm run build`)
+- [ ] Development server runs without errors (`npm run dev`)
+- [ ] No TypeScript errors in editor
+- [ ] Browser console is clean (no errors or warnings)
+- [ ] All functionality works as expected
+- [ ] Code follows existing project patterns
+- [ ] Changes are consistent with the rest of the codebase
+
+
+
+IMPORTANT: ALL styling and design decisions must follow the Design Reference section above EXACTLY. Do not make arbitrary design choices.
+
+Analyze the existing project structure and implement the task following the patterns already established. Ensure all success criteria are met.
