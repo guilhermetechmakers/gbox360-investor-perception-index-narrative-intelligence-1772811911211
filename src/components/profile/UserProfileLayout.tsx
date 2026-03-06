@@ -14,8 +14,12 @@ export interface UserProfileLayoutProps {
   userLoading?: boolean
   savedCompanies: Company[]
   savedLoading?: boolean
+  savedError?: boolean
+  refetchSaved?: () => void
   activity: ProfileActivityItem[]
   activityLoading?: boolean
+  activityError?: boolean
+  refetchActivity?: () => void
   preferences?: UserPreferences | null
   timeWindow?: { start: string; end: string }
   onProfileUpdated?: () => void
@@ -26,8 +30,12 @@ export function UserProfileLayout({
   userLoading = false,
   savedCompanies,
   savedLoading = false,
+  savedError = false,
+  refetchSaved,
   activity,
   activityLoading = false,
+  activityError = false,
+  refetchActivity,
   timeWindow,
   onProfileUpdated,
 }: UserProfileLayoutProps) {
@@ -51,11 +59,15 @@ export function UserProfileLayout({
           <SavedCompaniesPanel
             savedCompanies={savedCompanies ?? []}
             isLoading={savedLoading}
+            isError={savedError}
+            onRetry={refetchSaved}
             timeWindow={timeWindow}
           />
           <RecentActivityList
             activity={activity ?? []}
             isLoading={activityLoading}
+            isError={activityError}
+            onRetry={refetchActivity}
           />
         </div>
         <div className="lg:col-span-6 space-y-6">

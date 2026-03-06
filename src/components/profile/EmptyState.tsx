@@ -23,6 +23,8 @@ export function EmptyState({
         'flex flex-col items-center justify-center py-12 px-4 text-center',
         className
       )}
+      role="status"
+      aria-live="polite"
     >
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
         {icon ?? <FileQuestion className="h-6 w-6" />}

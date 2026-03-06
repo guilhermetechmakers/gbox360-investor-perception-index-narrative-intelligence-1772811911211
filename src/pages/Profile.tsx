@@ -17,8 +17,18 @@ function getDefaultTimeWindow() {
 export function Profile() {
   const queryClient = useQueryClient()
   const { data: user, isLoading: userLoading } = useCurrentUser()
-  const { data: savedCompanies = [], isLoading: savedLoading } = useSavedCompanies()
-  const { data: activity = [], isLoading: activityLoading } = useProfileActivity(20)
+  const {
+    data: savedCompanies = [],
+    isLoading: savedLoading,
+    isError: savedError,
+    refetch: refetchSaved,
+  } = useSavedCompanies()
+  const {
+    data: activity = [],
+    isLoading: activityLoading,
+    isError: activityError,
+    refetch: refetchActivity,
+  } = useProfileActivity(20)
   const timeWindow = getDefaultTimeWindow()
 
   const handleProfileUpdated = () => {
@@ -34,8 +44,12 @@ export function Profile() {
       userLoading={userLoading}
       savedCompanies={safeSaved}
       savedLoading={savedLoading}
+      savedError={savedError}
+      refetchSaved={refetchSaved}
       activity={safeActivity}
       activityLoading={activityLoading}
+      activityError={activityError}
+      refetchActivity={refetchActivity}
       timeWindow={timeWindow}
       onProfileUpdated={handleProfileUpdated}
     />

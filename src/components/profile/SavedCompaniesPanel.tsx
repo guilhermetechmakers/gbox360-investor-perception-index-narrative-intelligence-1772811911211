@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Building2, ExternalLink, PinOff, Star } from 'lucide-react'
+import { Building2, ExternalLink, PinOff, Star, AlertCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Company } from '@/types/company'
 import { EmptyState } from './EmptyState'
@@ -13,12 +13,18 @@ import { useRemoveSavedCompany } from '@/hooks/useCompanies'
 export interface SavedCompaniesPanelProps {
   savedCompanies: Company[]
   isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
   timeWindow?: { start: string; end: string }
 }
+
+const EMPTY_MIN_HEIGHT = 'min-h-[220px]'
 
 export function SavedCompaniesPanel({
   savedCompanies,
   isLoading = false,
+  isError = false,
+  onRetry,
   timeWindow,
 }: SavedCompaniesPanelProps) {
   const removeSaved = useRemoveSavedCompany()
@@ -28,15 +34,52 @@ export function SavedCompaniesPanel({
     return (
       <Card className="card-surface">
         <CardHeader>
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-5 w-40 rounded-lg" />
+          <Skeleton className="h-4 w-64 rounded-lg" />
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-14 w-full" />
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isError) {
+    return (
+      <Card className="card-surface transition-all duration-200 hover:shadow-card-hover">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Star className="h-4 w-4 text-accent" />
+            Saved companies
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Quick access from dashboard
+          </p>
+        </CardHeader>
+        <CardContent>
+          <EmptyState
+            icon={<AlertCircle className="h-6 w-6 text-destructive" />}
+            title="Couldn't load saved companies"
+            description="Something went wrong while loading. Check your connection and try again."
+            action={
+              onRetry ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRetry()}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try again
+                </Button>
+              ) : null
+            }
+            className={EMPTY_MIN_HEIGHT}
+          />
         </CardContent>
       </Card>
     )
@@ -64,6 +107,7 @@ export function SavedCompaniesPanel({
                 <Link to="/dashboard">Go to dashboard</Link>
               </Button>
             }
+            className={EMPTY_MIN_HEIGHT}
           />
         ) : (
           <ScrollArea className="h-[280px] pr-2">
