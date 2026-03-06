@@ -74,6 +74,8 @@ export function useNarrativeEvents(
     authority_min?: number
     date_start?: string
     date_end?: string
+    sort?: 'asc' | 'desc'
+    sortBy?: 'timestamp' | 'source' | 'authority'
   }
 ) {
   return useQuery({

@@ -326,355 +326,307 @@ All dashboard pages should be nested inside the dashboard layout, not separate r
 
 ## User Design Requirements
 
-# Gbox360 — Development Blueprint
+# Drilldown & Traceability UI
 
-## Project Concept
-Gbox360 is an explainable narrative intelligence platform that transforms constrained external signals (news, social, earnings transcripts) into a transparent, auditable Investor Perception Index (IPI). The MVP enables authenticated users to select a company and time window, view a current IPI score, see directional movement, and drill down to the top narratives and underlying events that drove changes. The system preserves raw payloads, normalizes them into an append-only canonical NarrativeEvent model, applies lightweight topic classification, authority weighting, and credibility/risk proxies, and produces signed audit artifacts for traceable export.
+## Overview
+Build a robust, production-ready Drilldown & Traceability UI for the Gbox360 Investor Perception Index (IPI) platform. The UI enables users to inspect the current IPI for a selected company, understand why the IPI moved, and drill down into the underlying NarrativeEvents. Features include: narrative discovery, paginated event lists with rich filtering, raw payload viewing, timeline replay controls, authority/credibility signals, and export of audit artifacts (signed JSON and PDF with integrity hashes). The system must guard against null/undefined values at runtime, support secure access control, and perform efficiently on large event datasets.
 
-Vision: deliver a board-credible, audit-first narrative index that surfaces “what changed” and “why” for investors and corporate stakeholders, enabling fast, trustworthy decision-making.
+Associated Pages:
+- page_core_008 (Company View / IPI Detail)
+- page_core_007 (Drilldown — Why Did This Move?)
 
-AI app description: Optional use of embeddings (OpenAI) for lightweight topic classification/clustering to improve narrative grouping where rule-based methods are insufficient. All AI usage is explainable and optional; raw payloads and deterministic heuristics remain primary.
+Project Context:
+- Target audience: investors, analysts, and executives requiring auditable narratives behind IPI movements.
+- Data model: immutable NarrativeEvent with canonical schema; raw payloads preserved for audit.
+- MVP scope: headline IPI, direction, top narratives, drill-down explanation with event-level details, and artifact export.
 
-## Problem Statement
-- Core problems:
-  - Investors and executives lack an auditable, explainable signal capturing how external narratives influence market perception.
-  - Existing sentiment dashboards are opaque, noisy, and poorly traceable to raw sources.
-  - Teams need quick root-cause insights (which narratives/events drove perception shifts) with provenance and replayability.
-- Who experiences these problems:
-  - Institutional PMs, research analysts, corporate IR teams, small boutiques, and compliance/auditors.
-- Why these problems matter:
-  - Decisions based on opaque or untraceable signals risk misallocation, reputational damage, or regulatory issues.
-  - Lack of provenance inhibits trust and slows investigative workflows.
-- Current gaps:
-  - No compact, auditable index that links scores to specific NarrativeEvents and raw payloads.
-  - Limited tooling for ingestion idempotency, replay, append-only storage, and signed export artifacts.
-  - Insufficient lightweight credibility/risk signals integrated into index calculations.
+CRITICAL runtime safety: follow the provided runtime safety rules in all generated code.
 
-## Solution
-- How the app addresses the problems:
-  - Ingests constrained external sources and preserves raw payloads for audit.
-  - Normalizes into an immutable NarrativeEvent model with provenance pointers.
-  - Computes a transparent IPI (Narrative 40%, Credibility 40%, Risk 20%) with explicit provisional weights and logs inputs used.
-  - Surfaces top narratives, shows directional changes, and provides a drill-down UI listing traceable events and raw payloads.
-  - Provides admin tools for ingestion monitoring, replay, DLQ handling, and signed audit exports.
-- Approach and methodology:
-  - Append-only event store + provenance retention.
-  - Deterministic normalization pipeline with idempotency (external id + content hash dedupe).
-  - Lightweight classification (rule-based first; optional embeddings).
-  - Time-decay persistence metric for narrative scoring and authority weighting tiers.
-  - Explainable scoring with explicit logging of input vectors and weight versions.
-- Key differentiators:
-  - Audit-first design (raw payload preservation, signing with KMS).
-  - Canonical NarrativeEvent model enabling replay and deterministic recalculation.
-  - No black-box sentiment dashboards; explicit, provisional weights and visible inputs.
-- Value creation:
-  - Faster, auditable insights into investor perception moves.
-  - Trust and compliance readiness via exportable signed artifacts.
-  - Operational visibility for ingestion health and data provenance.
-
-## Requirements
-
-### 1. Pages (UI Screens)
-List of pages with purpose, key sections/components, and contribution.
-
-- Email Verification Page
-  - Purpose: Instruct users to verify their email after signup.
-  - Components: Confirmation message, rate-limited Resend button, Change Email inline modal, Support link.
-  - Contribution: Ensures verified accounts; reduces signup friction and provides support flow.
-
-- Password Reset Page
-  - Purpose: Request and perform password resets.
-  - Components: Request Reset form (email + CTA + toast), Reset Form (token-based: new password, confirm, strength meter), security notes about token expiry.
-  - Contribution: Secure account recovery; preserves security posture.
-
-- User Management (Admin)
-  - Purpose: Administer users, roles, and support actions.
-  - Components: Searchable user table, user detail panel (activity, disable, resend verification), bulk actions (CSV import/export), link to audit logs.
-  - Contribution: Central support and compliance controls for admins.
-
-- 404 Not Found
-  - Purpose: Friendly error page for invalid routes.
-  - Components: Message, Dashboard/Home CTA, quick company search fallback.
-  - Contribution: Keeps users oriented and recoverable from navigation errors.
-
-- 500 Server Error
-  - Purpose: Show server fault and diagnostic ID.
-  - Components: Error message, Retry button, Contact Support link, request ID + timestamp.
-  - Contribution: Provides actionable diagnostic info for support and users.
-
-- Admin Dashboard
-  - Purpose: Operational landing for ingestion and system health.
-  - Components: Ingestion status panel, system health metrics (queue depth, errors), user activity overview, quick links (User Management, Raw Payload Browser, Ingest Monitor), admin notifications.
-  - Contribution: Enables operators to monitor and act on ingestion reliability and SLA issues.
-
-- Landing Page
-  - Purpose: Public marketing describing product value and conversion.
-  - Components: Hero with CTA (Sign up / Request demo), How It Works 3-step, sample IPI snapshot, feature highlight cards, trust/compliance blurb, footer.
-  - Contribution: Drives user acquisition and communicates audit-first value prop.
-
-- Signup Page
-  - Purpose: Register new users.
-  - Components: Form (name, email, password, org, role, invite code), OAuth (Google optional), password strength meter, terms checkbox, primary CTA.
-  - Contribution: Onboards users with role capture for personalization and enterprise invite flows.
-
-- Login Page
-  - Purpose: Authenticate existing users.
-  - Components: Email/password, remember-me, OAuth placeholder, forgot password link, demo access.
-  - Contribution: Entry point to product; includes security notices.
-
-- Dashboard (Authenticated)
-  - Purpose: Primary landing showing company selector and IPI quick-cards.
-  - Components: Global header (search/autocomplete, avatar), company selector, time-window selector, IPI quick card grid (score, direction, sparkline, top narratives), saved companies pane, system status banner.
-  - Contribution: Fast selection-to-insight path; entry point to drilldowns.
-
-- Company View (IPI Detail)
-  - Purpose: Detailed IPI view per company/time window.
-  - Components: Company header, IPI summary panel (large score, % change, breakdown pie), top 3 narratives list, timeline view, Why Did This Move CTA, export snapshot button, related companies panel.
-  - Contribution: Shows explainable IPI and entry to drilldown/audit export.
-
-- Drilldown — Why Did This Move?
-  - Purpose: Explain narrative contribution with event traceability.
-  - Components: Narrative header (persistence, contribution), events list (paginated), raw payload modal, replay/timeline controls, filters, audit export button.
-  - Contribution: Provides root-cause, raw evidence, and exportable audit artifacts.
-
-- Settings & Preferences
-  - Purpose: User configuration and provisional weight experimentation.
-  - Components: Profile, notification prefs, IPI weight scenario toggles/sliders (provisional), data & privacy controls, developer/API keys placeholder.
-  - Contribution: User personalization; transparency on provisional weights.
-
-- User Profile
-  - Purpose: Personal overview.
-  - Components: Avatar card, saved companies, recent activity, account actions.
-  - Contribution: Quick access to saved views and activity.
-
-- About & Help
-  - Purpose: Methodology explanation and support.
-  - Components: Methodology section (NarrativeEvent schema, IPI breakdown), FAQ, support form, roadmap teaser.
-  - Contribution: Builds trust, clarifies methodology, and supports users.
-
-- Raw Payload Browser & Audit Export (Admin)
-  - Purpose: Inspect raw payloads and generate signed artifacts.
-  - Components: Payload search/filters, payload list, payload viewer (JSON), replay control, export artifact builder, retention controls.
-  - Contribution: Enables audit, replay, and compliance exports.
-
-- Ingest Monitor
-  - Purpose: Operational ingestion pipeline view.
-  - Components: Source tiles (last fetch, items, errors), pipeline DAG, recent error log, manual trigger for transcript import.
-  - Contribution: Operational control for ingestion reliability.
-
-- Privacy Policy & Terms of Service
-  - Purpose: Legal pages.
-  - Components: Full text, retention tables, contact info.
-  - Contribution: Legal compliance and user transparency.
-
-- Loading / Success / Toast Components (Shared)
-  - Purpose: UI micro-components for status feedback.
-  - Components: Skeletons, loading spinners, toasts, success banners.
-  - Contribution: Smooth UX and error/confirmation signaling.
-
-### 2. Features
-Core features with technical notes.
-
-- User Authentication
-  - Secure signup/login, email verification, JWT access + refresh tokens, optional OAuth (Google).
-  - Implementation: bcrypt/argon2 hashing, HttpOnly secure cookies for refresh tokens, revocation list, rate limits, account lockout on failed attempts, CSRF protection, audit logging for auth events.
-
-- User Profile & Account Management
-  - Profile CRUD, saved companies, preferences JSON, account export/delete, 2FA toggle placeholder.
-  - Implementation: Re-auth for sensitive ops, GDPR export generating ZIP, input validation and sanitization.
-
-- Company Selection & Time Window Controls
-  - Debounced autocomplete with fuzzy search, recent/saved list, presets + custom range.
-  - Implementation: Postgres + search index (e.g., pg_trgm or Elasticsearch); API suggestions endpoint; frontend typeahead with <150ms target.
-
-- Simplified IPI Calculation
-  - IPI = 0.4*Narrative + 0.4*Credibility + 0.2*Risk; directional change; top narrative contributions.
-  - Implementation: Aggregation service that reads narrative aggregates, applies static provisional weights (config-driven), logs input vectors and weight version; cache computed results for fast retrieval; endpoint returns contributions and provenance ids.
-
-- Drilldown & Traceability UI
-  - Paginated NarrativeEvent listing, raw payload viewer, timeline replay, filters, export builder.
-  - Implementation: Backend paginated endpoints, raw payload retrieval from append-only store, signed artifact generation using KMS, export job queue with email notification on completion.
-
-- Resilient Ingestion Pipeline
-  - Fetchers for NewsAPI and X/Twitter (read-only), admin batch transcript uploader (S3), normalizer to NarrativeEvent.
-  - Implementation: Scheduled worker processes, rate-limit-aware fetchers with exponential backoff, idempotency via external_id + content_hash, DLQ with manual replay; store raw payloads in append-only raw_payload table and normalized events with pointer to raw_payload_id.
-
-- Canonical NarrativeEvent Model
-  - Immutable schema capturing event_id, raw_payload_id, source, platform, speaker_entity, speaker_role, audience_class, raw_text, ingestion_timestamp, original_timestamp, metadata JSON, authority_score, credibility_flags.
-  - Implementation: Append-only DB table, indexes for company/ticker and timestamps, replay capability to rebuild aggregates.
-
-- Topic Classification & Narrative Persistence
-  - Rule-based keywords + optional embedding clustering; time-decayed persistence metric (configurable half-life).
-  - Implementation: Keyword rules stored as config; optional OpenAI embeddings for clustering (batched); persistence computed as decayed count/time-weighted metric; authority weighting applied during aggregation.
-
-- Credibility Proxy & Risk Signals
-  - Heuristics for credibility (repetition across authoritative sources, management language consistency) and risk flags via keywords.
-  - Implementation: Detectors run during normalization or lightweight async re-score; outputs normalized 0-1 scores stored per event and narrative.
-
-- Audit Export & Artifact Generation
-  - Signed JSON + human-readable PDF artifacts that include raw payload refs, calculation inputs, weights and integrity hashes.
-  - Implementation: Use KMS to sign artifacts; include content hashes (SHA256) per payload; store generated artifact metadata and TTL; authorize exports.
-
-- Admin Operations & Monitoring
-  - Role-based access, replay controls, DLQ inspection, ingestion metrics.
-  - Implementation: RBAC (Admin, Operator, Auditor), admin UI dashboards, logs/traces, audit log writes for admin actions with justification.
-
-- Email Notifications & System Alerts
-  - Transactional emails for verification, password resets, export ready, ingestion failure alerts.
-  - Implementation: SendGrid templates; retry & bounce handling; manage user's notification prefs and unsubscribe; include mailing metrics.
-
-- Exportable Audit Artifacts
-  - Generate and sign artifacts on-demand for a selected company/time window or filtered events.
-  - Implementation: Background export job, integrity verification, production of JSON + PDF (template), download link emailed, signed with KMS.
-
-### 3. User Journeys
-Step-by-step flows per user type.
-
-- New User (Investor)
-  1. Visit Landing → Click Sign up.
-  2. Fill signup form → Create account → System sends verification email (SendGrid).
-  3. Email Verification Page instructs to check inbox; can resend or change email.
-  4. Verify email → First login → Onboarding explains IPI formula and provisional weights.
-  5. Dashboard: search company → select company + time window.
-  6. Dashboard shows IPI quick-card → Click View details → Company View shows IPI and top narratives.
-  7. Click "Why did this move?" → Drilldown lists NarrativeEvents → Open raw payloads and replay timeline.
-  8. Optionally export audit artifact → Background job generates signed JSON+PDF → get email with download link.
-
-- Returning User (Analyst)
-  1. Login → Dashboard populated with saved companies.
-  2. Choose company + custom time window → view IPI and narrative breakdown.
-  3. Drilldown events → use filters (source, authority) to refine events.
-  4. Generate export for compliance or reporting; download artifact.
-
-- Admin / Operator
-  1. Admin login (MFA placeholder) → Admin Dashboard.
-  2. Monitor Ingest Monitor: see source rate-limit warnings, queue depth, recent errors.
-  3. Inspect DLQ via Raw Payload Browser → replay idempotently or mark for retention/purge.
-  4. Manage users via User Management: resend verification, disable account, export user list.
-  5. Review export artifact logs and audit logs for compliance.
-
-- Auditor
-  1. Receive audit invitation link → Sign in (read-only scope).
-  2. Use Company View and Drilldown to inspect signed exported artifacts.
-  3. Validate raw payload hashes and weight versions; raise issues via support form.
-
-- Support Flow (User with unverified email)
-  1. From Email Verification Page use Change Email modal or Resend action (rate-limited).
-  2. If problem persists, contact support via link → submit issue.
-
-## UI Guide
 ---
 
-(Refer to Visual Style section below for comprehensive design system. Apply consistently across all pages and components.)
+## Components to Build
 
-## Visual Style
+1) Drilldown & Traceability UI Shell
+- Purpose: Orchestrates navigation between Company View and Drilldown views, manages global state for selected company, time window, and current narrative/IPI focus.
+- Technical details:
+  - Routes: /company/:companyId/ipi-detail and /drilldown/:narrativeId
+  - State: currentCompanyId, currentTimeWindow, selectedNarrativeId, viewMode (IPI vs drilldown)
+  - Data loading: fetch IPI summary, top narratives, and timeline data for the company/time window
+  - Accessibility: skip links, keyboard navigable, ARIA labeling for panels
 
-### Color Palette:
-- Primary background: #FBFBFC
-- Map/background overlay: #F3F4F6
-- Primary text: #111827
-- Secondary text / meta: #6B7280
-- Borders / dividers: #E5E7EB
-- Card background / surfaces: #FFFFFF
-- Accent (callouts / badges): #FF6B4A
-- Accent (interactive / primary CTA): #0F172A
-- Accent (focus / subtle highlights): #93C5FD
-- Muted success/credibility accent: #10B981
+2) Company View (IPI Detail)
+- Purpose: Displays the selected company’s current IPI, directional change, top 3 contributing narratives, and a timeline. Button CTA to drill down to “Why did this move?”
+- UI/UX specifics:
+  - Hero section: IPI score (large numeric stat), directional indicator (↑/↓ with color cue), timestamp
+  - Top narratives panel: 3 cards horizontally or in a responsive grid showing narrative title, short descriptor, and a small credibility badge
+  - Timeline view: compact inline timeline with events; ability to scrub through to see how narratives accumulate
+  - Drill-down CTA: prominent CTA button “Why did this move?” wired to /drilldown/:narrativeId
+- Data interactions:
+  - Fetch: company IPI summary, direction, top narratives, and timeline within selected window
+  - Ensure all array-like data guarded with (data ?? []) and Array.isArray checks
+- UI components:
+  - Card surfaces for narratives with chips (narrative labels), numeric badges for scores
+  - Timeline row with markers and hover tooltips
+- Export/Actions:
+  - Quick export of audit artifacts placeholder (signed JSON/PDF) available from drill-down path
 
-### Typography & Layout:
-- Font family: Inter / SF Pro / system-ui
-- Hierarchy:
-  - H1: 48–56px, 700
-  - H2: 24–32px, 600–700
-  - Body: 16px, 400, 1.4–1.6 line-height
-  - Micro/meta: 12–14px, color #6B7280
-  - Numeric stats: 28–36px, 700
-- Spacing & grid:
-  - Centered container, 12-column responsive grid
-  - Vertical rhythm 48–64px between major sections
-  - Card padding 20–28px; controls 12–16px
-  - Left-aligned text, visual center hero cards over map
+3) Drilldown — Why Did This Move?
+- Purpose: Detailed explanation for a selected narrative or IPI movement. Lists underlying NarrativeEvents with raw payload viewing, authority & credibility signals, timestamps, and a replayable chronological view.
+- UI/UX specifics:
+  - Narrative summary header: name, source, credibility weight, timestamp
+  - Event list: paginated, sortable, and filterable by timestamp, source, authority weight
+  - Raw payload viewer: modal or side panel to view full payload with syntax highlighting (JSON)
+  - Authority & credibility signals: compact badges/chips indicating analysts, media, retail signals, and credibility scores
+  - Replayable chronological view: small built-in player that steps through events in order with play/pause, speed controls, and scrubber
+  - Export: ability to export selected drilldown artifacts
+- Data interactions:
+  - Fetch: NarrativeEvents by narrativeId or IPI movement window, with pagination, sorting, and filters
+  - Ensure results guarded: const items = data ?? []; Array.isArray(items)
+- UI components:
+  - EventTable: rows with time, source, signal strength, credibility, payload preview toggle
+  - PayloadViewerModal: shows raw payload, line-wrapped, copy-to-clipboard
+  - ReplayTimeline: vertical/horizontal timeline with markers for each event
+  - Action bar: export artifact, filter controls
 
-### Key Design Elements
-Card Design:
-- White surfaces (#FFFFFF), 1px border (#E5E7EB), soft shadow (0 12px 30px rgba(15,23,42,0.06))
-- Corner radius 10–12px; hover: stronger shadow + -4px translateY
-- Internal hierarchy: thumbnail, title, numeric badge, metadata row, CTA; chips in #FF6B4A
+4) Shared/Supporting Components
+- Pagination controls
+- Filters bar (source, time window, credibility level)
+- Sign-off chips for provenance (source, model version, ingestion timestamp)
+- Export modal/dialogs
+- Loading skeletons and error banners
+- Utilities:
+  - safeArray(mapFn) helper: (Array.isArray(data) ? data.map(fn) : [])
+  - ensureArray(data): data ?? []
+  - safeAccess(obj, prop, defaultValue)
 
-Navigation:
-- Top horizontal bar, brand left, nav links center/left, auth actions right
-- Active state: subtle underline or heavier weight + #FF6B4A dot
-- Auth CTAs: primary pill #0F172A (white text), secondary outlined #E5E7EB
+---
 
-Data Visualization:
-- Minimal single-tone line/area charts; primary lines #0F172A or #FF6B4A
-- Secondary lines #6B7280 at 20–30% opacity
-- Light grid lines #F3F4F6; markers in #FF6B4A; tooltip cards for markers
+## Implementation Requirements
 
-Interactive Elements:
-- Buttons: primary pill (#0F172A), secondary white with border (#E5E7EB)
-- Inputs: 1px rounded borders (#E5E7EB), padding 10–12px, placeholder #9CA3AF, focus glow #93C5FD
-- Transitions: micro-interactions 150–220ms, panel expand 300ms
-- Accessibility: high contrast text, visible focus rings (#93C5FD)
+### Frontend
+- Frameworks: React 18+ with TypeScript; state management via React hooks or lightweight context; optional Redux if justified.
+- Routing: client-side routing with protected routes
+- State and Data Handling:
+  - Use useState/useEffect for local UI state; initialize arrays with []: useState<MyItem[]>([])
+  - Always guard API responses:
+    - const list = Array.isArray(response?.data) ? response.data : []
+    - const items = data ?? []
+  - Optional chaining for nested objects: obj?.payload?.raw
+- Components and UI:
+  - Reusable Card, Button, Chip, Dropdown, Modal, Tooltip components
+  - Theming aligned to the provided color palette and typography
+  - Data Visualization:
+    - Lightweight, accessible charts (line/area) with minimal dependencies or a chosen chart library
+    - Use #0F172A or #FF6B4A for primary lines; #6B7280 for secondary
+    - Tooltips for timeline markers showing a payload snippet and timestamp
+- Accessibility:
+  - Keyboard navigable controls, proper ARIA roles, focus-visible outlines in #93C5FD
+- Performance:
+  - Debounced search/filter changes
+  - Server-driven pagination for NarrativeEvents
+  - Efficient rendering for large lists (virtualized list if data is large)
+- Data Validation:
+  - Validate inputs before requests; guard against null/undefined
+- Export Artifacts:
+  - Placeholder services to trigger artifact generation (signed JSON and PDF)
+  - Include metadata: companyId, narrativeId, timeWindow, generationTimestamp, and integrity hash placeholder
+- Security:
+  - Ensure endpoints/components enforce authorization checks; UI should respect user roles for viewing exports and payloads
 
-### Design Philosophy
-- Modern, trust-focused minimalism
-- Corporate-professional aesthetic
-- Spatial calm and hierarchy with generous whitespace
-- Transparent, explainable UI cues (provenance chips, raw-payload cards)
-- UX goals: fast scannability, effortless drill-downs, enterprise polish
+### Backend
+- APIs:
+  - GET /api/companies/{companyId}/ipi-detail?startDate=&endDate=&limit=&offset=
+    - Returns: current IPI, direction, topN narratives (N=3), and a timeline
+  - GET /api/narratives/{narrativeId}/events?limit=&offset=&sort=&filters=
+    - Returns: paginated NarrativeEvents with fields: id, source, speaker, audience, rawPayload, timestamps, authoritySignal, credibilitySignal
+  - POST /api/export/audit
+    - Body: { companyId, narrativeId?, timeWindow, format: 'json'|'pdf' }
+    - Returns: signed artifact URLs and metadata including a hash
+- Data models:
+  - NarrativeEvent
+    - id: string
+    - narrativeId: string
+    - source: string
+    - speaker: { name: string; role?: string }
+    - audience: string
+    - rawPayload: object
+    - timestamp: string (ISO)
+    - authoritySignal: number (0-1)
+    - credibilitySignal: number (0-1)
+  - IPISummary
+    - currentValue: number
+    - direction: 'up'|'down'|'flat'
+    - timestamp: string
+    - topNarratives: Array<{ narrativeId: string; title: string; score: number; credibility?: number }>
+  - ArtifactMeta
+    - id, companyId, narrativeId?, timeWindow, format, generatedAt, sha256
+- Data safety:
+  - Guard all responses: if response.data not an array, default to []
+  - Use null-safe access in all tail code paths
 
-Implementation Notes:
-- Enforce tokens, spacing, typography, and component styles via a shared design system (Figma + component library). Ensure UI kit assets (logo variants, icons, templates) are integrated.
+### Integration
+- Data flow:
+  - User selects company/time window → Company View fetches IPI summary and top narratives
+  - User clicks a top narrative → Drilldown loads narrative summary and event page
+  - Drilldown page fetches NarrativeEvents with pagination; payload viewer fetches on demand
+  - User triggers export → Backend creates signed artifact and returns URL
+- State synchronization:
+  - When narrative changes, fetch related events; update timeline playback state
+  - Ensure consistent IDs between components for smooth drill-down transitions
+- Error handling:
+  - Global error boundary; user-friendly error banners
+  - Fallback UI with empty-state guidance
 
-## Instructions to AI Development Tool
-1. Refer to Project Concept, Problem Statement, and Solution to understand the "why".
-2. Ensure all features and pages directly solve the identified problems and map to the scope.
-3. Verify completeness: every page/component must adhere to specified UI Guide and Visual Style.
-4. Audit exports and IPI calculation must log exact inputs, weights, and provenance metadata.
-5. Implement append-only raw payload storage, idempotency checks, and replay mechanics for ingestion.
-6. Use KMS for signing artifacts; include integrity hashes for raw payloads.
-7. Rate-limit and retry for external fetchers; expose ingestion metrics on Admin Dashboard.
-8. Ensure security: hashed passwords, JWT + refresh tokens with revocation, rate limiting, CSRF protection, and auth/audit logs.
-9. Maintain clear feature flags and config for provisional weights; surface “provisional” in UI.
-10. Provide sample dataset and component kit to support deterministic UI and backend integration tests.
+---
 
-PROJECT CONTEXT:
-- Project: Gbox360 — Investor Perception Index & Narrative Intelligence
-- MVP Goals: Log in → select company & time window → view simplified IPI → drill down to events and export signed artifacts.
-- Data Intake:
-  - One news source (NewsAPI)
-  - One social source (X/Twitter read-only)
-  - Batch earnings transcripts (S3)
-  - Preserve raw payloads, ensure retry/idempotency
-- Canonical Narrative Model:
-  - Immutable NarrativeEvent schema with append-only storage and replay support
-- Simplified Intelligence:
-  - No sentiment dashboards
-  - Topic classification (rule-based or embeddings)
-  - Narrative persistence via time-decay
-  - Authority weighting (Analyst > Media > Retail)
-  - Credibility proxies and a simple risk proxy
-  - IPI weights: Narrative 40%, Credibility 40%, Risk 20% (provisional)
-- End-to-End Flow:
-  - User selects company/time window → system displays IPI + top narratives → “Why did this move?” drilldown shows events and raw payloads → export signed artifact
+## User Experience Flow
 
-ASSETS & INTEGRATIONS:
-- Email: SendGrid
-- Optional embeddings: OpenAI embeddings
-- News feed: NewsAPI
-- Social feed: X / Twitter read-only API
-- Transcript storage: S3-compatible object storage
-- KMS: AWS KMS (or equivalent) for signing artifacts and securing keys
-- UI assets: Brand logo variants, Figma UI kit, SVG icon set, sample raw payload dataset, NarrativeEvent schema docs, PDF export template
+1) User authentication and landing
+- User logs in and lands in the Investor Perception Dashboard
+- Accessible global nav with company selector
 
-USER FLOWS (condensed)
-- Auth flows (signup → verify → login)
-- Core flow (Dashboard → select company/time window → Company View → Drilldown → Export)
-- Admin flows (Admin Dashboard → Ingest Monitor → Raw Payload Browser → Replay/DLQ → User Management)
-- Auditor/read-only review via signed artifacts and raw payload verification
+2) Company View (IPI Detail)
+- User selects a company and time window
+- Page loads IPI summary:
+  - Current IPI score: large numeric
+  - Direction: Up or Down indicator with color cue
+  - Timestamp
+- Top 3 contributing narratives shown as cards:
+  - Narrative title, a compact descriptor, score, credibility chip
+- Timeline component shows events contributing to current IPI movement
+- CTA: “Why did this move?” on each narrative or a global CTA to drill down
 
-End of blueprint.
+3) Drilldown — Why Did This Move?
+- User clicks the drill-down CTA or selects a top narrative
+- Drilldown header shows narrative name, origin, credibility signals, and time window
+- Event list loads with pagination:
+  - Columns: timestamp, source, signal strength, credibility, quick action
+  - Each row can reveal a short payload snippet with a toggle
+- Raw Payload Viewing:
+  - Open a modal to view the full raw payload with syntax highlighting
+  - Copy-to-clipboard available
+- Authority & Credibility Signals:
+  - Chips/badges per event or grouped by signal type
+- Replayable Chronological View:
+  - Timeline scrubber with play/pause; step through events in order
+  - Playback speed controls
+  - Hover over markers to preview event summary
+- Export:
+  - Export artifacts for the drilldown as signed JSON and PDF with a progress indicator
+  - Export includes metadata and integrity hash placeholder
+
+4) Export Artifacts and Exit
+- User can download artifacts or obtain signed URLs
+- Validations ensure only authorized users can export
+
+---
+
+## Technical Specifications
+
+Data Models (Schemas)
+- NarrativeEvent
+  - id: string
+  - narrativeId: string
+  - source: string
+  - speaker: { name: string; role?: string }
+  - audience: string
+  - rawPayload: unknown
+  - timestamp: string
+  - authoritySignal: number
+  - credibilitySignal: number
+- Narrative
+  - id: string
+  - title: string
+  - summary: string
+  - narrativeType: string
+- IPISummary
+  - currentValue: number
+  - direction: 'up'|'down'|'flat'
+  - timestamp: string
+  - topNarratives: Array<{ narrativeId: string; title: string; score: number; credibility?: number }>
+- ArtifactMeta
+  - id: string
+  - companyId: string
+  - narrativeId?: string
+  - timeWindow: { start: string; end: string }
+  - format: 'json'|'pdf'
+  - generatedAt: string
+  - sha256: string
+
+API Endpoints (Routes and Methods)
+- GET /api/companies/{companyId}/ipi-detail
+  - Query: startDate, endDate, limit, offset
+  - Response: { currentValue, direction, timestamp, topNarratives: [{ narrativeId, title, score, credibility }], timeline: [...] }
+- GET /api/narratives/{narrativeId}/events
+  - Query: limit, offset, sort, filters
+  - Response: { items: NarrativeEvent[], total: number }
+- POST /api/export/audit
+  - Body: { companyId, narrativeId?, timeWindow: {start, end}, format }
+  - Response: { url, artifactMeta }
+
+Security and Access Control
+- Ensure authentication tokens/ sessions are validated
+- Authorization checks to confirm user access to company data and to exports/payloads
+- Sensitive payloads require proper permission; hide or redact fields if needed
+- API responses guarded with explicit checks for presence of required fields
+
+Validation
+- Validate all inputs both client- and server-side
+- For arrays: use Array.isArray(data) ? data : []
+- For API response shapes: const list = Array.isArray(response?.data) ? response.data : []
+- Optional chaining for nested fields: obj?.field?.subfield
+- Destructure with defaults: const { items = [], total = 0 } = response ?? {}
+
+Performance
+- Pagination for NarrativeEvents; server-side paging to prevent large payloads
+- Debounce search and filter inputs
+- Efficient rendering: use memoization for heavy computations; virtualization if event lists are large
+
+Testing Criteria
+- Frontend:
+  - [ ] IPI detail page renders with correct values from API
+  - [ ] Top narratives render with correct counts and badges
+  - [ ] Drilldown loads narrative events with pagination
+  - [ ] Raw payload modal displays valid JSON and copy works
+  - [ ] Timeline replay controls function (play/pause/seek)
+  - [ ] Export artifacts endpoint returns signed URLs and metadata
+  - [ ] All arrays are safely guarded against null/undefined
+- Backend:
+  - [ ] Endpoints return data with correct shapes; missing arrays default to []
+  - [ ] Pagination and filters apply correctly
+  - [ ] Artifact export returns signed artifacts with metadata
+  - [ ] Authorization checks enforced
+- End-to-end:
+  - [ ] User can drill from IPI detail to Why Did This Move? drilldown and retrieve event data
+  - [ ] Export artifacts reflect the current drilldown context
+
+UI/UX Guidelines
+- Apply the project's design system consistently
+- Maintain the color palette and typography as specified
+- Ensure visual hierarchy aligns with the specified scales
+- Soft shadows, clean surfaces, and restrained use of accent colors
+- Micro-interactions: 150–220ms hover transitions; 300ms panel transitions
+- Accessibility: high-contrast text, focus rings (#93C5FD), semantic HTML, proper ARIA roles
+
+Visual Style Matching
+- Card surfaces: white with light border, rounded corners 10–12px, subtle shadow
+- Navigation: top bar with brand mark, active states with accent cues
+- Data Visualization: minimal lines and dots; ensure text remains legible against backgrounds
+- CTAs: primary CTAs in #0F172A with white text; secondary outlined in #E5E7EB
+
+Mandatory Coding Standards — Runtime Safety
+- Supabase/API results: Always use nullish coalescing for results: const items = data ?? []
+- Array methods: Guard every call
+  - (items ?? []).map(...)
+  - Array.isArray(items) ? items.filter(...) : []
+- React useState for arrays: useState<MyType[]>([])
+- API response shapes: const list = Array.isArray(response?.data) ? response.data : []
+- Optional chaining: obj?.prop?.nested
+- Destructuring with defaults: const { items = [], count = 0 } = response ?? {}
+
+--- 
+
+If you need, I can convert this into an actionable project brief with task breakdowns, acceptance tests as concrete Jest/RTL tests, and a minimal starter repo layout (folders, components, hooks, and API clients) tailored to your existing tech stack (React TS, Next.js, or your preferred framework).
 
 ## Implementation Notes
 

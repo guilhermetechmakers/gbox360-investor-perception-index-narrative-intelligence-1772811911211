@@ -9,10 +9,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DataTablePagination } from '@/components/ui/data-table-pagination'
 import { format } from 'date-fns'
-import { FileJson } from 'lucide-react'
+import { FileJson, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ensureArray } from '@/lib/runtime-safe'
 import type { NarrativeEvent } from '@/types/narrative'
+import type { SortByField, SortOrder } from '@/types/drilldown'
 
 interface NarrativeEventsTableProps {
   events: NarrativeEvent[]
@@ -22,12 +25,59 @@ interface NarrativeEventsTableProps {
   total: number
   pageSize?: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   onViewRaw: (rawPayloadId: string) => void
   highlightedEventId?: string | null
   currentReplayIndex?: number
+  sortBy?: SortByField
+  sortOrder?: SortOrder
+  onSortChange?: (sortBy: SortByField, sortOrder: SortOrder) => void
 }
 
 const SNIPPET_LENGTH = 80
+
+function SortHeader({
+  label,
+  field,
+  currentSortBy,
+  currentSortOrder,
+  onSort,
+}: {
+  label: string
+  field: SortByField
+  currentSortBy?: SortByField
+  currentSortOrder?: SortOrder
+  onSort?: (sortBy: SortByField, sortOrder: SortOrder) => void
+}) {
+  const isActive = currentSortBy === field
+  const nextOrder =
+    isActive && currentSortOrder === 'asc' ? 'desc' : 'asc'
+  const SortIcon =
+    isActive && currentSortOrder === 'desc' ? ArrowDown : ArrowUp
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+      onClick={() => onSort?.(field, nextOrder)}
+      aria-sort={
+        isActive
+          ? currentSortOrder === 'asc'
+            ? 'ascending'
+            : 'descending'
+          : undefined
+      }
+    >
+      {label}
+      {onSort ? (
+        isActive ? (
+          <SortIcon className="h-3.5 w-3.5" />
+        ) : (
+          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
+        )
+      ) : null}
+    </button>
+  )
+}
 
 export function NarrativeEventsTable({
   events,
@@ -37,11 +87,15 @@ export function NarrativeEventsTable({
   total,
   pageSize = 10,
   onPageChange,
+  onPageSizeChange,
   onViewRaw,
   highlightedEventId: highlightedEventIdProp,
   currentReplayIndex,
+  sortBy,
+  sortOrder,
+  onSortChange,
 }: NarrativeEventsTableProps) {
-  const safeEvents = Array.isArray(events) ? events : []
+  const safeEvents = ensureArray(events)
   const totalPages = totalPagesProp ?? Math.max(1, Math.ceil(total / pageSize))
   const highlightedEventId =
     highlightedEventIdProp ??
@@ -95,10 +149,22 @@ export function NarrativeEventsTable({
           <TableHeader>
             <TableRow>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
-                Time
+                <SortHeader
+                  label="Time"
+                  field="timestamp"
+                  currentSortBy={sortBy}
+                  currentSortOrder={sortOrder}
+                  onSort={onSortChange}
+                />
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
-                Source
+                <SortHeader
+                  label="Source"
+                  field="source"
+                  currentSortBy={sortBy}
+                  currentSortOrder={sortOrder}
+                  onSort={onSortChange}
+                />
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
                 Speaker / Role
@@ -110,7 +176,13 @@ export function NarrativeEventsTable({
                 Excerpt
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
-                Authority
+                <SortHeader
+                  label="Authority"
+                  field="authority"
+                  currentSortBy={sortBy}
+                  currentSortOrder={sortOrder}
+                  onSort={onSortChange}
+                />
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
                 Credibility
@@ -216,30 +288,15 @@ export function NarrativeEventsTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            Page {page + 1} of {totalPages} · {total} total
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => onPageChange(Math.max(0, page - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages - 1}
-              onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      {(totalPages > 1 || (onPageSizeChange && total > 0)) && (
+        <DataTablePagination
+          currentPage={page + 1}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={(p) => onPageChange(Math.max(0, p - 1))}
+          onPageSizeChange={onPageSizeChange}
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
       )}
     </div>
   )

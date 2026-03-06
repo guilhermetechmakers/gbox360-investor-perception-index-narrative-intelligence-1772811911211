@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Download, Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { JsonHighlight } from './JsonHighlight'
 
 interface RawPayloadModalProps {
   open: boolean
@@ -102,9 +103,10 @@ export function RawPayloadModal({
             <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/30 p-4 font-mono text-xs min-h-[200px]">
               {isLoading && <Skeleton className="h-32 w-full" />}
               {!isLoading && payloadObj != null && (
-                <pre className="whitespace-pre-wrap break-words">
-                  {JSON.stringify(payloadObj, null, 2)}
-                </pre>
+                <JsonHighlight
+                  content={JSON.stringify(payloadObj)}
+                  className="whitespace-pre-wrap break-words"
+                />
               )}
               {!isLoading && payloadObj == null && (
                 <p className="text-muted-foreground">No payload available</p>

@@ -18,6 +18,7 @@ interface TopNarrativesListProps {
   companyId?: string
   windowStart?: string
   windowEnd?: string
+  provenanceId?: string
 }
 
 export function TopNarrativesList({
@@ -26,6 +27,7 @@ export function TopNarrativesList({
   companyId = '',
   windowStart = '',
   windowEnd = '',
+  provenanceId = '',
 }: TopNarrativesListProps) {
   const safeNarratives = Array.isArray(narratives) ? narratives.slice(0, 3) : []
 
@@ -87,7 +89,7 @@ export function TopNarrativesList({
                 onClick={() => onDrilldown?.(n.narrativeId)}
               >
                 <Link
-                  to={`/dashboard/drilldown/${n.narrativeId}?company=${companyId}&start=${windowStart}&end=${windowEnd}`}
+                  to={`/dashboard/drilldown/${n.narrativeId}?company=${companyId}&start=${windowStart}&end=${windowEnd}${provenanceId ? `&provenance=${encodeURIComponent(provenanceId)}` : ''}`}
                 >
                   View events
                   <ArrowRight className="ml-1 h-4 w-4" />

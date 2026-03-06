@@ -12,12 +12,17 @@ export interface Movement {
   calculationInputs?: Record<string, unknown> | null
 }
 
+export type SortByField = 'timestamp' | 'source' | 'authority'
+export type SortOrder = 'asc' | 'desc'
+
 export interface DrilldownFilters {
   sourceType?: string
   authorityTier?: string
   credibilityFlags?: string[]
   dateStart?: string
   dateEnd?: string
+  sortBy?: SortByField
+  sortOrder?: SortOrder
 }
 
 export interface AuditArtifactPayload {
@@ -29,4 +34,20 @@ export interface AuditArtifactPayload {
   calculationInputs: Record<string, unknown>
   jsonExport: Record<string, unknown>
   pdfExportUrl?: string
+}
+
+/** Response shape for POST /api/export/audit */
+export interface ArtifactMeta {
+  id: string
+  companyId: string
+  narrativeId?: string
+  timeWindow: { start: string; end: string }
+  format: 'json' | 'pdf'
+  generatedAt: string
+  sha256: string
+}
+
+export interface ExportAuditResponse {
+  url: string
+  artifactMeta: ArtifactMeta
 }

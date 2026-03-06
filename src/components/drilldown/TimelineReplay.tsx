@@ -1,7 +1,15 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Slider } from '@/components/ui/slider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { format } from 'date-fns'
 import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,9 +24,19 @@ interface TimelineReplayProps {
   loop?: boolean
   onLoopToggle?: (loop: boolean) => void
   onViewPayload?: (rawPayloadId: string) => void
+  /** Playback speed multiplier (0.5, 1, 1.5, 2) */
+  speed?: number
+  onSpeedChange?: (speed: number) => void
 }
 
-const REPLAY_INTERVAL_MS = 2000
+const SPEED_OPTIONS = [
+  { value: 0.5, label: '0.5×' },
+  { value: 1, label: '1×' },
+  { value: 1.5, label: '1.5×' },
+  { value: 2, label: '2×' },
+]
+
+const BASE_INTERVAL_MS = 2000
 
 function detectRepetitions(events: NarrativeEvent[]): Set<number> {
   const reps = new Set<number>()
@@ -51,12 +69,26 @@ export function TimelineReplay({
   loop = false,
   onLoopToggle,
   onViewPayload,
+  speed = 1,
+  onSpeedChange,
 }: TimelineReplayProps) {
   const safeEvents = Array.isArray(events) ? events : []
   const count = safeEvents.length
   const clampedIndex = Math.max(0, Math.min(currentIndex, count - 1))
   const repetitions = detectRepetitions(safeEvents)
   const spikes = detectSpikes(safeEvents)
+  const [internalSpeed, setInternalSpeed] = useState(1)
+  const effectiveSpeed = onSpeedChange != null ? speed : internalSpeed
+  const intervalMs = Math.round(BASE_INTERVAL_MS / (effectiveSpeed > 0 ? effectiveSpeed : 1))
+
+  const handleSpeedChange = (v: string) => {
+    const num = Number(v)
+    if (onSpeedChange) {
+      onSpeedChange(num)
+    } else {
+      setInternalSpeed(num)
+    }
+  }
 
   const goBack = useCallback(() => {
     if (count === 0) return
@@ -83,9 +115,9 @@ export function TimelineReplay({
       } else {
         onIndexChange(clampedIndex + 1)
       }
-    }, REPLAY_INTERVAL_MS)
+    }, intervalMs)
     return () => clearInterval(id)
-  }, [isPlaying, count, clampedIndex, loop, onIndexChange, onPlayPause])
+  }, [isPlaying, count, clampedIndex, loop, onIndexChange, onPlayPause, intervalMs])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -182,6 +214,39 @@ export function TimelineReplay({
         </div>
       </CardHeader>
       <CardContent>
+        <div className="flex flex-wrap items-center gap-4 mb-3">
+          <div className="flex items-center gap-2 min-w-[120px]">
+            <span className="text-xs text-muted-foreground">Speed</span>
+            <Select
+              value={String(effectiveSpeed)}
+              onValueChange={handleSpeedChange}
+            >
+              <SelectTrigger className="h-8 w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SPEED_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={String(opt.value)}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {count > 1 && (
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">Scrubber</span>
+              <Slider
+                value={[clampedIndex]}
+                max={Math.max(0, count - 1)}
+                step={1}
+                onValueChange={([v]) => onIndexChange(v ?? 0)}
+                className="flex-1"
+                aria-label="Event position"
+              />
+            </div>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground mb-2">
           Use arrow keys or buttons to step. Space to play/pause.
         </p>

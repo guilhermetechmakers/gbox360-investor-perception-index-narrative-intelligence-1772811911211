@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Shield, Database, FileCheck } from 'lucide-react'
+import { ScrollReveal } from './ScrollReveal'
 
 export interface TrustComplianceProps {
   auditabilityStatement?: string
@@ -26,13 +28,21 @@ export function TrustCompliance({
       aria-labelledby="trust-title"
     >
       <div className="container px-4">
-        <h2
-          id="trust-title"
-          className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
+        <ScrollReveal>
+          <h2
+            id="trust-title"
+            className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
+          >
+            Trust & compliance ready
+          </h2>
+        </ScrollReveal>
+        <motion.div
+          className="mx-auto max-w-3xl"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          Trust & compliance ready
-        </h2>
-        <div className="mx-auto max-w-3xl">
           <div className="rounded-xl border border-border bg-card p-8 md:p-10 shadow-card">
             <div className="space-y-6">
               <div className="flex gap-4">
@@ -82,7 +92,7 @@ export function TrustCompliance({
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

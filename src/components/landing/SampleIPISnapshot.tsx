@@ -1,6 +1,8 @@
+import { motion } from 'motion/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { TrendingUp } from 'lucide-react'
+import { ScrollReveal } from './ScrollReveal'
 
 export interface NarrativeItem {
   id: string
@@ -84,14 +86,23 @@ export function SampleIPISnapshot({
       aria-labelledby="sample-ipi-title"
     >
       <div className="mx-auto max-w-2xl text-center">
-        <h2
-          id="sample-ipi-title"
-          className="text-2xl font-semibold md:text-3xl"
+        <ScrollReveal>
+          <h2
+            id="sample-ipi-title"
+            className="text-2xl font-semibold md:text-3xl"
+          >
+            Sample IPI snapshot
+          </h2>
+          <p className="mt-2 text-muted-foreground text-sm md:text-base">{tagline}</p>
+        </ScrollReveal>
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          Sample IPI snapshot
-        </h2>
-        <p className="mt-2 text-muted-foreground text-sm md:text-base">{tagline}</p>
-        <Card className="mt-8 text-left animate-fade-in-up">
+        <Card className="text-left">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle className="text-lg font-semibold">
@@ -139,6 +150,7 @@ export function SampleIPISnapshot({
             </p>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </section>
   )

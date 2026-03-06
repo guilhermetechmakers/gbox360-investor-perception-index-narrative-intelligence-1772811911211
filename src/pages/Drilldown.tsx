@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronLeft } from 'lucide-react'
+import { SkipLinks } from '@/components/shared/SkipLinks'
 import {
   NarrativeHeaderCard,
   NarrativeEventsTable,
@@ -11,6 +12,7 @@ import {
   FiltersPanel,
   DrilldownAuditExportPanel,
   ProvenancePanel,
+  ProvenanceSignOffChips,
 } from '@/components/drilldown'
 import {
   useMovement,
@@ -22,7 +24,7 @@ import {
 import type { DrilldownFilters } from '@/types/drilldown'
 import type { Movement } from '@/types/drilldown'
 
-const PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
 
 const AUTHORITY_TIER_MAP: Record<string, number> = {
   analyst: 0.66,
@@ -39,10 +41,14 @@ export function Drilldown() {
   const provenanceId = searchParams.get('provenance') ?? ''
 
   const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [sortBy, setSortBy] = useState<'timestamp' | 'source' | 'authority'>('timestamp')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [payloadModalId, setPayloadModalId] = useState<string | null>(null)
   const [currentReplayIndex, setCurrentReplayIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [loop, setLoop] = useState(false)
+  const [replaySpeed, setReplaySpeed] = useState(1)
   const [filters, setFilters] = useState<DrilldownFilters>({})
 
   const narrativeIdSafe = narrativeId ?? ''
@@ -89,7 +95,14 @@ export function Drilldown() {
   }, [movementData, narrativeIdSafe, isOverview, snapshot])
 
   const apiFilters = useMemo(() => {
-    const f: { source?: string; authority_min?: number; date_start?: string; date_end?: string } = {}
+    const f: {
+      source?: string
+      authority_min?: number
+      date_start?: string
+      date_end?: string
+      sort?: 'asc' | 'desc'
+      sortBy?: 'timestamp' | 'source' | 'authority'
+    } = {}
     if (filters.sourceType) f.source = filters.sourceType
     if (filters.authorityTier && String(filters.authorityTier) !== 'all') {
       const min = AUTHORITY_TIER_MAP[filters.authorityTier]
@@ -97,14 +110,16 @@ export function Drilldown() {
     }
     if (filters.dateStart) f.date_start = filters.dateStart
     if (filters.dateEnd) f.date_end = filters.dateEnd
+    f.sort = sortOrder
+    f.sortBy = sortBy
     return f
-  }, [filters])
+  }, [filters, sortOrder, sortBy])
 
   const { data: eventsData, isLoading: eventsLoading } = useNarrativeEvents(
     narrativeIdSafe,
     page,
-    PAGE_SIZE,
-    Object.keys(apiFilters).length > 0 ? apiFilters : undefined
+    pageSize,
+    apiFilters
   )
 
   const { data: rawPayload, isLoading: payloadLoading } = useRawPayload(
@@ -136,6 +151,20 @@ export function Drilldown() {
     setCurrentReplayIndex(0)
   }, [])
 
+  const handleSortChange = useCallback(
+    (by: 'timestamp' | 'source' | 'authority', order: 'asc' | 'desc') => {
+      setSortBy(by)
+      setSortOrder(order)
+      setPage(0)
+    },
+    []
+  )
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize)
+    setPage(0)
+  }, [])
+
   const backUrl = `/dashboard/company/${companyId}?start=${start}&end=${end}`
 
   const selectedEventForModal = payloadModalId
@@ -144,7 +173,14 @@ export function Drilldown() {
   const provenance = selectedEventForModal?.metadata as { documentId?: string; url?: string } | undefined
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
+    <div className="space-y-8 animate-fade-in-up relative" role="main" aria-label="Drilldown — Why did this move?">
+      <SkipLinks
+        links={[
+          { href: '#drilldown-main', label: 'Skip to main content' },
+          { href: '#events-table', label: 'Skip to events table' },
+          { href: '#filters-panel', label: 'Skip to filters' },
+        ]}
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
@@ -171,12 +207,17 @@ export function Drilldown() {
           .map((e) => e.authority_score ?? 0)
           .filter((v) => typeof v === 'number')}
       />
+      <ProvenanceSignOffChips
+        source={snapshot?.company_name ? 'IPI Snapshot' : undefined}
+        modelVersion={auditProvenance?.weightsUsed ? 'v1 (provisional)' : undefined}
+        ingestionTimestamp={auditProvenance?.timestamp ?? snapshot?.window_end}
+      />
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="card-surface">
+      <div id="drilldown-main" className="grid gap-8 lg:grid-cols-3" tabIndex={-1}>
+        <div className="lg:col-span-2 space-y-6" aria-labelledby="events-heading">
+          <Card className="card-surface" id="events-table">
             <CardHeader>
-              <CardTitle>Events</CardTitle>
+              <CardTitle id="events-heading">Events</CardTitle>
               <p className="text-sm text-muted-foreground">
                 NarrativeEvents with source, speaker, authority, and raw payload links
               </p>
@@ -186,20 +227,25 @@ export function Drilldown() {
                 events={filteredByCredibility}
                 isLoading={eventsLoading}
                 page={page}
-                totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                totalPages={Math.max(1, Math.ceil(total / pageSize))}
                 total={total}
-                pageSize={PAGE_SIZE}
+                pageSize={pageSize}
                 onPageChange={setPage}
+                onPageSizeChange={handlePageSizeChange}
                 onViewRaw={(id) => setPayloadModalId(id)}
                 highlightedEventId={
                   filteredByCredibility[currentReplayIndex]?.event_id ?? null
                 }
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortChange={handleSortChange}
               />
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
+          <div id="filters-panel" tabIndex={-1}>
           <FiltersPanel
             filters={filters}
             onApply={handleFiltersApply}
@@ -207,6 +253,7 @@ export function Drilldown() {
             dateStart={start}
             dateEnd={end}
           />
+          </div>
           <TimelineReplay
             events={filteredByCredibility}
             currentIndex={currentReplayIndex}
@@ -216,6 +263,8 @@ export function Drilldown() {
             loop={loop}
             onLoopToggle={setLoop}
             onViewPayload={(id) => setPayloadModalId(id)}
+            speed={replaySpeed}
+            onSpeedChange={setReplaySpeed}
           />
 
           <ProvenancePanel

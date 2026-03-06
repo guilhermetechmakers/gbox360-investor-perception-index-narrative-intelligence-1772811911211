@@ -1,6 +1,8 @@
+import { motion } from 'motion/react'
 import { FeatureCard } from '@/components/landing/FeatureCard'
 import { FileJson, FileCheck, GitBranch, Map } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ScrollReveal } from './ScrollReveal'
 
 export interface FeatureItem {
   id: string
@@ -65,18 +67,22 @@ export function FeatureHighlights({ features = DEFAULT_FEATURES, className }: Fe
       aria-labelledby="features-title"
     >
       <div className="container px-4">
-        <h2
-          id="features-title"
-          className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
-        >
-          Feature highlights
-        </h2>
+        <ScrollReveal>
+          <h2
+            id="features-title"
+            className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
+          >
+            Feature highlights
+          </h2>
+        </ScrollReveal>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {(items ?? []).map((feature, i) => (
-            <div
+            <motion.div
               key={feature.id}
-              className="animate-fade-in-up"
-              style={{ animationDelay: `${i * 80}ms` }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
             >
               <FeatureCard
                 title={feature.title}
@@ -86,7 +92,7 @@ export function FeatureHighlights({ features = DEFAULT_FEATURES, className }: Fe
                 ctaLink={feature.ctaLink}
                 icon={feature.icon}
               />
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

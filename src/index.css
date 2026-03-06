@@ -70,6 +70,14 @@
   outline-offset: 2px;
 }
 
+/* JSON syntax highlighting for raw payload viewer */
+.json-key { color: rgb(15, 23, 42); font-weight: 600; }
+.json-string { color: rgb(16, 185, 129); }
+.json-number { color: rgb(255, 107, 74); }
+.json-boolean { color: rgb(99, 102, 241); }
+.json-null { color: rgb(107, 114, 128); }
+.json-punct { color: rgb(107, 114, 128); }
+
 @keyframes accordion-down {
   from { height: 0; }
   to { height: var(--radix-accordion-content-height); }

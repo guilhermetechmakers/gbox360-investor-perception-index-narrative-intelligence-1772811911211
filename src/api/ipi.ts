@@ -7,7 +7,7 @@ import type {
   IPICalculateResponse,
   AuditProvenance,
 } from '@/types/narrative'
-import type { Movement } from '@/types/drilldown'
+import type { Movement, ExportAuditResponse } from '@/types/drilldown'
 import type { PaginatedResponse } from '@/types/api'
 
 const PROVISIONAL_WEIGHTS = { narrative: 0.4, credibility: 0.4, risk: 0.2 }
@@ -89,6 +89,58 @@ export const ipiApi = {
       `/ipi/snapshot?company_id=${encodeURIComponent(companyId)}&window_start=${encodeURIComponent(windowStart)}&window_end=${encodeURIComponent(windowEnd)}`
     ),
 
+  /** GET /api/companies/:companyId/ipi-detail — spec endpoint; falls back to snapshot */
+  getIPIDetail: async (
+    companyId: string,
+    startDate: string,
+    endDate: string,
+    limit?: number,
+    offset?: number
+  ): Promise<IPISnapshot> => {
+    try {
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        ...(limit != null && { limit: String(limit) }),
+        ...(offset != null && { offset: String(offset) }),
+      })
+      const res = await api.get<{
+        currentValue?: number
+        direction?: 'up' | 'down' | 'flat'
+        timestamp?: string
+        topNarratives?: Array<{ narrativeId: string; title: string; score: number; credibility?: number }>
+        timeline?: unknown[]
+      }>(`/api/companies/${encodeURIComponent(companyId)}/ipi-detail?${params}`)
+      const top = Array.isArray(res?.topNarratives) ? res.topNarratives : []
+      return {
+        company_id: companyId,
+        company_name: '',
+        score: res?.currentValue ?? 0,
+        direction: res?.direction ?? 'flat',
+        percent_change: 0,
+        breakdown: { narrative: 0.4, credibility: 0.4, risk: 0.2 },
+        top_narratives: top.map((n) => ({
+          id: n.narrativeId,
+          label: n.title,
+          persistence: n.score,
+          contribution: n.score,
+          event_count: 0,
+          company_id: companyId,
+          window_start: startDate,
+          window_end: endDate,
+        })),
+        window_start: startDate,
+        window_end: endDate,
+        weight_version: 'provisional-v1',
+        timestamp: res?.timestamp,
+      }
+    } catch {
+      return api.get<IPISnapshot>(
+        `/ipi/snapshot?company_id=${encodeURIComponent(companyId)}&window_start=${encodeURIComponent(startDate)}&window_end=${encodeURIComponent(endDate)}`
+      )
+    }
+  },
+
   getDashboardCards: async (
     companyIds: string[],
     windowStart: string,
@@ -109,6 +161,8 @@ export const ipiApi = {
       authority_min?: number
       date_start?: string
       date_end?: string
+      sort?: 'asc' | 'desc'
+      sortBy?: 'timestamp' | 'source' | 'authority'
     }
   ): Promise<PaginatedResponse<NarrativeEvent>> => {
     const params = new URLSearchParams({
@@ -121,6 +175,8 @@ export const ipiApi = {
       }),
       ...(filters?.date_start && { date_start: filters.date_start }),
       ...(filters?.date_end && { date_end: filters.date_end }),
+      ...(filters?.sort && { sort: filters.sort }),
+      ...(filters?.sortBy && { sort_by: filters.sortBy }),
     })
     return api.get<PaginatedResponse<NarrativeEvent>>(
       `/ipi/narrative-events?${params}`
@@ -142,6 +198,15 @@ export const ipiApi = {
       window_end: windowEnd,
       ...options,
     }),
+
+  /** POST /api/export/audit — signed artifact URLs and metadata (spec endpoint) */
+  postExportAudit: async (body: {
+    companyId: string
+    narrativeId?: string
+    timeWindow: { start: string; end: string }
+    format: 'json' | 'pdf'
+  }): Promise<ExportAuditResponse> =>
+    api.post<ExportAuditResponse>('/api/export/audit', body),
 
   /** POST /ipi/calculate - on-demand IPI computation with provenance */
   calculate: async (

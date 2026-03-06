@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { motion, useReducedMotion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -18,6 +19,12 @@ const DEFAULT_CTA_PRIMARY = { label: 'Sign up', href: '/signup' }
 const DEFAULT_CTA_SECONDARY = { label: 'Request demo', href: '/login' }
 const DEFAULT_CTA_TERTIARY = { label: 'Explore sample IPI', href: '#sample-ipi' }
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+}
+
 export function LandingHero({
   title = DEFAULT_TITLE,
   subtitle = DEFAULT_SUBTITLE,
@@ -26,6 +33,7 @@ export function LandingHero({
   ctaTertiary = DEFAULT_CTA_TERTIARY,
   className,
 }: LandingHeroProps) {
+  const shouldReduceMotion = useReducedMotion()
   const isTertiaryScroll = ctaTertiary?.href?.startsWith('#') ?? false
   const handleTertiaryClick = () => {
     if (ctaTertiary?.onClick) {
@@ -37,36 +45,67 @@ export function LandingHero({
   }
 
   return (
-    <section
+    <motion.section
       className={cn(
         'container px-4 py-16 md:py-24 lg:py-32',
         'relative overflow-hidden',
-        'animate-fade-in-up',
         className
       )}
       aria-labelledby="hero-title"
+      initial={shouldReduceMotion ? false : 'initial'}
+      animate={shouldReduceMotion ? false : 'animate'}
+      variants={{
+        initial: {},
+        animate: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+      }}
     >
+      {/* Animated gradient mesh background */}
       <div
-        className="absolute inset-0 -z-10 opacity-30 pointer-events-none"
+        className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <motion.div
+          className="absolute inset-0 opacity-40"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 60%, rgba(255, 107, 74, 0.06) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 20% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%)',
+          }}
+          animate={
+            shouldReduceMotion
+              ? undefined
+              : {
+                  background: [
+                    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 60%, rgba(255, 107, 74, 0.06) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 20% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%)',
+                    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(15, 23, 42, 0.1) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 70% 50%, rgba(255, 107, 74, 0.08) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 30% 70%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)',
+                    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(15, 23, 42, 0.08) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 60%, rgba(255, 107, 74, 0.06) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 20% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%)',
+                  ],
+                }
+          }
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-transparent to-transparent" />
       </div>
+
       <div className="mx-auto max-w-4xl text-center relative">
-        <h1
+        <motion.h1
           id="hero-title"
           className="text-4xl font-bold tracking-tight sm:text-5xl md:text-[3.5rem] lg:text-[3.75rem]"
           style={{ lineHeight: 1.2 }}
+          variants={fadeInUp}
         >
           {title ?? DEFAULT_TITLE}
-        </h1>
-        <p
+        </motion.h1>
+        <motion.p
           className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto"
           style={{ lineHeight: 1.6 }}
+          variants={fadeInUp}
         >
           {subtitle ?? DEFAULT_SUBTITLE}
-        </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
+        </motion.p>
+        <motion.div
+          className="mt-10 flex flex-wrap justify-center gap-4"
+          variants={fadeInUp}
+        >
           <Button
             size="lg"
             asChild
@@ -103,8 +142,8 @@ export function LandingHero({
               <Link to={ctaTertiary.href}>{ctaTertiary.label}</Link>
             </Button>
           ) : null}
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   )
 }

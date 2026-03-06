@@ -1,6 +1,8 @@
+import { motion } from 'motion/react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Database, GitMerge, BarChart3 } from 'lucide-react'
+import { ScrollReveal } from './ScrollReveal'
 
 export interface StepCardProps {
   icon: React.ComponentType<{ className?: string }>
@@ -14,8 +16,7 @@ function StepCard({ icon: Icon, title, description, microCopy, className }: Step
   return (
     <Card
       className={cn(
-        'transition-all duration-300',
-        'animate-fade-in-up',
+        'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1',
         className
       )}
     >
@@ -74,27 +75,59 @@ export function HowItWorks({ steps = STEPS, className }: HowItWorksProps) {
       aria-labelledby="how-it-works-title"
     >
       <div className="container px-4">
-        <h2
-          id="how-it-works-title"
-          className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
-        >
-          How it works
-        </h2>
-        <div className="grid gap-8 md:grid-cols-3">
-          {(items ?? []).map((step, i) => (
-            <div
-              key={step.title}
-              className="animate-fade-in-up"
-              style={{ animationDelay: `${i * 100}ms` }}
-            >
-              <StepCard
-                icon={step.icon}
-                title={step.title}
-                description={step.description}
-                microCopy={step.microCopy}
-              />
-            </div>
-          ))}
+        <ScrollReveal>
+          <h2
+            id="how-it-works-title"
+            className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
+          >
+            How it works
+          </h2>
+        </ScrollReveal>
+        {/* Bento-style asymmetric grid */}
+        <div className="grid gap-6 md:grid-cols-3 md:grid-rows-2 md:grid-rows-[auto_auto] md:gap-6">
+          <motion.div
+            className="md:col-span-2 md:row-span-1"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepCard
+              icon={items[0]?.icon ?? Database}
+              title={items[0]?.title ?? 'Ingest'}
+              description={items[0]?.description ?? ''}
+              microCopy={items[0]?.microCopy}
+            />
+          </motion.div>
+          <motion.div
+            className="md:row-span-2"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepCard
+              icon={items[1]?.icon ?? GitMerge}
+              title={items[1]?.title ?? 'Canonicalize'}
+              description={items[1]?.description ?? ''}
+              microCopy={items[1]?.microCopy}
+              className="h-full"
+            />
+          </motion.div>
+          <motion.div
+            className="md:col-span-1"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <StepCard
+              icon={items[2]?.icon ?? BarChart3}
+              title={items[2]?.title ?? 'Explain IPI'}
+              description={items[2]?.description ?? ''}
+              microCopy={items[2]?.microCopy}
+            />
+          </motion.div>
         </div>
       </div>
     </section>

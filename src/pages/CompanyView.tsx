@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
+import { SkipLinks } from '@/components/shared/SkipLinks'
 import { useIPISnapshot, useCompanyTimelineEvents, useCalculateIPI } from '@/hooks/useIPI'
 import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
 import { Button } from '@/components/ui/button'
@@ -197,8 +198,15 @@ export function CompanyView() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      <div className="flex flex-col gap-4">
+    <div className="space-y-8 animate-fade-in-up relative" role="main" aria-label="Company IPI Detail">
+      <SkipLinks
+        links={[
+          { href: '#company-main', label: 'Skip to main content' },
+          { href: '#ipi-summary', label: 'Skip to IPI summary' },
+          { href: '#top-narratives', label: 'Skip to top narratives' },
+        ]}
+      />
+      <div className="flex flex-col gap-4" aria-label="Company selector and time window">
         <div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
             {snapshot?.company_name ?? 'Company'}
@@ -220,9 +228,10 @@ export function CompanyView() {
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      <div id="company-main" className="grid gap-8 lg:grid-cols-3" role="region" aria-label="IPI summary and narratives" tabIndex={-1}>
+        <div className="lg:col-span-2 space-y-6" aria-label="IPI summary, top narratives, and timeline">
           <div className="grid gap-6 md:grid-cols-2">
+            <div id="ipi-summary" tabIndex={-1}>
             <IPISummaryPanel
               ipiValue={snapshot?.score}
               direction={snapshot?.direction}
@@ -234,12 +243,15 @@ export function CompanyView() {
               breakdown={snapshot?.breakdown}
               timestamp={snapshot?.window_end}
             />
+            </div>
 
+            <div id="top-narratives" tabIndex={-1}>
             <TopNarrativesList
               narratives={narrativesForList}
               companyId={id}
               windowStart={windowStart}
               windowEnd={windowEnd}
+              provenanceId={lastProvenanceId ?? snapshot?.provenance_id ?? ''}
             />
           </div>
 
@@ -288,9 +300,10 @@ export function CompanyView() {
 
           <PeerSnapshotPanel
             windowStart={windowStart}
-            windowEnd={windowEnd}
-          />
-        </div>
+              windowEnd={windowEnd}
+            />
+            </div>
+          </div>
       </div>
 
       <div className="rounded-[10px] border border-border bg-card p-6">
