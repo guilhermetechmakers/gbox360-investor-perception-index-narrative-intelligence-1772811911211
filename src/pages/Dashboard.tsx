@@ -28,6 +28,7 @@ const DEFAULT_WINDOW: TimeWindow = {
 export function Dashboard() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(DEFAULT_WINDOW)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
+  const [removingCompanyId, setRemovingCompanyId] = useState<string | null>(null)
 
   const windowStart = format(timeWindow.start, 'yyyy-MM-dd')
   const windowEnd = format(timeWindow.end, 'yyyy-MM-dd')
@@ -94,7 +95,9 @@ export function Dashboard() {
 
   const handleUnpin = useCallback(
     (companyId: string) => {
+      setRemovingCompanyId(companyId)
       removeSaved.mutate(companyId, {
+        onSettled: () => setRemovingCompanyId(null),
         onSuccess: () => {
           refetchCards()
           if (selectedCompanyId === companyId) setSelectedCompanyId(null)
@@ -109,10 +112,10 @@ export function Dashboard() {
   }, [refetchStatus])
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up" role="main" aria-label="Dashboard">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           {selectedCompanyId && (
             <Button
               variant="outline"
@@ -126,12 +129,14 @@ export function Dashboard() {
                 })
               }
               disabled={calculateIPI.isPending}
-              className="gap-2"
+              className="gap-2 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-ring focus-visible:ring-2"
+              aria-label="Calculate IPI for selected company"
+              aria-busy={calculateIPI.isPending}
             >
               {calculateIPI.isPending ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4 w-4 animate-spin" aria-hidden />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-4 w-4" aria-hidden />
               )}
               Calculate IPI
             </Button>
@@ -169,11 +174,13 @@ export function Dashboard() {
           )}
 
           {!savedLoading && safeSaved.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">No saved companies yet</p>
-                <p className="text-sm text-muted-foreground">
+            <Card className="rounded-[10px] border-border shadow-card">
+              <CardContent className="py-12 px-6 text-center">
+                <div className="rounded-full bg-muted p-4 inline-flex mb-4">
+                  <BarChart3 className="h-12 w-12 text-muted-foreground" aria-hidden />
+                </div>
+                <h2 className="text-lg font-semibold text-foreground mb-2">No saved companies yet</h2>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   Search and save companies above to see IPI quick cards here.
                 </p>
               </CardContent>
@@ -182,14 +189,17 @@ export function Dashboard() {
 
           {!savedLoading && safeSaved.length > 0 && (
             <>
-              {cardsLoading && (
+              {(cardsLoading || saveCompany.isPending) && (
                 <div className="grid gap-4 md:grid-cols-2">
                   {safeSaved.map((c) => (
                     <Skeleton key={c.id} className="h-48 rounded-lg" />
                   ))}
+                  {saveCompany.isPending && (
+                    <Skeleton className="h-48 rounded-lg animate-pulse" aria-hidden />
+                  )}
                 </div>
               )}
-              {!cardsLoading && safeCards.length > 0 && (
+              {!cardsLoading && !saveCompany.isPending && safeCards.length > 0 && (
                 <div className="grid gap-4 md:grid-cols-2">
                   {safeCards.map((snap) => (
                     <IPIQuickCard
@@ -201,9 +211,9 @@ export function Dashboard() {
                   ))}
                 </div>
               )}
-              {!cardsLoading && safeCards.length === 0 && (
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground">
+              {!cardsLoading && !saveCompany.isPending && safeCards.length === 0 && (
+                <Card className="rounded-[10px] border-border shadow-card">
+                  <CardContent className="py-8 text-center text-muted-foreground" role="status">
                     No IPI data for the selected window. Try another period.
                   </CardContent>
                 </Card>
@@ -220,11 +230,12 @@ export function Dashboard() {
             selectedCompanyId={selectedCompanyId}
             windowStart={windowStart}
             windowEnd={windowEnd}
+            removingCompanyId={removingCompanyId}
           />
         </div>
       </div>
 
-      <Card className="border-accent/30 bg-accent/5">
+      <Card className="rounded-[10px] border-accent/30 bg-accent/5 border-border shadow-card">
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground">
             <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk 20%.

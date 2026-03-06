@@ -111,21 +111,28 @@ export function useProvenance(provenanceId: string) {
 
 export function useCalculateIPI() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (params: {
-      companyId: string
-      windowStart: string
-      windowEnd: string
-      topN?: number
-    }) => ipiApi.calculate(params),
-    onSuccess: (_, variables) => {
+  type Variables = { companyId: string; windowStart: string; windowEnd: string; topN?: number }
+  type Context = { toastId: string | number }
+  return useMutation<Awaited<ReturnType<typeof ipiApi.calculate>>, Error, Variables, Context>({
+    mutationFn: (params: Variables) => ipiApi.calculate(params),
+    onMutate: () => {
+      const toastId = toast.loading('Calculating IPI…')
+      return { toastId }
+    },
+    onSuccess: (_data, variables, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
       queryClient.invalidateQueries({
         queryKey: ipiKeys.snapshot(variables.companyId, variables.windowStart, variables.windowEnd),
       })
       queryClient.invalidateQueries({ queryKey: ['ipi', 'dashboard'] })
       toast.success('IPI calculated successfully')
     },
-    onError: (err: Error) => toast.error(err.message ?? 'IPI calculation failed'),
+    onError: (err: Error, _variables, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
+      toast.error(err.message ?? 'IPI calculation failed')
+    },
   })
 }
 

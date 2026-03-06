@@ -60,24 +60,46 @@ export function useCompany(id: string) {
 
 export function useSaveCompany() {
   const queryClient = useQueryClient()
-  return useMutation({
+  type Context = { toastId: string | number }
+  return useMutation<void, Error, string, Context>({
     mutationFn: (companyId: string) => companiesApi.save(companyId),
-    onSuccess: () => {
+    onMutate: () => {
+      const toastId = toast.loading('Saving company…')
+      return { toastId }
+    },
+    onSuccess: (_, __, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
       queryClient.invalidateQueries({ queryKey: companyKeys.saved() })
       toast.success('Company saved')
     },
-    onError: (err: Error) => toast.error(err.message || 'Failed to save'),
+    onError: (err: Error, _, __, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
+      toast.error(err.message || 'Failed to save')
+    },
   })
 }
 
 export function useRemoveSavedCompany() {
   const queryClient = useQueryClient()
-  return useMutation({
+  type Context = { toastId: string | number }
+  return useMutation<void, Error, string, Context>({
     mutationFn: (companyId: string) => companiesApi.removeSaved(companyId),
-    onSuccess: () => {
+    onMutate: () => {
+      const toastId = toast.loading('Removing from saved…')
+      return { toastId }
+    },
+    onSuccess: (_, __, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
       queryClient.invalidateQueries({ queryKey: companyKeys.saved() })
       toast.success('Company removed from saved')
     },
-    onError: (err: Error) => toast.error(err.message || 'Failed to remove'),
+    onError: (err: Error, _, __, context) => {
+      const ctx = (context as unknown) as Context | undefined
+      if (ctx?.toastId) toast.dismiss(ctx.toastId)
+      toast.error(err.message || 'Failed to remove')
+    },
   })
 }

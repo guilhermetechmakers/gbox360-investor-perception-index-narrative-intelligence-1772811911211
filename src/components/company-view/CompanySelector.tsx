@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useCompanySuggest, useSavedCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
 import { useDebounce } from '@/hooks/useDebounce'
-import { Search, Calendar, Star, StarOff } from 'lucide-react'
+import { Search, Calendar, Star, StarOff, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CompanySearchResult } from '@/types/company'
 import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
@@ -98,6 +98,7 @@ export function CompanySelector({
   const [customStart, setCustomStart] = useState(format(timeWindow.start, 'yyyy-MM-dd'))
   const [customEnd, setCustomEnd] = useState(format(timeWindow.end, 'yyyy-MM-dd'))
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [pendingSaveCompanyId, setPendingSaveCompanyId] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const debouncedQuery = useDebounce(query, 250)
 
@@ -133,10 +134,15 @@ export function CompanySelector({
     (e: React.MouseEvent, companyId: string) => {
       e.preventDefault()
       e.stopPropagation()
+      setPendingSaveCompanyId(companyId)
       if (savedIds.has(companyId)) {
-        removeSaved.mutate(companyId)
+        removeSaved.mutate(companyId, {
+          onSettled: () => setPendingSaveCompanyId(null),
+        })
       } else {
-        saveCompany.mutate(companyId)
+        saveCompany.mutate(companyId, {
+          onSettled: () => setPendingSaveCompanyId(null),
+        })
       }
     },
     [savedIds, saveCompany, removeSaved]
@@ -293,14 +299,18 @@ export function CompanySelector({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 shrink-0"
+                      className="h-7 w-7 shrink-0 min-w-[44px] min-h-[44px]"
                       onClick={(e) => handleSaveToggle(e, company.id)}
+                      disabled={saveCompany.isPending || removeSaved.isPending}
                       aria-label={savedIds.has(company.id) ? `Remove ${company.name} from saved` : `Save ${company.name}`}
+                      aria-busy={pendingSaveCompanyId === company.id}
                     >
-                      {savedIds.has(company.id) ? (
-                        <StarOff className="h-3.5 w-3.5 text-accent" />
+                      {pendingSaveCompanyId === company.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" aria-hidden />
+                      ) : savedIds.has(company.id) ? (
+                        <StarOff className="h-3.5 w-3.5 text-accent" aria-hidden />
                       ) : (
-                        <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Star className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                       )}
                     </Button>
                   )}
