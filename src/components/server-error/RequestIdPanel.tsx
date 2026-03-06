@@ -5,9 +5,9 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 interface RequestIdPanelProps {
-  /** Request ID to display and copy */
+  /** Request ID to display (sanitized; use "UNKNOWN" if missing) */
   requestId: string
-  /** Optional class name */
+  /** Optional className */
   className?: string
 }
 
@@ -30,41 +30,38 @@ export function RequestIdPanel({ requestId, className }: RequestIdPanelProps) {
     }
   }, [requestId])
 
-  const displayId = typeof requestId === 'string' && requestId.length > 0
-    ? requestId
-    : 'UNKNOWN'
+  const displayId = typeof requestId === 'string' && requestId.length > 0 ? requestId : 'UNKNOWN'
 
   return (
     <div
       className={cn(
-        'rounded-md border border-border bg-muted/50 px-4 py-3',
+        'flex flex-col gap-2 rounded-md border border-border bg-muted/50 px-4 py-3',
         className
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Request ID
-          </p>
-          <p className="mt-0.5 font-mono text-sm text-foreground break-all">
-            {displayId}
-          </p>
-        </div>
+        <span className="text-xs font-medium text-muted-foreground">Request ID</span>
         <Button
-          type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={handleCopy}
-          className="shrink-0 h-9 px-3 rounded-full"
-          aria-label="Copy Request ID to clipboard"
+          className="h-8 gap-1.5 px-2 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={`Copy request ID ${displayId}`}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-success" />
+            <>
+              <Check className="h-3.5 w-3.5 text-success" aria-hidden />
+              <span>Copied</span>
+            </>
           ) : (
-            <Copy className="h-4 w-4" />
+            <>
+              <Copy className="h-3.5 w-3.5" aria-hidden />
+              <span>Copy</span>
+            </>
           )}
         </Button>
       </div>
+      <code className="break-all font-mono text-sm text-foreground">{displayId}</code>
     </div>
   )
 }
