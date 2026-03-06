@@ -29,6 +29,7 @@ import { Terms } from '@/pages/Terms'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { UserManagement } from '@/pages/admin/UserManagement'
 import { IngestMonitor } from '@/pages/admin/IngestMonitor'
+import { TranscriptIngestion } from '@/pages/admin/TranscriptIngestion'
 import { RawPayloadBrowser } from '@/pages/admin/RawPayloadBrowser'
 import { AuditExports } from '@/pages/admin/AuditExports'
 
@@ -126,6 +127,7 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="ingest-monitor" element={<IngestMonitor />} />
+            <Route path="transcript-ingestion" element={<TranscriptIngestion />} />
             <Route path="payloads" element={<RawPayloadBrowser />} />
             <Route path="audit-exports" element={<AuditExports />} />
           </Route>

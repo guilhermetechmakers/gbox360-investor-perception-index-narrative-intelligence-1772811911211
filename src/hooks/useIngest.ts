@@ -131,3 +131,54 @@ export function useErrorRetry() {
     },
   })
 }
+
+/** Transcript batch ingestion */
+const BATCH_STATUS_KEY = ['ingest', 'batch-status']
+
+export function useTranscriptBatchSubmit() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (params: import('@/types/ingest').TranscriptBatchRequest) =>
+      ingestApi.submitTranscriptBatch(params),
+    onSuccess: (data) => {
+      if (data?.batch_id) {
+        queryClient.invalidateQueries({ queryKey: BATCH_STATUS_KEY })
+        queryClient.invalidateQueries({ queryKey: METRICS_KEY })
+      }
+      toast.success(data?.batch_id ? `Batch ${data.batch_id} submitted` : 'Batch submitted')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Batch submit failed')
+    },
+  })
+}
+
+export function useBatchStatus(batchId: string | null, refetchInterval?: number) {
+  return useQuery({
+    queryKey: [...BATCH_STATUS_KEY, batchId],
+    queryFn: async () => {
+      if (!batchId) return null
+      const res = await ingestApi.getTranscriptBatchStatus(batchId)
+      return res
+    },
+    enabled: !!batchId,
+    refetchInterval: batchId ? (refetchInterval ?? 5000) : false,
+  })
+}
+
+export function useIngestReplayPayload() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (params: import('@/types/ingest').ReplayRequest) =>
+      ingestApi.replayPayload(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: METRICS_KEY })
+      queryClient.invalidateQueries({ queryKey: DLQ_KEY })
+      queryClient.invalidateQueries({ queryKey: BATCH_STATUS_KEY })
+      toast.success('Replay initiated')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Replay failed')
+    },
+  })
+}

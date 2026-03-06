@@ -1,0 +1,24 @@
+{
+  "batch_id": "sample-batch-2024-q1",
+  "company": "AAPL",
+  "items": [
+    {
+      "external_id": "transcript-aapl-q1-2024-001",
+      "source": "transcript",
+      "timestamp": "2024-01-25T18:00:00Z",
+      "speaker": "Tim Cook",
+      "speaker_role": "CEO",
+      "audience": "investors",
+      "text": "We delivered strong results in Q1 with record revenue and all-time high for services."
+    },
+    {
+      "external_id": "transcript-aapl-q1-2024-002",
+      "source": "transcript",
+      "timestamp": "2024-01-25T18:05:00Z",
+      "speaker": "Luca Maestri",
+      "speaker_role": "CFO",
+      "audience": "investors",
+      "text": "iPhone revenue was up 6% year over year, driven by strong demand in emerging markets."
+    }
+  ]
+}

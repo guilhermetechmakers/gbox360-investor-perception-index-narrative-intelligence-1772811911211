@@ -100,12 +100,20 @@ export function IngestMonitorDashboard() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Ingest monitor</h1>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/admin">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to overview
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/transcript-ingestion">Transcript batch</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin/payloads">Raw payloads & events</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to overview
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
