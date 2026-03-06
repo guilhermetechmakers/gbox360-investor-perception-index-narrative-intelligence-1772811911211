@@ -1,103 +1,129 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  LoginFormComponent,
+  LayoutWrapper,
+  SignUpLink,
+} from '@/components/login'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useSignIn } from '@/hooks/useAuth'
+import { useSignIn, useDemoSignIn } from '@/hooks/useAuth'
+import { features } from '@/config/features'
 import { Building2 } from 'lucide-react'
-
-const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password required'),
-  remember: z.boolean().optional(),
-})
-
-type FormData = z.infer<typeof schema>
+import { cn } from '@/lib/utils'
 
 export function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const signIn = useSignIn()
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { remember: false },
-  })
+  const demoSignIn = useDemoSignIn()
 
-  const onSubmit = (data: FormData) => {
+  const token =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const isAuthenticated = !!token
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
+
+  useEffect(() => {
+    const highlightDemo = searchParams.get('demo') === '1'
+    if (highlightDemo) {
+      const el = document.getElementById('demo-panel')
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [searchParams])
+
+  const handleSubmit = (data: { email: string; password: string; rememberMe?: boolean }) => {
     signIn.mutate(
-      { email: data.email, password: data.password, remember: data.remember },
+      {
+        email: data.email,
+        password: data.password,
+        remember: data.rememberMe,
+      },
       { onSuccess: () => navigate('/dashboard') }
     )
   }
 
+  const handleDemo = () => {
+    demoSignIn.mutate(undefined, {
+      onSuccess: () => navigate('/dashboard'),
+    })
+  }
+
+  const apiError = signIn.error?.message ?? null
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in-up">
+    <LayoutWrapper>
+      <div className="w-full animate-fade-in-up">
         <div className="flex justify-center mb-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold">
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+            aria-label="Home"
+          >
             <Building2 className="h-8 w-8 text-primary" />
             Gbox360
           </Link>
         </div>
-        <Card>
+
+        <Card className="card-surface">
           <CardHeader>
-            <CardTitle>Log in</CardTitle>
-            <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
+            <CardTitle className="text-2xl sm:text-[1.75rem] font-bold">
+              Sign in to Gbox360
+            </CardTitle>
+            <CardDescription>
+              Enter your credentials to access the dashboard.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  className="mt-1"
-                  {...register('email')}
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  className="mt-1"
-                  {...register('password')}
-                />
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" {...register('remember')} className="rounded border-input" />
-                  Remember me
-                </label>
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <Button type="submit" className="w-full" disabled={signIn.isPending}>
-                {signIn.isPending ? 'Signing in...' : 'Log in'}
-              </Button>
-            </form>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link to="/signup" className="text-primary font-medium hover:underline">
-                Sign up
-              </Link>
-            </p>
+            <LoginFormComponent
+              onSubmit={handleSubmit}
+              loading={signIn.isPending}
+              demoLoading={demoSignIn.isPending}
+              error={apiError}
+              onDemo={features.demoMode ? handleDemo : undefined}
+              showOAuth={features.oauthGoogle}
+              showDemoPanel={features.demoMode}
+            />
           </CardContent>
         </Card>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Demo access available. Contact support for credentials.
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Don&apos;t have an account? <SignUpLink />
+        </p>
+
+        {features.demoMode && (
+          <p className="mt-3 text-center text-sm text-muted-foreground">
+            <button
+              type="button"
+              onClick={handleDemo}
+              disabled={demoSignIn.isPending}
+              className={cn(
+                'text-primary font-medium hover:underline',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              aria-label="Request demo - explore with limited access"
+            >
+              Request demo
+            </button>
+          </p>
+        )}
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          By signing in, you agree to our{' '}
+          <Link to="/terms" className="text-primary hover:underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link to="/privacy" className="text-primary hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
-    </div>
+    </LayoutWrapper>
   )
 }

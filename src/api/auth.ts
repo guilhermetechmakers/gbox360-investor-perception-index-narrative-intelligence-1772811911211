@@ -110,19 +110,4 @@ export const authApi = {
       message: res?.message ?? '',
     }
   },
-
-  /** Demo mode sign-in (limited scope, no credentials required) */
-  demoSignIn: async (): Promise<AuthResponse> => {
-    const res = await api.post<AuthResponse>('/auth/demo-signin', {})
-    const payload = res ?? {}
-    const token = payload?.token ?? null
-    if (token && typeof localStorage !== 'undefined') {
-      localStorage.setItem('auth_token', token)
-    }
-    return {
-      token: payload?.token,
-      user: payload?.user,
-      expiresIn: payload?.expiresIn,
-    }
-  },
 }

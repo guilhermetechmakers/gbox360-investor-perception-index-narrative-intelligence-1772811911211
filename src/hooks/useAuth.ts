@@ -145,19 +145,3 @@ export function useVerificationStatus(enabled: boolean) {
     enabled,
   })
 }
-
-export function useDemoSignIn() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: () => authApi.demoSignIn(),
-    onSuccess: (data) => {
-      if (data?.user) {
-        queryClient.setQueryData(authKeys.user, data.user)
-      }
-      toast.success('Demo mode started. Explore with limited access.')
-    },
-    onError: (err: Error) => {
-      toast.error(err.message ?? 'Demo sign-in failed')
-    },
-  })
-}
