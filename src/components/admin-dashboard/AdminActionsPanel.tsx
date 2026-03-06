@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { LogTable } from './LogTable'
 import { Search } from 'lucide-react'
 import type { AdminAction } from '@/types/admin'
@@ -74,27 +73,18 @@ export function AdminActionsPanel({
           </Select>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full rounded" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border py-12 text-center">
-            <p className="text-sm text-muted-foreground">No admin actions found.</p>
-          </div>
-        ) : (
-          <LogTable<AdminAction>
-            columns={[
-              { key: 'actionType', header: 'Action', render: (a) => formatActionType(a.actionType ?? '') },
-              { key: 'userId', header: 'User', render: (a) => a.userId ?? '—' },
-              { key: 'timestamp', header: 'Time', render: (a) => (a.timestamp ? new Date(a.timestamp).toLocaleString() : '—') },
-            ]}
-            data={filtered}
-            keyExtractor={(a) => a.id}
-          />
-        )}
+        <LogTable<AdminAction>
+          columns={[
+            { key: 'actionType', header: 'Action', render: (a) => formatActionType(a.actionType ?? '') },
+            { key: 'userId', header: 'User', render: (a) => a.userId ?? '—' },
+            { key: 'timestamp', header: 'Time', render: (a) => (a.timestamp ? new Date(a.timestamp).toLocaleString() : '—') },
+          ]}
+          data={filtered}
+          keyExtractor={(a) => a.id}
+          isLoading={isLoading}
+          emptyMessage="No admin actions found."
+          aria-label="Recent admin actions"
+        />
       </CardContent>
     </Card>
   )
