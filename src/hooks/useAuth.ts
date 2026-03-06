@@ -81,8 +81,11 @@ export function useResetPassword() {
 
 export function useResendVerification() {
   return useMutation({
-    mutationFn: () => authApi.resendVerification(),
-    onSuccess: () => toast.success('Verification email sent'),
+    mutationFn: (email: string) => authApi.resendVerification(email),
+    onSuccess: (data) => {
+      if (data.success) toast.success('Verification email sent')
+      else toast.error(data.message)
+    },
     onError: (err: Error) =>
       toast.error(err.message || 'Resend verification failed'),
   })
@@ -90,8 +93,28 @@ export function useResendVerification() {
 
 export function useChangeEmail() {
   return useMutation({
-    mutationFn: (newEmail: string) => authApi.changeEmail(newEmail),
-    onSuccess: () => toast.success('Verification email sent to new address'),
-    onError: (err: Error) => toast.error(err.message || 'Change email failed'),
+    mutationFn: ({
+      newEmail,
+      currentPassword,
+    }: {
+      newEmail: string
+      currentPassword?: string
+    }) => authApi.changeEmail(newEmail, currentPassword),
+    onSuccess: (data) => {
+      if (data.success) toast.success('Verification email sent to new address')
+      else toast.error(data.message)
+    },
+    onError: (err: Error) =>
+      toast.error(err.message || 'Change email failed'),
+  })
+}
+
+export function useVerificationStatus(enabled: boolean) {
+  return useQuery({
+    queryKey: ['auth', 'verification-status'],
+    queryFn: () => authApi.getVerificationStatus(),
+    staleTime: 1000 * 30,
+    retry: false,
+    enabled,
   })
 }

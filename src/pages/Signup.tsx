@@ -38,7 +38,10 @@ export function Signup() {
         role: data.role,
         invite_code: data.invite_code,
       },
-      { onSuccess: () => navigate('/verify-email') }
+      {
+        onSuccess: () =>
+          navigate('/verify-email', { state: { email: data.email } }),
+      }
     )
   }
 

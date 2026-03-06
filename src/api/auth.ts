@@ -1,5 +1,12 @@
 import { api } from '@/lib/api'
-import type { AuthResponse, SignInInput, SignUpInput } from '@/types/auth'
+import type {
+  AuthResponse,
+  SignInInput,
+  SignUpInput,
+  VerificationStatusResponse,
+  ResendVerificationResponse,
+  ChangeEmailResponse,
+} from '@/types/auth'
 
 export const authApi = {
   signIn: async (credentials: SignInInput): Promise<AuthResponse> => {
@@ -27,9 +34,38 @@ export const authApi = {
   resetPassword: async (token: string, newPassword: string): Promise<void> =>
     api.post('/auth/reset-password', { token, password: newPassword }),
 
-  resendVerification: async (): Promise<void> =>
-    api.post('/auth/resend-verification', {}),
+  getVerificationStatus: async (): Promise<VerificationStatusResponse> => {
+    const res = await api.get<VerificationStatusResponse>('/auth/verification-status')
+    return {
+      status: res?.status ?? 'unknown',
+      lastSentAt: res?.lastSentAt ?? null,
+      attempts: res?.attempts ?? 0,
+      email: res?.email ?? undefined,
+    }
+  },
 
-  changeEmail: async (newEmail: string): Promise<void> =>
-    api.post('/auth/change-email', { new_email: newEmail }),
+  resendVerification: async (email: string): Promise<ResendVerificationResponse> => {
+    const res = await api.post<ResendVerificationResponse>('/auth/resend-verification', {
+      email,
+    })
+    return {
+      success: res?.success ?? false,
+      message: res?.message ?? '',
+      nextAllowedAt: res?.nextAllowedAt,
+    }
+  },
+
+  changeEmail: async (
+    newEmail: string,
+    currentPassword?: string
+  ): Promise<ChangeEmailResponse> => {
+    const res = await api.post<ChangeEmailResponse>('/auth/change-email', {
+      newEmail,
+      currentPassword: currentPassword ?? undefined,
+    })
+    return {
+      success: res?.success ?? false,
+      message: res?.message ?? '',
+    }
+  },
 }
