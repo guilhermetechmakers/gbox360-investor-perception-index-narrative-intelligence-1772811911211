@@ -1,20 +1,15 @@
 /**
  * Topic Classification & Narrative Persistence types
- * Aligns with Topic Classification spec and runtime safety rules.
+ * Aligns with Topic Classification & Narrative Persistence spec.
  */
 
+/** Topic label with confidence score */
 export interface TopicLabel {
   topic: string
   confidence: number
 }
 
-export interface TopicClassificationResult {
-  top_topic_labels: TopicLabel[]
-  primary_topic: string
-  clustering_id: string | null
-  explanation: string
-}
-
+/** Contributing event preview for persistence aggregates */
 export interface ContributingEventPreview {
   narrative_id: string
   timestamp: string
@@ -23,6 +18,7 @@ export interface ContributingEventPreview {
   weight: number
 }
 
+/** Per-topic persistence aggregate */
 export interface TopicAggregate {
   id: string
   topic_label: string
@@ -33,6 +29,7 @@ export interface TopicAggregate {
   top_contributing_events: ContributingEventPreview[]
 }
 
+/** Narrative event with topic classification (extends canonical) */
 export interface NarrativeEventWithTopics {
   id: string
   event_id: string
@@ -49,27 +46,31 @@ export interface NarrativeEventWithTopics {
   topic_labels: TopicLabel[]
   primary_topic: string
   clustering_id: string | null
-  authority_score: number | null
-  credibility_flags: Record<string, unknown> | null
-  /** Classification rationale (rule-based or embedding) */
   explanation?: string
 }
 
-export interface NarrativeIngestPayload {
-  id?: string
-  source: string
-  platform: string
-  speaker: string
-  speaker_role?: string
-  audience_class: string
-  text: string
-  timestamp: string
-  event_type: string
-  provenance: Record<string, unknown>
-  raw_payload?: Record<string, unknown>
+/** Topic classification result from classifier */
+export interface TopicClassificationResult {
+  top_topic_labels: TopicLabel[]
+  primary_topic: string
+  clustering_id: string | null
+  explanation: string
 }
 
-export interface NarrativesListParams {
+/** Authority weights by audience class */
+export const AUTHORITY_WEIGHTS: Record<string, number> = {
+  analyst: 1.0,
+  institutional: 0.85,
+  media: 0.7,
+  retail: 0.4,
+  unknown: 0.3,
+}
+
+/** Default weight for unknown audience class */
+export const DEFAULT_AUTHORITY_WEIGHT = 0.3
+
+/** Narrative list query params */
+export interface NarrativeListParams {
   company_id?: string
   window_start?: string
   window_end?: string
@@ -78,26 +79,9 @@ export interface NarrativesListParams {
   offset?: number
 }
 
-export interface NarrativesListResponse {
-  items: NarrativeEventWithTopics[]
-  total: number
-}
-
+/** Topics aggregate query params */
 export interface TopicsAggregateParams {
-  company_id: string
+  company_id?: string
   window_start: string
   window_end: string
-}
-
-export interface TopicsAggregateResponse {
-  items: TopicAggregate[]
-}
-
-/** Authority weights: Analyst > Media > Retail */
-export const AUTHORITY_WEIGHTS: Record<string, number> = {
-  analyst: 1.0,
-  media: 0.7,
-  retail: 0.4,
-  institutional: 0.8,
-  unknown: 0.5,
 }
