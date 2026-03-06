@@ -1,6 +1,10 @@
 export interface AuthResponse {
-  token: string
-  user: { id: string; email: string; full_name?: string; role?: string }
+  token?: string
+  user?: { id: string; email: string; full_name?: string; role?: string }
+  /** When true, user must verify email before full access */
+  requiresEmailVerification?: boolean
+  userId?: string
+  verificationSentAt?: string
 }
 
 export interface SignInInput {

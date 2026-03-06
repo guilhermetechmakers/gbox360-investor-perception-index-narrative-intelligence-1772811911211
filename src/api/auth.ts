@@ -19,7 +19,7 @@ export const authApi = {
 
   signUp: async (credentials: SignUpInput): Promise<AuthResponse> => {
     const data = await api.post<AuthResponse>('/auth/register', credentials)
-    if (data.token && typeof localStorage !== 'undefined')
+    if (data?.token && typeof localStorage !== 'undefined')
       localStorage.setItem('auth_token', data.token)
     return data
   },

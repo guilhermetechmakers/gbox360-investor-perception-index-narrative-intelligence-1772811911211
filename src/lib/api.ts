@@ -14,13 +14,21 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
   const res = await fetch(url, { ...options, headers })
   if (!res.ok) {
+    let message = `API Error: ${res.status}`
+    try {
+      const body = (await res.json()) as { message?: string; error?: string; msg?: string }
+      const errMsg = body?.message ?? body?.error ?? body?.msg
+      if (typeof errMsg === 'string' && errMsg.trim()) message = errMsg
+    } catch {
+      // Response body may not be JSON
+    }
     if (res.status === 401) {
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('auth_token')
         window.location.href = '/login'
       }
     }
-    throw new Error(`API Error: ${res.status}`)
+    throw new Error(message)
   }
   return res.json() as Promise<T>
 }

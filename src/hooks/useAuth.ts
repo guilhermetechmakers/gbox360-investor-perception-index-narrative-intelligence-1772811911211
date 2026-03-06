@@ -42,7 +42,7 @@ export function useSignUp() {
       toast.success('Account created. Please check your email to verify.')
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Sign up failed')
+      toast.error(err.message ?? 'Sign up failed')
     },
   })
 }
