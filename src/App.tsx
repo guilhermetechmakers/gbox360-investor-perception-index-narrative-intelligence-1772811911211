@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ToastProvider, ToastContainer } from '@/components/feedback'
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -48,6 +49,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ToastProvider>
       <TooltipProvider>
       <BrowserRouter>
         <Routes>
@@ -104,7 +106,9 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       <Toaster richColors position="top-right" />
+      <ToastContainer position="bottom-right" />
       </TooltipProvider>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }
