@@ -17,4 +17,11 @@ export interface UpdateUserInput {
   full_name?: string
   avatar_url?: string
   org?: string
+  role?: UserRole
+  roles?: string[]
+}
+
+export interface UserWithAdminFields extends User {
+  last_login?: string
+  roles?: string[]
 }

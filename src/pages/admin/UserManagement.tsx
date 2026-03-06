@@ -1,121 +1,190 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useUsers } from '@/hooks/useUsers'
-import { useDisableUser, useResendUserVerification } from '@/hooks/useUsers'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
-import { Mail, Ban } from 'lucide-react'
-import { format } from 'date-fns'
+  AdminUserTable,
+  AdminUserDetailPanel,
+  BulkActionsPanel,
+  AuditExportPanel,
+} from '@/components/admin-user-management'
+import { useDebounce } from '@/hooks/useDebounce'
+import {
+  useAdminUsers,
+  useAdminUser,
+  useAdminUserActivity,
+  useAdminUpdateUser,
+  useAdminDisableUser,
+  useAdminResendVerification,
+  useAdminResetPassword,
+  useAdminImportCsv,
+} from '@/hooks/useAdminUsers'
+import type { SortField, SortDir } from '@/components/admin-user-management/AdminUserTable'
+import { adminUsersApi } from '@/api/admin-users'
+import { toast } from 'sonner'
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export function UserManagement() {
   const [search, setSearch] = useState('')
-  const { data: users, isLoading } = useUsers({ search: search || undefined })
-  const disableUser = useDisableUser()
-  const resendVerification = useResendUserVerification()
+  const [roleFilter, setRoleFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [detailUserId, setDetailUserId] = useState<string | null>(null)
+
+  const debouncedSearch = useDebounce(search, 300)
+
+  const { data, isLoading } = useAdminUsers({
+    search: debouncedSearch || undefined,
+    role: roleFilter || undefined,
+    status: statusFilter || undefined,
+  })
+
+  const users = data?.data ?? []
+
+  const { data: detailUser } = useAdminUser(detailUserId)
+  const { data: activityLogs = [], isLoading: activityLoading } = useAdminUserActivity(detailUserId)
+
+  const updateUser = useAdminUpdateUser()
+  const disableUser = useAdminDisableUser()
+  const resendVerification = useAdminResendVerification()
+  const resetPassword = useAdminResetPassword()
+  const importCsv = useAdminImportCsv()
+  const [exportLoading, setExportLoading] = useState(false)
+  const [auditExportLoading, setAuditExportLoading] = useState(false)
+
+  const handleSort = useCallback((field: SortField, dir: SortDir) => {
+    setSortField(field)
+    setSortDir(dir)
+  }, [])
+
+  const handleSelect = useCallback((id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (selected) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = useCallback((selected: boolean) => {
+    if (selected) {
+      setSelectedIds(new Set(users.map((u) => u.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }, [users])
+
+  const handleExportCsv = useCallback(async () => {
+    setExportLoading(true)
+    try {
+      const blob = await adminUsersApi.exportCsv({
+        search: debouncedSearch || undefined,
+        role: roleFilter || undefined,
+        status: statusFilter || undefined,
+      })
+      downloadBlob(blob, `users-export-${new Date().toISOString().slice(0, 10)}.csv`)
+      toast.success('Export downloaded')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Export failed')
+    } finally {
+      setExportLoading(false)
+    }
+  }, [debouncedSearch, roleFilter, statusFilter])
+
+  const handleAuditExport = useCallback(async () => {
+    setAuditExportLoading(true)
+    try {
+      const blob = await adminUsersApi.exportAudits()
+      downloadBlob(blob, `audit-logs-${new Date().toISOString().slice(0, 10)}.json`)
+      toast.success('Audit export downloaded')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Audit export failed')
+    } finally {
+      setAuditExportLoading(false)
+    }
+  }, [])
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">User management</h1>
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-48"
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">User management</h1>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/admin">Back to overview</Link>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="card-surface">
+            <CardHeader>
+              <CardTitle className="text-lg">Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdminUserTable
+                users={users}
+                isLoading={isLoading}
+                search={search}
+                onSearchChange={setSearch}
+                roleFilter={roleFilter}
+                onRoleFilterChange={setRoleFilter}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                sortField={sortField}
+                sortDir={sortDir}
+                onSort={handleSort}
+                selectedIds={selectedIds}
+                onSelect={handleSelect}
+                onSelectAll={handleSelectAll}
+                onResendVerification={(id) => resendVerification.mutate(id)}
+                onDisable={(id) => disableUser.mutate({ id })}
+                onResetPassword={(id) => resetPassword.mutate(id)}
+                onEditRoles={(u) => setDetailUserId(u.id)}
+                onRowClick={(u) => setDetailUserId(u.id)}
+                isResending={resendVerification.isPending}
+                isDisabling={disableUser.isPending}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <BulkActionsPanel
+            selectedCount={selectedIds.size}
+            onImportCsv={(file) => importCsv.mutate(file)}
+            onExportCsv={handleExportCsv}
+            importLoading={importCsv.isPending}
+            exportLoading={exportLoading}
           />
-          <Button variant="outline" disabled>
-            Export CSV
-          </Button>
+          <AuditExportPanel
+            onExport={handleAuditExport}
+            isLoading={auditExportLoading}
+          />
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-            {isLoading && (
-              <div className="space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            )}
-            {!isLoading && users && users.length === 0 && (
-              <p className="py-8 text-center text-muted-foreground">No users found.</p>
-            )}
-            {!isLoading && users && users.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Verified</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="w-32">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>{u.full_name ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{u.role ?? 'user'}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {u.email_verified ? (
-                          <Badge variant="success">Yes</Badge>
-                        ) : (
-                          <Badge variant="outline">No</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(u.created_at), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {!u.email_verified && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => resendVerification.mutate(u.id)}
-                              disabled={resendVerification.isPending}
-                              title="Resend verification"
-                            >
-                              <Mail className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => disableUser.mutate({ id: u.id })}
-                            disabled={disableUser.isPending}
-                            title="Disable user"
-                          >
-                            <Ban className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-        </CardContent>
-      </Card>
+      <AdminUserDetailPanel
+        user={detailUser ?? null}
+        activity={activityLogs}
+        activityLoading={activityLoading}
+        open={!!detailUserId}
+        onOpenChange={(open) => !open && setDetailUserId(null)}
+        onUpdateUser={(id, payload) => updateUser.mutate({ id, payload })}
+        onResendVerification={(id) => resendVerification.mutate(id)}
+        onDisable={(id) => disableUser.mutate({ id })}
+        onResetPassword={(id) => resetPassword.mutate(id)}
+        disablePending={disableUser.isPending}
+        resendPending={resendVerification.isPending}
+      />
     </div>
   )
 }

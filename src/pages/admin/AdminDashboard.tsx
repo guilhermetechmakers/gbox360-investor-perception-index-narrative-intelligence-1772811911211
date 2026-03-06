@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Database, Users, FileJson, AlertTriangle } from 'lucide-react'
+import { Database, Users, FileJson, AlertTriangle, FileDown } from 'lucide-react'
 
 export function AdminDashboard() {
   return (
@@ -61,6 +61,12 @@ export function AdminDashboard() {
               <Link to="/admin/users">
                 <Users className="mr-2 h-4 w-4" />
                 User management
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link to="/admin/users#audit-export">
+                <FileDown className="mr-2 h-4 w-4" />
+                Audit export
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
