@@ -173,8 +173,23 @@ export function useCompanyTimelineEvents(
   }, [results])
 
   const isLoading = results.some((r) => r.isLoading)
+  const isError = results.some((r) => r.isError)
+  const firstError = results.find((r) => r.error)?.error
+  const errorMessage =
+    firstError instanceof Error ? firstError.message : typeof firstError === 'string' ? firstError : null
 
-  return { data: events, isLoading }
+  const refetch = useMemo(
+    () => () => Promise.all(results.map((r) => r.refetch())),
+    [results]
+  )
+
+  return {
+    data: events,
+    isLoading,
+    isError,
+    error: errorMessage,
+    refetch,
+  }
 }
 
 export function useRequestExport() {

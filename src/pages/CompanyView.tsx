@@ -80,7 +80,7 @@ export function CompanyView() {
     [snapshot?.top_narratives]
   )
 
-  const { data: timelineEvents = [] } = useCompanyTimelineEvents(narrativeIds)
+  const { data: timelineEvents = [], isLoading: timelineLoading, isError: timelineError, error: timelineErr, refetch: refetchTimeline } = useCompanyTimelineEvents(narrativeIds)
 
   const { data: savedCompanies = [] } = useSavedCompanies()
   const { data: recentCompanies = [] } = useRecentCompanies()
@@ -336,7 +336,7 @@ export function CompanyView() {
           role="alert"
         />
       )}
-      <div className="flex flex-col gap-4" aria-label="Company selector and time window">
+      <div id="company-selector-time-window" className="flex flex-col gap-4" aria-label="Company selector and time window">
         <div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
             {snapshot?.company_name ?? 'Company'}
@@ -422,7 +422,12 @@ export function CompanyView() {
 
           <TimelineView
             events={timelineEvents}
+            isLoading={timelineLoading}
+            error={timelineError ? (timelineErr ?? 'Failed to load timeline events') : null}
+            onRetry={() => refetchTimeline()}
             onViewPayload={(rawPayloadId) => setPayloadModalId(rawPayloadId)}
+            onEmptyAction={() => document.getElementById('company-selector-time-window')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            emptyStateActionLabel="Change time window"
           />
           </div>
 
