@@ -18,6 +18,9 @@ export interface AdminUserDetailPanelProps {
   user: AdminUser | null
   activity: ActivityLog[]
   activityLoading?: boolean
+  /** Optional refetch for activity log; when provided, empty state shows Refresh button with loading state */
+  onRefreshActivity?: () => void
+  activityRefreshing?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdateUser: (id: string, payload: { roles?: AdminUser['roles']; status?: AdminUser['status'] }) => void
@@ -32,6 +35,8 @@ export function AdminUserDetailPanel({
   user,
   activity,
   activityLoading = false,
+  onRefreshActivity,
+  activityRefreshing = false,
   open,
   onOpenChange,
   onUpdateUser,
@@ -112,8 +117,15 @@ export function AdminUserDetailPanel({
             <Separator />
 
             <div>
-              <h4 className="text-sm font-medium mb-2">Recent activity</h4>
-              <ActivityLogList logs={activity} isLoading={activityLoading} />
+              <h4 id="activity-log-heading" className="text-sm font-medium mb-2">Recent activity</h4>
+              <ActivityLogList
+                logs={activity}
+                isLoading={activityLoading}
+                ariaLabel="Recent activity log"
+                labelledById="activity-log-heading"
+                onRefresh={onRefreshActivity}
+                isRefreshing={activityRefreshing}
+              />
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">

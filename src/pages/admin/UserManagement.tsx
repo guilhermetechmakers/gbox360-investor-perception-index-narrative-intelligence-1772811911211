@@ -53,7 +53,7 @@ export function UserManagement() {
   const users = data?.data ?? []
 
   const { data: detailUser } = useAdminUser(detailUserId)
-  const { data: activityLogs = [], isLoading: activityLoading } = useAdminUserActivity(detailUserId)
+  const { data: activityLogs = [], isLoading: activityLoading, refetch: refetchActivity, isFetching: activityRefreshing } = useAdminUserActivity(detailUserId)
 
   const updateUser = useAdminUpdateUser()
   const disableUser = useAdminDisableUser()
@@ -178,6 +178,8 @@ export function UserManagement() {
         user={detailUser ?? null}
         activity={activityLogs}
         activityLoading={activityLoading}
+        onRefreshActivity={() => refetchActivity()}
+        activityRefreshing={activityRefreshing}
         open={!!detailUserId}
         onOpenChange={(open) => !open && setDetailUserId(null)}
         onUpdateUser={(id, payload) => updateUser.mutate({ id, payload })}
