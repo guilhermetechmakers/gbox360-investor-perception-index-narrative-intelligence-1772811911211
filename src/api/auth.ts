@@ -6,6 +6,7 @@ import type {
   VerificationStatusResponse,
   ResendVerificationResponse,
   ChangeEmailResponse,
+  PasswordResetTokenStatusResponse,
 } from '@/types/auth'
 
 export const authApi = {
@@ -33,6 +34,23 @@ export const authApi = {
 
   resetPassword: async (token: string, newPassword: string): Promise<void> =>
     api.post('/auth/reset-password', { token, password: newPassword }),
+
+  getPasswordResetTokenStatus: async (
+    token: string
+  ): Promise<PasswordResetTokenStatusResponse | null> => {
+    try {
+      const res = await api.get<PasswordResetTokenStatusResponse>(
+        `/auth/password-reset-token-status?token=${encodeURIComponent(token)}`
+      )
+      return {
+        valid: res?.valid ?? false,
+        expiresAt: res?.expiresAt,
+        reason: res?.reason,
+      }
+    } catch {
+      return null
+    }
+  },
 
   getVerificationStatus: async (): Promise<VerificationStatusResponse> => {
     const res = await api.get<VerificationStatusResponse>('/auth/verification-status')

@@ -53,10 +53,8 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<PasswordReset />} />
-          <Route
-            path="/forgot-password/reset"
-            element={<PasswordReset />}
-          />
+          <Route path="/forgot-password/reset" element={<PasswordReset />} />
+          <Route path="/reset" element={<PasswordReset />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />

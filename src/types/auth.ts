@@ -38,3 +38,11 @@ export interface ChangeEmailResponse {
   success: boolean
   message: string
 }
+
+/** Password reset token status (optional endpoint for UX) */
+export interface PasswordResetTokenStatusResponse {
+  valid: boolean
+  expiresAt?: string
+  reason?: string
+}
+

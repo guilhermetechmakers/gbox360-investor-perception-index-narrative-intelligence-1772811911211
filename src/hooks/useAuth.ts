@@ -63,9 +63,21 @@ export function useResetPasswordRequest() {
   return useMutation({
     mutationFn: (email: string) => authApi.resetPasswordRequest(email),
     onSuccess: () =>
-      toast.success('Password reset email sent. Check your inbox.'),
+      toast.success(
+        "If this email is registered, you'll receive a password reset link shortly."
+      ),
     onError: (err: Error) =>
       toast.error(err.message || 'Password reset request failed'),
+  })
+}
+
+export function usePasswordResetTokenStatus(token: string | null) {
+  return useQuery({
+    queryKey: ['auth', 'password-reset-token-status', token ?? ''],
+    queryFn: () => authApi.getPasswordResetTokenStatus(token!),
+    enabled: !!token && token.length > 0,
+    staleTime: 1000 * 60,
+    retry: false,
   })
 }
 
