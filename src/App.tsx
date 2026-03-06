@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ToastProvider, ToastContainer } from '@/components/feedback'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { syncAuthTokenFromSession } from '@/lib/auth-token-sync'
+import { supabase } from '@/lib/supabase'
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -41,14 +45,44 @@ const queryClient = new QueryClient({
 })
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
-  if (!token) return <Navigate to="/login" replace />
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
+  useEffect(() => {
+    const client = supabase
+    if (!client) {
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+      setHasSession(!!token)
+      return
+    }
+    const check = async () => {
+      const { data } = await client.auth.getSession()
+      const ok = !!data.session
+      if (ok) syncAuthTokenFromSession()
+      setHasSession(ok)
+    }
+    check()
+    const { data: { subscription } } = client.auth.onAuthStateChange(() => {
+      client.auth.getSession().then(({ data }) => {
+        if (data.session) syncAuthTokenFromSession()
+        setHasSession(!!data.session)
+      })
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+  if (hasSession === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+  if (!hasSession) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <ToastProvider>
       <TooltipProvider>
       <BrowserRouter>
@@ -109,6 +143,7 @@ export default function App() {
       <ToastContainer position="bottom-right" />
       </TooltipProvider>
       </ToastProvider>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

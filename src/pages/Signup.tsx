@@ -22,28 +22,34 @@ import { Building2 } from 'lucide-react'
 
 const ROLE_OPTIONS = ['Investor', 'Executive', 'Research'] as const
 
-const schema = z.object({
-  name: z.string().min(1, 'Full name is required').max(120, 'Name too long'),
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'At least 8 characters required')
-    .refine(isSignupPasswordValid, {
-      message:
-        'Password must include uppercase, lowercase, number, and symbol (!@#$%^&*)',
+const schema = z
+  .object({
+    name: z.string().min(1, 'Full name is required').max(120, 'Name too long'),
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'At least 8 characters required')
+      .refine(isSignupPasswordValid, {
+        message:
+          'Password must include uppercase, lowercase, number, and symbol (!@#$%^&*)',
+      }),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    organization: z.string().max(120).optional().or(z.literal('')),
+    role: z.enum(ROLE_OPTIONS),
+    inviteCode: z
+      .string()
+      .optional()
+      .refine((v) => !v || v.trim() === '' || isInviteCodeFormatValid(v ?? ''), {
+        message: 'Invite code must be 6–24 alphanumeric characters',
+      }),
+    terms: z.boolean().refine((v) => v === true, {
+      message: 'You must accept the Terms and Privacy Policy',
     }),
-  organization: z.string().max(120).optional().or(z.literal('')),
-  role: z.enum(ROLE_OPTIONS),
-  inviteCode: z
-    .string()
-    .optional()
-    .refine((v) => !v || v.trim() === '' || isInviteCodeFormatValid(v ?? ''), {
-      message: 'Invite code must be 6–24 alphanumeric characters',
-    }),
-  terms: z.boolean().refine((v) => v === true, {
-    message: 'You must accept the Terms and Privacy Policy',
-  }),
-})
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords must match',
+    path: ['confirmPassword'],
+  })
 
 type FormData = z.infer<typeof schema>
 
@@ -63,6 +69,7 @@ export function Signup() {
       role: 'Investor',
       organization: '',
       inviteCode: '',
+      confirmPassword: '',
       terms: false,
     },
   })
@@ -189,6 +196,26 @@ export function Signup() {
                   {errors.password && (
                     <p className="text-sm text-destructive mt-1" role="alert">
                       {errors.password.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">
+                    Confirm password <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    className="mt-1"
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.confirmPassword}
+                    aria-required
+                    {...register('confirmPassword')}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-destructive mt-1" role="alert">
+                      {errors.confirmPassword.message}
                     </p>
                   )}
                 </div>

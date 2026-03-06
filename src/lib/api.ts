@@ -2,14 +2,28 @@ const base =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
   'http://localhost:3000/api'
 
+/** Get auth token: prefer Supabase session, fallback to localStorage */
+async function getAuthToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+  try {
+    const { supabase } = await import('@/lib/supabase')
+    if (supabase) {
+      const { data } = await supabase.auth.getSession()
+      return data.session?.access_token ?? null
+    }
+  } catch {
+    // Supabase may not be configured
+  }
+  return typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+}
+
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${base}${endpoint}`
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
-  const token =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const token = await getAuthToken()
   if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
 
   const res = await fetch(url, { ...options, headers })
@@ -25,8 +39,14 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     if (res.status === 401) {
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('auth_token')
-        window.location.href = '/login'
       }
+      try {
+        const { supabase } = await import('@/lib/supabase')
+        if (supabase) await supabase.auth.signOut()
+      } catch {
+        // ignore
+      }
+      if (typeof window !== 'undefined') window.location.href = '/login'
     }
     throw new Error(message)
   }
