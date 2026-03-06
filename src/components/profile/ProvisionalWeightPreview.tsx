@@ -57,9 +57,11 @@ export function ProvisionalWeightPreview({ open, onOpenChange }: ProvisionalWeig
 
   useEffect(() => {
     if (weightsData) {
-      setNarrative(weightsData.narrative ?? DEFAULT_N)
-      setCredibility(weightsData.credibility ?? DEFAULT_C)
-      setRisk(weightsData.risk ?? DEFAULT_R)
+      queueMicrotask(() => {
+        setNarrative(weightsData.narrative ?? DEFAULT_N)
+        setCredibility(weightsData.credibility ?? DEFAULT_C)
+        setRisk(weightsData.risk ?? DEFAULT_R)
+      })
     }
   }, [weightsData, open])
 

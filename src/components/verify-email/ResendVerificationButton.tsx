@@ -34,7 +34,7 @@ export function ResendVerificationButton({
 
   useEffect(() => {
     const initial = initialNextAllowedAt ? computeCooldown() : 0
-    setCooldownRemaining(initial)
+    queueMicrotask(() => setCooldownRemaining(initial))
   }, [initialNextAllowedAt, computeCooldown])
 
   useEffect(() => {

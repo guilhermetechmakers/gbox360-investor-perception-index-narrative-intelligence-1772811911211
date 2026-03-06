@@ -58,9 +58,11 @@ export function TimeWindowPicker({ value, onChange, className }: TimeWindowPicke
 
   useEffect(() => {
     if (customOpen) {
-      setCustomStart(format(value.start, 'yyyy-MM-dd'))
-      setCustomEnd(format(value.end, 'yyyy-MM-dd'))
-      setValidationError(null)
+      queueMicrotask(() => {
+        setCustomStart(format(value.start, 'yyyy-MM-dd'))
+        setCustomEnd(format(value.end, 'yyyy-MM-dd'))
+        setValidationError(null)
+      })
     }
   }, [customOpen, value.start, value.end])
 

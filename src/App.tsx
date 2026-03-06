@@ -54,7 +54,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     const client = supabase
     if (!client) {
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
-      setHasSession(!!token)
+      queueMicrotask(() => setHasSession(!!token))
       return
     }
     const check = async () => {

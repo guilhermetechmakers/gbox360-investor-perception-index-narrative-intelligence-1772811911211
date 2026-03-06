@@ -21,6 +21,7 @@ export function JsonHighlight({ content, className }: JsonHighlightProps) {
     return <pre className={className}>—</pre>
   }
 
+  let result: { type: 'success'; html: string } | { type: 'fallback'; raw: string }
   try {
     const formatted = JSON.stringify(JSON.parse(content), null, 2)
     const parts: string[] = []
@@ -99,17 +100,22 @@ export function JsonHighlight({ content, className }: JsonHighlightProps) {
       }
     }
 
+    result = { type: 'success', html: parts.join('') }
+  } catch {
+    result = { type: 'fallback', raw: content }
+  }
+
+  if (result.type === 'success') {
     return (
       <pre
         className={className}
-        dangerouslySetInnerHTML={{ __html: parts.join('') }}
+        dangerouslySetInnerHTML={{ __html: result.html }}
       />
     )
-  } catch {
-    return (
-      <pre className={className}>
-        {content}
-      </pre>
-    )
   }
+  return (
+    <pre className={className}>
+      {result.raw}
+    </pre>
+  )
 }

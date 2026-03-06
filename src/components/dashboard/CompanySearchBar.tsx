@@ -23,7 +23,7 @@ export function CompanySearchBar({
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (initialQuery) setQuery(initialQuery)
+    if (initialQuery) queueMicrotask(() => setQuery(initialQuery))
   }, [initialQuery])
   const [highlightIndex, setHighlightIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -53,7 +53,7 @@ export function CompanySearchBar({
   }, [])
 
   useEffect(() => {
-    setHighlightIndex(0)
+    queueMicrotask(() => setHighlightIndex(0))
   }, [debouncedQuery])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

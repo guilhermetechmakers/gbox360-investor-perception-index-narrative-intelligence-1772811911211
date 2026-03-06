@@ -66,8 +66,8 @@ export function PolicySection({
 
       {(safeSubsections ?? []).length > 0 && (
         <div className="mt-6 space-y-6">
-          {(safeSubsections ?? []).map((sub) => (
-            <div key={sub?.id ?? sub?.title ?? Math.random()}>
+          {(safeSubsections ?? []).map((sub, i) => (
+            <div key={sub?.id ?? sub?.title ?? `sub-${i}`}>
               <h3 className="text-lg font-medium text-foreground mb-2">{sub?.title ?? ''}</h3>
               <p className="text-muted-foreground text-base leading-[1.6]">
                 {sub?.content ?? ''}

@@ -43,7 +43,8 @@ export function TocNav({ sections, className, showHeading = true }: TocNavProps)
   }, [sectionIds])
 
   useEffect(() => {
-    handleScroll()
+    const run = () => handleScroll()
+    queueMicrotask(run)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])

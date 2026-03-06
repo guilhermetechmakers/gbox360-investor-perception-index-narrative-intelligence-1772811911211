@@ -86,9 +86,9 @@ export function RetentionTable({ data, className }: RetentionTableProps) {
             </tr>
           </thead>
           <tbody>
-            {(rows ?? []).map((row) => (
+            {(rows ?? []).map((row, index) => (
               <tr
-                key={row?.id ?? row?.category ?? Math.random()}
+                key={row?.id ?? row?.category ?? `row-${index}`}
                 className="border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
               >
                 <td className="py-4 px-6 font-medium text-foreground">
@@ -111,9 +111,9 @@ export function RetentionTable({ data, className }: RetentionTableProps) {
 
       {/* Mobile: stacked cards */}
       <div className="md:hidden divide-y divide-border">
-        {(rows ?? []).map((row) => (
+        {(rows ?? []).map((row, index) => (
           <div
-            key={row?.id ?? row?.category ?? Math.random()}
+            key={row?.id ?? row?.category ?? `row-${index}`}
             className="p-6 space-y-3"
           >
             <h3 className="font-semibold text-foreground">{row?.category ?? ''}</h3>

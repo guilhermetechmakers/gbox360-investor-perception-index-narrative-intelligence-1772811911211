@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useCompanySuggest, useSavedCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
@@ -108,7 +108,10 @@ export function CompanySelector({
   const safeSaved = Array.isArray(savedCompanies) ? savedCompanies : []
 
   const { data: savedFromApi = [] } = useSavedCompanies()
-  const savedIds = new Set((savedFromApi ?? []).map((c) => c.id))
+  const savedIds = useMemo(
+    () => new Set((savedFromApi ?? []).map((c) => c.id)),
+    [savedFromApi]
+  )
   const saveCompany = useSaveCompany()
   const removeSaved = useRemoveSavedCompany()
 
@@ -150,11 +153,11 @@ export function CompanySelector({
   }, [])
 
   useEffect(() => {
-    setHighlightIndex(0)
+    queueMicrotask(() => setHighlightIndex(0))
   }, [debouncedQuery])
 
   useEffect(() => {
-    if (value?.name) setQuery(value.name)
+    if (value?.name) queueMicrotask(() => setQuery(value.name))
   }, [value?.name])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

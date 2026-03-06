@@ -24,9 +24,11 @@ export function PreferencesPanel() {
 
   useEffect(() => {
     if (prefs) {
-      setIngestNotifications(prefs.ingestNotifications ?? DEFAULT_PREFERENCES.ingestNotifications)
-      setWeeklySummary(prefs.weeklySummary ?? DEFAULT_PREFERENCES.weeklySummary)
-      setExportNotifications(prefs.exportNotifications ?? DEFAULT_PREFERENCES.exportNotifications)
+      queueMicrotask(() => {
+        setIngestNotifications(prefs.ingestNotifications ?? DEFAULT_PREFERENCES.ingestNotifications)
+        setWeeklySummary(prefs.weeklySummary ?? DEFAULT_PREFERENCES.weeklySummary)
+        setExportNotifications(prefs.exportNotifications ?? DEFAULT_PREFERENCES.exportNotifications)
+      })
     }
   }, [prefs])
 

@@ -168,7 +168,7 @@ export const adminDashboardApi = {
       .map((x) => ({
         id: String(x.id),
         name: String(x.name),
-        queueSize: Number(x.queueSize) ?? 0,
+        queueSize: x.queueSize != null ? Number(x.queueSize) : 0,
         throughput: x.throughput != null ? Number(x.throughput) : undefined,
       }))
     return {

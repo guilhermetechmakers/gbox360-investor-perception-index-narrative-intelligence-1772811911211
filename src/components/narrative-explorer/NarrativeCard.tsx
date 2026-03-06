@@ -61,9 +61,6 @@ export type NarrativeCardProps = NarrativeCardNarrativeProps | NarrativeCardAggr
 
 export function NarrativeCard(props: NarrativeCardProps) {
   const {
-    companyId: _companyId,
-    windowStart: _windowStart,
-    windowEnd: _windowEnd,
     onSelect,
     onViewDetail,
     className,

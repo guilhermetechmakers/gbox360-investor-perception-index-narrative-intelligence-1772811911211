@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { authKeys } from '@/hooks/useAuth'
 
+/* eslint-disable react-refresh/only-export-components -- context + hook pattern */
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
 interface AuthContextValue {
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [queryClient])
 
   useEffect(() => {
-    updateSession()
+    queueMicrotask(() => updateSession())
     if (!supabase) return
     const {
       data: { subscription },

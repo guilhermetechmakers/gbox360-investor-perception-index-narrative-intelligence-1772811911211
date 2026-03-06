@@ -9,6 +9,7 @@ import {
 } from 'react'
 import type { ToastData, PushToastOptions, ToastContextValue } from './toast-types'
 
+/* eslint-disable react-refresh/only-export-components -- context + hook pattern */
 const DEFAULT_DURATION = 5000
 
 const ToastContext = createContext<ToastContextValue | null>(null)

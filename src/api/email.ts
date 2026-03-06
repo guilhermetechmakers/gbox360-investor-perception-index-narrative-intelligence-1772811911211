@@ -95,7 +95,7 @@ export const emailApi = {
     return { success: res?.success ?? false }
   },
 
-  setEmail: async (newEmail: string, _userId?: string): Promise<{ success: boolean; message?: string }> => {
+  setEmail: async (newEmail: string): Promise<{ success: boolean; message?: string }> => {
     if (supabase) {
       try {
         const res = await invokeEmailFunction<{ success: boolean; message?: string }>('set-email', { newEmail })

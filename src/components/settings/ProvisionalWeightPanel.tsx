@@ -43,11 +43,13 @@ export function ProvisionalWeightPanel() {
 
   useEffect(() => {
     if (weightsData) {
-      const isCustom = weightsData.isCustom ?? false
-      setScenario(isCustom ? 'custom' : 'default')
-      setNarrativeWeight(weightsData.narrative ?? DEFAULT_NARRATIVE)
-      setCredibilityWeight(weightsData.credibility ?? DEFAULT_CREDIBILITY)
-      setRiskWeight(weightsData.risk ?? DEFAULT_RISK)
+      queueMicrotask(() => {
+        const isCustom = weightsData.isCustom ?? false
+        setScenario(isCustom ? 'custom' : 'default')
+        setNarrativeWeight(weightsData.narrative ?? DEFAULT_NARRATIVE)
+        setCredibilityWeight(weightsData.credibility ?? DEFAULT_CREDIBILITY)
+        setRiskWeight(weightsData.risk ?? DEFAULT_RISK)
+      })
     }
   }, [weightsData])
 

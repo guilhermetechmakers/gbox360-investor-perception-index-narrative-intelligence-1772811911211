@@ -88,13 +88,13 @@ export function DataRequestForm({
 
   const requestType = watch('requestType')
 
+  // Placeholder handler: payload will be used when POST /policy/privacy/data-request exists
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- future API payload
   const onSubmit = async (_data: FormValues) => {
     setIsSubmitting(true)
     try {
-      // Placeholder: no API yet. In production, call POST /policy/privacy/data-request
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      // Placeholder: in production, POST to /policy/privacy/data-request
-      // Payload: { name, email, requestType, description }
+      // Placeholder: no API yet. In production, call POST /policy/privacy/data-request with _data
+      await new Promise<void>((resolve) => setTimeout(() => resolve(), 800))
 
       toast.success(
         'Your data request has been submitted. We will respond within 30 days.'

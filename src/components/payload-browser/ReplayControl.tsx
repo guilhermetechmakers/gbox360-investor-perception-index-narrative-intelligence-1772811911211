@@ -15,6 +15,52 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Play } from 'lucide-react'
 
+function ReplayFormFields({
+  idempotencyKey,
+  setIdempotencyKey,
+  reason,
+  setReason,
+  defaultPlaceholder,
+}: {
+  idempotencyKey: string
+  setIdempotencyKey: (v: string) => void
+  reason: string
+  setReason: (v: string) => void
+  defaultPlaceholder: string
+}) {
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-2">
+        <Label htmlFor="idempotency-key">Idempotency key</Label>
+        <Input
+          id="idempotency-key"
+          placeholder={defaultPlaceholder}
+          value={idempotencyKey}
+          onChange={(e) => setIdempotencyKey(e.target.value)}
+          className="font-mono text-sm"
+          aria-describedby="idempotency-key-desc"
+        />
+        <p id="idempotency-key-desc" className="text-xs text-muted-foreground">
+          Unique key to prevent duplicate replays. Leave empty to auto-generate.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="replay-reason">Reason (optional)</Label>
+        <Input
+          id="replay-reason"
+          placeholder="e.g. Retry after schema fix"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          aria-describedby="replay-reason-desc"
+        />
+        <p id="replay-reason-desc" className="text-xs text-muted-foreground">
+          Justification for audit log.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export interface ReplayParams {
   idempotencyKey: string
   reason?: string
@@ -45,7 +91,9 @@ export function ReplayControl({
   const canReplaySingle = !!selectedPayloadId && typeof selectedPayloadId === 'string'
   const canReplayBatch = hasSelection && ids.every((x) => typeof x === 'string')
 
-  const defaultIdempotencyKey = `replay-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  const [defaultIdempotencyKey] = useState(() =>
+    `replay-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  )
   const effectiveKey = idempotencyKey.trim() || defaultIdempotencyKey
 
   const handleSingleReplay = () => {
@@ -72,37 +120,13 @@ export function ReplayControl({
     }
   }
 
-  const ReplayFormFields = () => (
-    <div className="space-y-4 py-2">
-      <div className="space-y-2">
-        <Label htmlFor="idempotency-key">Idempotency key</Label>
-        <Input
-          id="idempotency-key"
-          placeholder={defaultIdempotencyKey}
-          value={idempotencyKey}
-          onChange={(e) => setIdempotencyKey(e.target.value)}
-          className="font-mono text-sm"
-          aria-describedby="idempotency-key-desc"
-        />
-        <p id="idempotency-key-desc" className="text-xs text-muted-foreground">
-          Unique key to prevent duplicate replays. Leave empty to auto-generate.
-        </p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="replay-reason">Reason (optional)</Label>
-        <Input
-          id="replay-reason"
-          placeholder="e.g. Retry after schema fix"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          aria-describedby="replay-reason-desc"
-        />
-        <p id="replay-reason-desc" className="text-xs text-muted-foreground">
-          Justification for audit log.
-        </p>
-      </div>
-    </div>
-  )
+  const formFieldsProps = {
+    idempotencyKey,
+    setIdempotencyKey,
+    reason,
+    setReason,
+    defaultPlaceholder: defaultIdempotencyKey,
+  }
 
   return (
     <>
@@ -146,7 +170,7 @@ export function ReplayControl({
               Idempotency is enforced via the key below.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ReplayFormFields />
+          <ReplayFormFields {...formFieldsProps} />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
@@ -168,7 +192,7 @@ export function ReplayControl({
               Idempotency is enforced via the key below.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <ReplayFormFields />
+          <ReplayFormFields {...formFieldsProps} />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

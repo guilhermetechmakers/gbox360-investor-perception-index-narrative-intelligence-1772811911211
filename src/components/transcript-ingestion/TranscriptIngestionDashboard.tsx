@@ -26,9 +26,11 @@ export function TranscriptIngestionDashboard() {
 
   const dlqEntries = (dlqData?.data ?? []) as DLQEntry[]
 
-  const handleFilesSelected = useCallback((_files: File[]) => {
-    // Files selected - user would need a submit button; for now we support manifest flow
-    // Could extend to upload files to S3 and then submit manifest URL
+  const handleFilesSelected = useCallback((files: File[]) => {
+    // Files selected - manifest flow is primary; future: upload files to S3 and submit manifest URL
+    if (files.length > 0) {
+      // Placeholder for future batch file upload
+    }
   }, [])
 
   const handleManifestSubmit = useCallback(
