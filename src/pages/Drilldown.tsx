@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChevronLeft } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ChevronLeft, RefreshCw } from 'lucide-react'
 import { SkipLinks } from '@/components/shared/SkipLinks'
+import { ErrorBanner } from '@/components/shared/ErrorBanner'
 import {
   NarrativeHeaderCard,
   NarrativeEventsTable,
@@ -56,16 +58,16 @@ export function Drilldown() {
   const narrativeIdSafe = narrativeId ?? ''
   const isOverview = narrativeIdSafe === 'overview' || !narrativeIdSafe
 
-  const { data: movementData } = useMovement(
+  const { data: movementData, isLoading: movementLoading, isError: movementError, error: movementErr, refetch: refetchMovement } = useMovement(
     narrativeIdSafe,
     companyId || undefined,
     start || undefined,
     end || undefined
   )
 
-  const { data: snapshot } = useIPISnapshot(companyId, start, end)
+  const { data: snapshot, isLoading: snapshotLoading, isError: snapshotError, error: snapshotErr, refetch: refetchSnapshot } = useIPISnapshot(companyId, start, end)
   const provenanceIdToFetch = provenanceId ? provenanceId : (snapshot?.provenance_id ?? '')
-  const { data: auditProvenance, isLoading: provenanceLoading } = useProvenance(provenanceIdToFetch)
+  const { data: auditProvenance, isLoading: provenanceLoading, isError: provenanceError, error: provenanceErr, refetch: refetchProvenance } = useProvenance(provenanceIdToFetch)
 
   const movement: Movement | null = useMemo(() => {
     const m = movementData ?? null
@@ -117,7 +119,7 @@ export function Drilldown() {
     return f
   }, [filters, sortOrder, sortBy])
 
-  const { data: eventsData, isLoading: eventsLoading } = useNarrativeEvents(
+  const { data: eventsData, isLoading: eventsLoading, isError: eventsError, error: eventsErr, refetch: refetchEvents } = useNarrativeEvents(
     narrativeIdSafe,
     page,
     pageSize,
@@ -213,6 +215,46 @@ export function Drilldown() {
     })
   }, [recomputeMutation, start, end])
 
+  const apiError = useMemo(() => {
+    if (movementError && movementErr) return { message: movementErr.message, refetch: refetchMovement }
+    if (snapshotError && snapshotErr) return { message: snapshotErr.message, refetch: refetchSnapshot }
+    if (provenanceError && provenanceErr) return { message: provenanceErr.message, refetch: refetchProvenance }
+    if (eventsError && eventsErr) return { message: eventsErr.message, refetch: refetchEvents }
+    return null
+  }, [
+    movementError,
+    movementErr,
+    snapshotError,
+    snapshotErr,
+    provenanceError,
+    provenanceErr,
+    eventsError,
+    eventsErr,
+    refetchMovement,
+    refetchSnapshot,
+    refetchProvenance,
+    refetchEvents,
+  ])
+
+  const handleRetryAll = useCallback(() => {
+    if (movementError) refetchMovement()
+    if (snapshotError) refetchSnapshot()
+    if (provenanceError) refetchProvenance()
+    if (eventsError) refetchEvents()
+  }, [
+    movementError,
+    snapshotError,
+    provenanceError,
+    eventsError,
+    refetchMovement,
+    refetchSnapshot,
+    refetchProvenance,
+    refetchEvents,
+  ])
+
+  const headerLoading = !isOverview && (movementLoading || (!!narrativeIdSafe && !movementData && !!companyId && snapshotLoading))
+  const sidebarLoading = (snapshotLoading && !!companyId) || (provenanceLoading && !!provenanceIdToFetch)
+
   return (
     <div className="space-y-8 animate-fade-in-up relative" role="main" aria-label="Drilldown — Why did this move?">
       <SkipLinks
@@ -222,6 +264,24 @@ export function Drilldown() {
           { href: '#filters-panel', label: 'Skip to filters' },
         ]}
       />
+      {apiError && (
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3" role="alert" aria-live="assertive">
+          <ErrorBanner
+            message={apiError.message ?? 'Unable to load drilldown data. Check your connection and try again.'}
+            role="alert"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetryAll}
+            aria-label="Retry loading drilldown data"
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden />
+            Retry
+          </Button>
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
@@ -242,7 +302,7 @@ export function Drilldown() {
 
       <NarrativeHeaderCard
         movement={movement}
-        isLoading={!movement && !isOverview}
+        isLoading={headerLoading}
         sparklineData={(movement?.events ?? safeEvents)
           .slice(0, 10)
           .map((e) => e.authority_score ?? 0)
@@ -288,7 +348,7 @@ export function Drilldown() {
         </div>
 
         <div className="space-y-6">
-          <div id="filters-panel" tabIndex={-1}>
+          <div id="filters-panel" tabIndex={-1} role="region" aria-label="Filter events by source, authority, and date">
           <FiltersPanel
             filters={filters}
             onApply={handleFiltersApply}
@@ -309,7 +369,12 @@ export function Drilldown() {
             speed={replaySpeed}
             onSpeedChange={setReplaySpeed}
           />
-
+          {sidebarLoading && (
+            <div className="space-y-2" role="status" aria-label="Loading">
+              <Skeleton className="h-20 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+            </div>
+          )}
           <NarrativeSignalList
             signals={aggregatedSignals}
             credibilityScore={credibilityScore ?? movement?.credibilityScore ?? undefined}
@@ -330,6 +395,7 @@ export function Drilldown() {
             size="sm"
             onClick={handleRecompute}
             disabled={recomputeMutation.isPending || !companyId}
+            aria-label={recomputeMutation.isPending ? 'Re-scoring signals…' : 'Re-score narrative signals for the selected time window'}
           >
             {recomputeMutation.isPending ? 'Re-scoring…' : 'Re-score signals'}
           </Button>
@@ -346,7 +412,9 @@ export function Drilldown() {
 
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="outline" asChild>
-          <Link to={backUrl}>Back to Company View</Link>
+          <Link to={backUrl} aria-label="Back to Company View">
+            Back to Company View
+          </Link>
         </Button>
       </div>
 

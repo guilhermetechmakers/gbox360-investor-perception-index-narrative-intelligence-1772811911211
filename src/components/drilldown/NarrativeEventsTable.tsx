@@ -68,6 +68,11 @@ function SortHeader({
             : 'descending'
           : undefined
       }
+      aria-label={
+        onSort
+          ? `Sort by ${label} ${isActive && currentSortOrder === 'asc' ? 'descending' : 'ascending'}`
+          : undefined
+      }
     >
       {label}
       {onSort ? (
