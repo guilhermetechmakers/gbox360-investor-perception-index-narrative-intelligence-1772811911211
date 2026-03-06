@@ -13,6 +13,13 @@ export interface SignInInput {
   remember?: boolean
 }
 
+/** Demo mode auth response (limited scope) */
+export interface DemoAuthResponse {
+  token?: string
+  user?: { id: string; email: string; name?: string }
+  limitations?: string[]
+}
+
 export interface SignUpInput {
   name: string
   email: string

@@ -3,23 +3,42 @@ import type {
   AuthResponse,
   SignInInput,
   SignUpInput,
+  DemoAuthResponse,
   VerificationStatusResponse,
   ResendVerificationResponse,
   ChangeEmailResponse,
   PasswordResetTokenStatusResponse,
 } from '@/types/auth'
 
-/** Demo sign-in response (limited scope token) */
-export interface DemoSignInResponse extends AuthResponse {
-  demo?: boolean
-}
-
 export const authApi = {
   signIn: async (credentials: SignInInput): Promise<AuthResponse> => {
-    const data = await api.post<AuthResponse>('/auth/login', credentials)
-    if (data.token && typeof localStorage !== 'undefined')
-      localStorage.setItem('auth_token', data.token)
-    return data
+    const payload = {
+      email: credentials.email,
+      password: credentials.password,
+      rememberMe: credentials.remember,
+    }
+    const data = await api.post<AuthResponse>('/auth/login', payload)
+    const token = data?.token ?? null
+    if (token && typeof localStorage !== 'undefined')
+      localStorage.setItem('auth_token', token)
+    return data ?? {}
+  },
+
+  demoSignIn: async (): Promise<AuthResponse> => {
+    const data = await api.post<DemoAuthResponse>('/auth/demo-signin', {})
+    const token = data?.token ?? null
+    if (token && typeof localStorage !== 'undefined')
+      localStorage.setItem('auth_token', token)
+    return {
+      token: data?.token,
+      user: data?.user
+        ? {
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.name,
+          }
+        : undefined,
+    }
   },
 
   signUp: async (credentials: SignUpInput): Promise<AuthResponse> => {

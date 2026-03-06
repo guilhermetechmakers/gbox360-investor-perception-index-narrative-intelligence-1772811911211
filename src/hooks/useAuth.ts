@@ -47,6 +47,21 @@ export function useSignUp() {
   })
 }
 
+export function useDemoSignIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => authApi.demoSignIn(),
+    onSuccess: (data) => {
+      const user = data?.user ?? null
+      if (user) queryClient.setQueryData(authKeys.user, user)
+      toast.success('Demo mode started. Explore with limited access.')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? 'Demo sign-in failed')
+    },
+  })
+}
+
 export function useSignOut() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -128,5 +143,21 @@ export function useVerificationStatus(enabled: boolean) {
     staleTime: 1000 * 30,
     retry: false,
     enabled,
+  })
+}
+
+export function useDemoSignIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => authApi.demoSignIn(),
+    onSuccess: (data) => {
+      if (data?.user) {
+        queryClient.setQueryData(authKeys.user, data.user)
+      }
+      toast.success('Demo mode started. Explore with limited access.')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? 'Demo sign-in failed')
+    },
   })
 }
