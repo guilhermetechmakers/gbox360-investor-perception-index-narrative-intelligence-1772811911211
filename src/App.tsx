@@ -1,35 +1,103 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
 
-function App() {
-  const [count, setCount] = useState(0)
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { AdminLayout } from '@/components/layout/AdminLayout'
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+import { Landing } from '@/pages/Landing'
+import { Login } from '@/pages/Login'
+import { Signup } from '@/pages/Signup'
+import { VerifyEmail } from '@/pages/VerifyEmail'
+import { PasswordReset } from '@/pages/PasswordReset'
+import { NotFound } from '@/pages/NotFound'
+import { ServerError } from '@/pages/ServerError'
+import { Dashboard } from '@/pages/Dashboard'
+import { CompanyView } from '@/pages/CompanyView'
+import { Drilldown } from '@/pages/Drilldown'
+import { Profile } from '@/pages/Profile'
+import { Settings } from '@/pages/Settings'
+import { About } from '@/pages/About'
+import { Privacy } from '@/pages/Privacy'
+import { Terms } from '@/pages/Terms'
+
+import { AdminDashboard } from '@/pages/admin/AdminDashboard'
+import { UserManagement } from '@/pages/admin/UserManagement'
+import { IngestMonitor } from '@/pages/admin/IngestMonitor'
+import { RawPayloadBrowser } from '@/pages/admin/RawPayloadBrowser'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+  if (!token) return <Navigate to="/login" replace />
+  return <>{children}</>
 }
 
-export default App
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<PasswordReset />} />
+          <Route
+            path="/forgot-password/reset"
+            element={<PasswordReset />}
+          />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <DashboardLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="company/:id" element={<CompanyView />} />
+            <Route path="drilldown/:narrativeId" element={<Drilldown />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+
+          <Route
+            path="/admin"
+            element={
+              <RequireAuth>
+                <AdminLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="ingest" element={<IngestMonitor />} />
+            <Route path="payloads" element={<RawPayloadBrowser />} />
+          </Route>
+
+          <Route path="/company/:id" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/drilldown/:narrativeId" element={<Navigate to="/dashboard" replace />} />
+
+          <Route path="/500" element={<ServerError />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster richColors position="top-right" />
+    </QueryClientProvider>
+  )
+}
