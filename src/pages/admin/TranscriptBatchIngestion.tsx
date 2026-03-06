@@ -22,9 +22,9 @@ import {
   ArrowLeft,
   Upload,
   FileJson,
-  Database,
   AlertCircle,
   Loader2,
+  Inbox,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -35,21 +35,36 @@ const INITIAL_FORM: TranscriptBatchRequest = {
   ingestion_window: '',
 }
 
+type FormErrors = { batch_id?: string; company?: string }
+
 export function TranscriptBatchIngestion() {
   const [form, setForm] = useState<TranscriptBatchRequest>(INITIAL_FORM)
+  const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [statusBatchId, setStatusBatchId] = useState<string | null>(null)
 
   const submitBatch = useTranscriptBatchSubmit()
   const { data: batchStatus, isLoading: statusLoading } = useBatchStatus(statusBatchId, 5000)
   const replayPayload = useIngestReplayPayload()
 
+  const clearFieldError = useCallback((field: keyof FormErrors) => {
+    setFormErrors((prev) => {
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }, [])
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
       const batchId = (form.batch_id ?? '').trim()
       const company = (form.company ?? '').trim()
-      if (!batchId || !company) {
-        toast.error('Batch ID and Company are required')
+      const errors: FormErrors = {}
+      if (!batchId) errors.batch_id = 'Batch ID is required'
+      if (!company) errors.company = 'Company is required'
+      setFormErrors(errors)
+      if (Object.keys(errors).length > 0) {
+        toast.error('Please fix the errors below')
         return
       }
       submitBatch.mutate(
@@ -63,6 +78,7 @@ export function TranscriptBatchIngestion() {
           onSuccess: (data) => {
             const id = data?.batch_id ?? batchId
             setStatusBatchId(id)
+            setFormErrors({})
           },
         }
       )
@@ -94,8 +110,8 @@ export function TranscriptBatchIngestion() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
+            <Link to="/admin" className="gap-2" aria-label="Back to admin overview">
+              <ArrowLeft className="h-4 w-4" aria-hidden />
               Back to overview
             </Link>
           </Button>
@@ -105,10 +121,14 @@ export function TranscriptBatchIngestion() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/ingest-monitor">Ingest monitor</Link>
+            <Link to="/admin/ingest-monitor" aria-label="Go to ingest monitor">
+              Ingest monitor
+            </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/payloads">Raw payloads</Link>
+            <Link to="/admin/payloads" aria-label="Go to raw payloads">
+              Raw payloads
+            </Link>
           </Button>
         </div>
       </div>
@@ -118,7 +138,7 @@ export function TranscriptBatchIngestion() {
           <Card className="card-surface">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Upload className="h-5 w-5" />
+                <Upload className="h-5 w-5" aria-hidden />
                 Submit batch
               </CardTitle>
               <CardDescription>
@@ -127,19 +147,31 @@ export function TranscriptBatchIngestion() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="space-y-2">
                   <Label htmlFor="batch_id">Batch ID</Label>
                   <Input
                     id="batch_id"
                     placeholder="e.g. batch-2024-q1-aapl"
                     value={form.batch_id ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setForm((prev) => ({ ...prev, batch_id: e.target.value }))
-                    }
+                      clearFieldError('batch_id')
+                    }}
                     disabled={isFormDisabled}
                     aria-required
+                    aria-invalid={!!formErrors.batch_id}
+                    aria-describedby={formErrors.batch_id ? 'batch_id-error' : undefined}
                   />
+                  {formErrors.batch_id && (
+                    <p
+                      id="batch_id-error"
+                      className="text-sm text-destructive"
+                      role="alert"
+                    >
+                      {formErrors.batch_id}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company">Company</Label>
@@ -147,12 +179,24 @@ export function TranscriptBatchIngestion() {
                     id="company"
                     placeholder="e.g. AAPL or Apple Inc."
                     value={form.company ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setForm((prev) => ({ ...prev, company: e.target.value }))
-                    }
+                      clearFieldError('company')
+                    }}
                     disabled={isFormDisabled}
                     aria-required
+                    aria-invalid={!!formErrors.company}
+                    aria-describedby={formErrors.company ? 'company-error' : undefined}
                   />
+                  {formErrors.company && (
+                    <p
+                      id="company-error"
+                      className="text-sm text-destructive"
+                      role="alert"
+                    >
+                      {formErrors.company}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="batch_manifest_url">Manifest URL (optional)</Label>
@@ -167,6 +211,7 @@ export function TranscriptBatchIngestion() {
                       }))
                     }
                     disabled={isFormDisabled}
+                    aria-label="Batch manifest URL (optional)"
                   />
                 </div>
                 <div className="space-y-2">
@@ -182,18 +227,25 @@ export function TranscriptBatchIngestion() {
                       }))
                     }
                     disabled={isFormDisabled}
+                    aria-label="Ingestion window date range (optional)"
                   />
                 </div>
-                <Button type="submit" disabled={isFormDisabled} className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  disabled={isFormDisabled}
+                  className="w-full sm:w-auto"
+                  aria-busy={isFormDisabled ? 'true' : 'false'}
+                  aria-disabled={isFormDisabled}
+                >
                   {submitBatch.isPending ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting…
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      <span>Submitting…</span>
                     </>
                   ) : (
                     <>
-                      <Upload className="h-4 w-4" />
-                      Submit batch
+                      <Upload className="h-4 w-4" aria-hidden />
+                      <span>Submit batch</span>
                     </>
                   )}
                 </Button>
@@ -206,7 +258,7 @@ export function TranscriptBatchIngestion() {
           <Card className="card-surface">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <FileJson className="h-5 w-5" />
+                <FileJson className="h-5 w-5" aria-hidden />
                 Batch status
               </CardTitle>
               <CardDescription>
@@ -217,10 +269,28 @@ export function TranscriptBatchIngestion() {
               {statusBatchId ? (
                 <>
                   {statusLoading && !batchStatus ? (
-                    <div className="space-y-3">
+                    <div className="space-y-3" aria-live="polite" aria-busy="true">
                       <Skeleton className="h-8 w-48" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-[66%]" />
+                      <p className="text-xs text-muted-foreground">Loading batch status…</p>
+                    </div>
+                  ) : statusLoading && batchStatus ? (
+                    <div className="relative">
+                      <div
+                        className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/60 transition-opacity duration-200"
+                        aria-live="polite"
+                      >
+                        <span className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          Updating…
+                        </span>
+                      </div>
+                      <BatchStatusView
+                        status={batchStatus}
+                        onReplayFailed={handleReplayFailed}
+                        isReplaying={replayPayload.isPending}
+                      />
                     </div>
                   ) : batchStatus ? (
                     <BatchStatusView
@@ -229,7 +299,7 @@ export function TranscriptBatchIngestion() {
                       isReplaying={replayPayload.isPending}
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground" role="status">
                       No status data yet. Refreshing…
                     </p>
                   )}
@@ -238,15 +308,32 @@ export function TranscriptBatchIngestion() {
                       variant="outline"
                       size="sm"
                       onClick={() => setStatusBatchId(null)}
+                      aria-label="Clear batch selection and hide status"
                     >
                       Clear selection
                     </Button>
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-                  <Database className="mx-auto h-10 w-10 opacity-50" />
-                  <p className="mt-2">Submit a batch above to see status here.</p>
+                <div
+                  className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-12 text-center"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Inbox
+                    className="h-12 w-12 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <h3 className="mt-4 text-base font-medium text-foreground">
+                    No batch selected
+                  </h3>
+                  <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                    Submit a batch using the form on the left to see status, progress, and failed
+                    items here. Enter a Batch ID and Company, then click Submit batch.
+                  </p>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    You can also open Ingest monitor or Raw payloads from the links above.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -258,7 +345,7 @@ export function TranscriptBatchIngestion() {
         <Card className="card-surface">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertCircle className="h-5 w-5 text-destructive" />
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden />
               Failed items
             </CardTitle>
             <CardDescription>
@@ -267,8 +354,8 @@ export function TranscriptBatchIngestion() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {errors.slice(0, 10).map((err, i) => (
+            <ul className="space-y-2" role="list">
+              {(errors ?? []).slice(0, 10).map((err, i) => (
                 <li
                   key={`${err?.item_id ?? i}-${err?.message ?? ''}`}
                   className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm"
@@ -343,13 +430,13 @@ function BatchStatusView({ status }: BatchStatusViewProps) {
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Processed</p>
-          <p className="text-lg font-semibold text-emerald-600">
+          <p className="text-lg font-semibold text-success">
             {status.processed ?? 0}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Failed</p>
-          <p className="text-lg font-semibold text-red-600">
+          <p className="text-lg font-semibold text-destructive">
             {status.failed ?? 0}
           </p>
         </div>
