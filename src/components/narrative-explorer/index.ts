@@ -1,6 +1,6 @@
 export { NarrativeCard } from './NarrativeCard'
+export type { NarrativeCardProps } from './NarrativeCard'
 export { TopicLegend } from './TopicLegend'
 export { PersistenceChart } from './PersistenceChart'
+export { NarrativeFilterBar } from './NarrativeFilterBar'
 export { NarrativeDetailDrawer } from './NarrativeDetailDrawer'
-export { FilterBar } from './FilterBar'
-export type { FilterBarProps } from './FilterBar'

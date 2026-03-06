@@ -9,7 +9,7 @@ import type {
   TopicAggregate,
   TopicsAggregateParams,
   TopicsAggregateResponse,
-} from '@/types/topic-classification'
+} from '@/types/topic-persistence'
 
 const supabaseUrl = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_SUPABASE_URL as string) ?? '' : ''
 const supabaseAnonKey = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_SUPABASE_ANON_KEY as string) ?? '' : ''
@@ -41,10 +41,10 @@ export const topicsApi = {
   /** GET /topics/aggregate - fetch per-topic persistence metrics */
   getAggregate: async (params: TopicsAggregateParams): Promise<TopicsAggregateResponse> => {
     const searchParams: Record<string, string> = {
-      company_id: params.company_id,
       window_start: params.window_start,
       window_end: params.window_end,
     }
+    if (params.company_id) searchParams.company_id = params.company_id
 
     if (FUNCTIONS_BASE) {
       const res = await supabaseFunction<{ items: TopicAggregate[] }>('topics-aggregate', {

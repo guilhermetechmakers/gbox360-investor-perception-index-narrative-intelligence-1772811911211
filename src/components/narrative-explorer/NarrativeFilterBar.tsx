@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { TimeWindowPicker, type TimeWindow } from '@/components/dashboard/TimeWindowPicker'
+import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
 import {
   CompanySelector,
   type CompanySelectorValue,

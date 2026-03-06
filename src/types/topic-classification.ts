@@ -49,8 +49,8 @@ export interface NarrativeEventWithTopics {
   topic_labels: TopicLabel[]
   primary_topic: string
   clustering_id: string | null
-  authority_score: number | null
-  credibility_flags: Record<string, unknown> | null
+  authority_score?: number | null
+  credibility_flags?: Record<string, unknown> | null
   /** Classification rationale (rule-based or embedding) */
   explanation?: string
 }
@@ -84,7 +84,7 @@ export interface NarrativesListResponse {
 }
 
 export interface TopicsAggregateParams {
-  company_id: string
+  company_id?: string
   window_start: string
   window_end: string
 }

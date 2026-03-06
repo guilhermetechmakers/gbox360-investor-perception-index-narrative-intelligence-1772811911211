@@ -3,14 +3,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronRight, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { NarrativeEventWithTopics, TopicLabel } from '@/types/topic-persistence'
+import type {
+  NarrativeEventWithTopics,
+  TopicAggregate,
+  TopicLabel,
+} from '@/types/topic-classification'
 import { ensureArray } from '@/lib/runtime-safe'
-
-interface NarrativeCardProps {
-  narrative: NarrativeEventWithTopics
-  onSelect?: (id: string) => void
-  className?: string
-}
 
 const TOPIC_COLORS: Record<string, string> = {
   earnings: 'bg-emerald-500/20 text-emerald-700 border-emerald-200',
@@ -27,13 +25,95 @@ function getTopicStyle(topic: string): string {
   return TOPIC_COLORS[key] ?? TOPIC_COLORS.unknown
 }
 
-export function NarrativeCard({ narrative, onSelect, className }: NarrativeCardProps) {
-  const topicLabels = ensureArray(narrative?.topic_labels) as TopicLabel[]
-  const primaryTopic = narrative?.primary_topic ?? 'unknown'
-  const text = narrative?.text ?? ''
+/** Narrative variant: single narrative event with topic labels */
+interface NarrativeCardNarrativeProps {
+  narrative: NarrativeEventWithTopics
+  variant?: 'narrative'
+  aggregate?: never
+  companyId?: string
+  windowStart?: string
+  windowEnd?: string
+  onSelect?: (id: string) => void
+  onViewDetail?: (id: string) => void
+  className?: string
+}
+
+/** Aggregate variant: per-topic persistence summary */
+interface NarrativeCardAggregateProps {
+  aggregate: TopicAggregate
+  variant: 'aggregate'
+  narrative?: never
+  companyId?: string
+  windowStart?: string
+  windowEnd?: string
+  onSelect?: (id: string) => void
+  onViewDetail?: (id: string) => void
+  className?: string
+}
+
+export type NarrativeCardProps = NarrativeCardNarrativeProps | NarrativeCardAggregateProps
+
+export function NarrativeCard(props: NarrativeCardProps) {
+  const {
+    companyId: _companyId,
+    windowStart: _windowStart,
+    windowEnd: _windowEnd,
+    onSelect,
+    onViewDetail,
+    className,
+  } = props
+
+  const handleAction = onViewDetail ?? onSelect
+
+  if (props.variant === 'aggregate' && props.aggregate) {
+    const agg = props.aggregate
+    const topEvents = ensureArray(agg.top_contributing_events)
+    return (
+      <Card
+        className={cn(
+          'card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5',
+          className
+        )}
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-medium text-foreground truncate">{agg.topic_label ?? 'Topic'}</p>
+            <Badge variant="secondary" className="shrink-0 text-sm font-semibold">
+              {(typeof agg.persistence_score === 'number' ? agg.persistence_score : 0).toFixed(2)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Authority-weighted count: {(typeof agg.authority_weighted_count === 'number' ? agg.authority_weighted_count : 0).toFixed(1)}
+          </p>
+          {topEvents.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Top contributing events</p>
+              <ul className="space-y-1">
+                {topEvents.slice(0, 3).map((ev, i) => (
+                  <li key={i} className="text-xs text-muted-foreground truncate" title={ev.snippet}>
+                    {ev.snippet ? `${ev.snippet.slice(0, 60)}…` : ev.source}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const narrative = props.narrative
+  if (!narrative) return null
+
+  const topicLabels = ensureArray(narrative.topic_labels) as TopicLabel[]
+  const primaryTopic = narrative.primary_topic ?? 'unknown'
+  const text = narrative.text ?? ''
   const snippet = text.length > 120 ? `${text.slice(0, 120)}…` : text
-  const source = narrative?.source ?? 'unknown'
-  const audienceClass = narrative?.audience_class ?? 'unknown'
+  const source = narrative.source ?? 'unknown'
+  const audienceClass = narrative.audience_class ?? 'unknown'
+  const narrativeId = narrative.id ?? narrative.event_id ?? ''
 
   return (
     <Card
@@ -41,13 +121,13 @@ export function NarrativeCard({ narrative, onSelect, className }: NarrativeCardP
         'card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer',
         className
       )}
-      onClick={() => onSelect?.(narrative?.id ?? narrative?.event_id ?? '')}
+      onClick={() => handleAction?.(narrativeId)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onSelect?.(narrative?.id ?? narrative?.event_id ?? '')
+          handleAction?.(narrativeId)
         }
       }}
       aria-label={`View narrative: ${primaryTopic}`}
@@ -86,7 +166,7 @@ export function NarrativeCard({ narrative, onSelect, className }: NarrativeCardP
               variant="outline"
               className={cn('text-xs font-medium border', getTopicStyle(t.topic))}
             >
-              {t.topic} {(t.confidence * 100).toFixed(0)}%
+              {t.topic} {((t.confidence ?? 0) * 100).toFixed(0)}%
             </Badge>
           ))}
         </div>

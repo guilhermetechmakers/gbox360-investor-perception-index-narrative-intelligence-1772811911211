@@ -11,19 +11,36 @@ const TOPIC_ITEMS: { key: string; label: string; color: string }[] = [
 ]
 
 interface TopicLegendProps {
+  /** Static topic keys for legend; when provided, overrides TOPIC_ITEMS for display */
+  topics?: string[]
   activeTopics?: string[]
   onTopicClick?: (topic: string) => void
   className?: string
 }
 
-export function TopicLegend({ activeTopics = [], onTopicClick, className }: TopicLegendProps) {
+function formatTopicLabel(topic: string): string {
+  return topic
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+export function TopicLegend({ topics, activeTopics = [], onTopicClick, className }: TopicLegendProps) {
+  const items = Array.isArray(topics) && topics.length > 0
+    ? topics.map((topic) => ({
+        key: topic,
+        label: formatTopicLabel(topic),
+        color: TOPIC_ITEMS.find((t) => t.key === topic.toLowerCase())?.color ?? 'bg-muted-foreground',
+      }))
+    : TOPIC_ITEMS
+
   return (
     <div
       className={cn('flex flex-wrap items-center gap-2', className)}
       role="list"
       aria-label="Topic legend"
     >
-      {TOPIC_ITEMS.map((item) => {
+      {items.map((item) => {
         const isActive = activeTopics.length === 0 || activeTopics.includes(item.key)
         return (
           <button

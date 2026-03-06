@@ -30,7 +30,8 @@ export function useNarrative(id: string | null) {
 export function useIngestNarrative() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: NarrativeIngestPayload) => narrativesApi.ingest(payload),
+    mutationFn: (payload: NarrativeIngestPayload) =>
+      narrativesApi.ingest(payload as unknown as Record<string, unknown>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: narrativesKeys.all })
     },

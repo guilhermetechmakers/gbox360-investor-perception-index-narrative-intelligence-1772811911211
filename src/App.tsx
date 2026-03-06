@@ -20,6 +20,7 @@ import { ServerError } from '@/pages/ServerError'
 import { Dashboard } from '@/pages/Dashboard'
 import { CompanyView } from '@/pages/CompanyView'
 import { Drilldown } from '@/pages/Drilldown'
+import { NarrativeExplorer } from '@/pages/NarrativeExplorer'
 import { Profile } from '@/pages/Profile'
 import { Settings } from '@/pages/Settings'
 import { About } from '@/pages/About'
@@ -111,6 +112,7 @@ export default function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="narratives" element={<NarrativeExplorer />} />
             <Route path="company/:id" element={<CompanyView />} />
             <Route path="drilldown/:narrativeId" element={<Drilldown />} />
             <Route path="profile" element={<Profile />} />

@@ -12,12 +12,14 @@ import {
   PanelLeftClose,
   PanelLeft,
   Menu,
+  FileText,
 } from 'lucide-react'
 
 const STORAGE_KEY = 'dashboard-sidebar-collapsed'
 
 const dashboardNav = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard/narratives', label: 'Narratives', icon: FileText },
   { to: '/dashboard/profile', label: 'Profile', icon: User },
   { to: '/dashboard/settings', label: 'Settings', icon: Settings },
   { to: '/about', label: 'About & Help', icon: HelpCircle },

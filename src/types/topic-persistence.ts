@@ -47,6 +47,8 @@ export interface NarrativeEventWithTopics {
   primary_topic: string
   clustering_id: string | null
   explanation?: string
+  authority_score?: number | null
+  credibility_flags?: Record<string, unknown> | null
 }
 
 /** Topic classification result from classifier */
@@ -69,6 +71,21 @@ export const AUTHORITY_WEIGHTS: Record<string, number> = {
 /** Default weight for unknown audience class */
 export const DEFAULT_AUTHORITY_WEIGHT = 0.3
 
+/** Narrative ingest payload for POST /narratives */
+export interface NarrativeIngestPayload {
+  id?: string
+  source: string
+  platform: string
+  speaker: string
+  speaker_role?: string
+  audience_class: string
+  text: string
+  timestamp: string
+  event_type: string
+  provenance: Record<string, unknown>
+  raw_payload?: Record<string, unknown>
+}
+
 /** Narrative list query params */
 export interface NarrativeListParams {
   company_id?: string
@@ -84,4 +101,9 @@ export interface TopicsAggregateParams {
   company_id?: string
   window_start: string
   window_end: string
+}
+
+/** Topics aggregate API response */
+export interface TopicsAggregateResponse {
+  items: TopicAggregate[]
 }

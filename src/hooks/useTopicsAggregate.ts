@@ -3,7 +3,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { topicsApi } from '@/api/topics'
-import type { TopicsAggregateParams } from '@/types/topic-classification'
+import type { TopicsAggregateParams } from '@/types/topic-persistence'
 
 export const topicsKeys = {
   all: ['topics'] as const,
@@ -12,8 +12,8 @@ export const topicsKeys = {
 
 export function useTopicsAggregate(params: TopicsAggregateParams | null) {
   return useQuery({
-    queryKey: topicsKeys.aggregate(params ?? { company_id: '', window_start: '', window_end: '' }),
+    queryKey: topicsKeys.aggregate(params ?? { window_start: '', window_end: '' }),
     queryFn: () => (params ? topicsApi.getAggregate(params) : Promise.resolve({ items: [] })),
-    enabled: !!params?.company_id && !!params?.window_start && !!params?.window_end,
+    enabled: !!params?.window_start && !!params?.window_end,
   })
 }

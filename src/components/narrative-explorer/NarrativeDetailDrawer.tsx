@@ -1,17 +1,17 @@
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Copy, ExternalLink, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import type { NarrativeEventWithTopics, TopicLabel } from '@/types/topic-persistence'
+import type { NarrativeEventWithTopics, TopicLabel } from '@/types/topic-classification'
 import { ensureArray } from '@/lib/runtime-safe'
 
 const TOPIC_COLORS: Record<string, string> = {
@@ -63,17 +63,17 @@ export function NarrativeDetailDrawer({
   const explanation = narrative?.explanation ?? ''
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent
-        className="w-full sm:max-w-lg overflow-y-auto"
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
         aria-describedby="narrative-detail-description"
       >
-        <SheetHeader>
-          <SheetTitle>Narrative Details</SheetTitle>
-          <SheetDescription id="narrative-detail-description">
+        <DialogHeader>
+          <DialogTitle>Narrative Details</DialogTitle>
+          <DialogDescription id="narrative-detail-description">
             Classification, provenance, and raw payload
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         {isLoading && (
           <div className="space-y-4 mt-6">
@@ -102,7 +102,7 @@ export function NarrativeDetailDrawer({
                       variant="outline"
                       className={cn('text-xs font-medium border', getTopicStyle(t.topic))}
                     >
-                      {t.topic} {(t.confidence * 100).toFixed(0)}%
+                      {t.topic} {((t.confidence ?? 0) * 100).toFixed(0)}%
                     </Badge>
                   ))}
                 </div>
@@ -175,7 +175,7 @@ export function NarrativeDetailDrawer({
             <p className="text-muted-foreground">Narrative not found</p>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
