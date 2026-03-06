@@ -25,6 +25,7 @@ import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { UserManagement } from '@/pages/admin/UserManagement'
 import { IngestMonitor } from '@/pages/admin/IngestMonitor'
 import { RawPayloadBrowser } from '@/pages/admin/RawPayloadBrowser'
+import { AuditExports } from '@/pages/admin/AuditExports'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,8 +85,9 @@ export default function App() {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UserManagement />} />
-            <Route path="ingest" element={<IngestMonitor />} />
+            <Route path="ingest-monitor" element={<IngestMonitor />} />
             <Route path="payloads" element={<RawPayloadBrowser />} />
+            <Route path="audit-exports" element={<AuditExports />} />
           </Route>
 
           <Route path="/company/:id" element={<Navigate to="/dashboard" replace />} />

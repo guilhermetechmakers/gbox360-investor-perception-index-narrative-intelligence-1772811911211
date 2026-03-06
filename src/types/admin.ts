@@ -154,6 +154,16 @@ export interface SignEventsResponse {
   artifacts: AuditArtifact[]
 }
 
+export interface AdminNotification {
+  id: string
+  type: 'sla' | 'critical' | 'warning' | 'info'
+  message: string
+  timestamp: string
+  actionLabel?: string
+  onAction?: () => void
+  dismissed?: boolean
+}
+
 /** Normalize API User to AdminUser for admin UI */
 export function toAdminUser(
   u: { id: string; email: string; full_name?: string; email_verified?: boolean; created_at: string; updated_at: string; role?: string; last_login?: string; roles?: string[] }

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,10 +15,15 @@ export function IngestMonitor() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Ingest monitor</h1>
-        <Button>
-          <Play className="mr-2 h-4 w-4" />
-          Trigger transcript import
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/admin">Back to overview</Link>
+          </Button>
+          <Button>
+            <Play className="mr-2 h-4 w-4" />
+            Trigger transcript import
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

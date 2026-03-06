@@ -1,97 +1,93 @@
-import { Link } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Database, Users, FileJson, AlertTriangle, FileDown } from 'lucide-react'
+import { useState } from 'react'
+import {
+  IngestionOverviewPanel,
+  SystemHealthPanel,
+  AdminNotificationsBar,
+  QuickAccessTiles,
+  AdminActionsPanel,
+  UserManagementShortcutCard,
+  IngestMonitorPanel,
+} from '@/components/admin-dashboard'
+import {
+  useIngestionStatus,
+  useSystemHealth,
+  useAdminActions,
+  useIngestMonitor,
+  useUserSummary,
+  useAdminNotifications,
+} from '@/hooks/useAdminDashboard'
 
 export function AdminDashboard() {
+  const [sourceFilter, setSourceFilter] = useState('all')
+  const [timeWindow, setTimeWindow] = useState('24h')
+
+  const { data: ingestionData, isLoading: ingestionLoading } = useIngestionStatus()
+  const { data: healthData, isLoading: healthLoading } = useSystemHealth()
+  const { data: actionsData, isLoading: actionsLoading } = useAdminActions({ limit: 10 })
+  const { data: ingestMonitorData, isLoading: ingestMonitorLoading } = useIngestMonitor()
+  const userSummary = useUserSummary()
+  const { notifications, dismiss, acknowledge } = useAdminNotifications()
+
+  const sources = ingestionData?.sources ?? []
+  const queues = healthData?.queues ?? []
+  const healthScore = healthData?.healthScore ?? 100
+  const actions = actionsData?.actions ?? []
+  const ingestSources = ingestMonitorData?.sources ?? []
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <h1 className="text-2xl font-semibold">Admin dashboard</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Admin dashboard</h1>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Ingestion status</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">Healthy</p>
-            <p className="text-xs text-muted-foreground">All sources within SLA</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Queue depth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">0</p>
-            <p className="text-xs text-muted-foreground">No backlog</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Recent errors</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">0</p>
-            <p className="text-xs text-muted-foreground">Last 24h</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">User activity</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground">Overview</p>
-          </CardContent>
-        </Card>
+      <AdminNotificationsBar
+        notifications={notifications ?? []}
+        onDismiss={dismiss}
+        onAcknowledge={acknowledge}
+      />
+
+      {/* Ingestion Overview & System Health */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <IngestionOverviewPanel
+            sources={sources}
+            isLoading={ingestionLoading}
+            sourceFilter={sourceFilter}
+            onSourceFilterChange={setSourceFilter}
+            timeWindow={timeWindow}
+            onTimeWindowChange={setTimeWindow}
+          />
+        </div>
+        <div>
+          <SystemHealthPanel
+            queues={queues}
+            healthScore={healthScore}
+            isLoading={healthLoading}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick links</CardTitle>
-            <CardDescription>Operational tools</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/users">
-                <Users className="mr-2 h-4 w-4" />
-                User management
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/users#audit-export">
-                <FileDown className="mr-2 h-4 w-4" />
-                Audit export
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/payloads">
-                <FileJson className="mr-2 h-4 w-4" />
-                Raw payload browser
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/ingest">
-                <Database className="mr-2 h-4 w-4" />
-                Ingest monitor
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin notifications</CardTitle>
-            <CardDescription>System alerts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">No new notifications.</p>
-          </CardContent>
-        </Card>
+      {/* Quick Access Tiles */}
+      <QuickAccessTiles />
+
+      {/* Admin Actions & User Management & Ingest Monitor */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <AdminActionsPanel
+            actions={actions}
+            isLoading={actionsLoading}
+          />
+        </div>
+        <div className="space-y-6">
+          <UserManagementShortcutCard
+            totalUsers={userSummary.total}
+            activeCount={userSummary.active}
+            disabledCount={userSummary.disabled}
+            recentVerifications={userSummary.recentVerifications}
+            isLoading={false}
+          />
+          <IngestMonitorPanel
+            sources={ingestSources}
+            isLoading={ingestMonitorLoading}
+          />
+        </div>
       </div>
     </div>
   )
