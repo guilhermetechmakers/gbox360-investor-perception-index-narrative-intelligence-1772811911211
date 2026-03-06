@@ -7,6 +7,7 @@ import {
   AdminActionsPanel,
   UserManagementShortcutCard,
   IngestMonitorPanel,
+  ActivityAuditExportPanel,
 } from '@/components/admin-dashboard'
 import {
   useIngestionStatus,
@@ -66,6 +67,9 @@ export function AdminDashboard() {
 
       {/* Quick Access Tiles */}
       <QuickAccessTiles />
+
+      {/* Activity & Audit Export */}
+      <ActivityAuditExportPanel />
 
       {/* Admin Actions & User Management & Ingest Monitor */}
       <div className="grid gap-6 lg:grid-cols-3">
