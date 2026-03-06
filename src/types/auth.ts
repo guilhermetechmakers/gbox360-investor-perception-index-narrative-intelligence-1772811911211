@@ -50,3 +50,10 @@ export interface PasswordResetTokenStatusResponse {
   reason?: string
 }
 
+/** Demo mode profile with limited capabilities */
+export interface DemoProfile {
+  id: string
+  limitations?: string[]
+  startedAt?: string
+}
+

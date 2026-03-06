@@ -9,6 +9,11 @@ import type {
   PasswordResetTokenStatusResponse,
 } from '@/types/auth'
 
+/** Demo sign-in response (limited scope token) */
+export interface DemoSignInResponse extends AuthResponse {
+  demo?: boolean
+}
+
 export const authApi = {
   signIn: async (credentials: SignInInput): Promise<AuthResponse> => {
     const data = await api.post<AuthResponse>('/auth/login', credentials)
@@ -84,6 +89,21 @@ export const authApi = {
     return {
       success: res?.success ?? false,
       message: res?.message ?? '',
+    }
+  },
+
+  /** Demo mode sign-in (limited scope, no credentials required) */
+  demoSignIn: async (): Promise<AuthResponse> => {
+    const res = await api.post<AuthResponse>('/auth/demo-signin', {})
+    const payload = res ?? {}
+    const token = payload?.token ?? null
+    if (token && typeof localStorage !== 'undefined') {
+      localStorage.setItem('auth_token', token)
+    }
+    return {
+      token: payload?.token,
+      user: payload?.user,
+      expiresIn: payload?.expiresIn,
     }
   },
 }
