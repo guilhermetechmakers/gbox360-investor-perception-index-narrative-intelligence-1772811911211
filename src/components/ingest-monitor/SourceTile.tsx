@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Sparkline } from '@/components/dashboard/Sparkline'
-import { Rss, Twitter, FileText } from 'lucide-react'
+import { Rss, Twitter, FileText, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const SOURCE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -54,17 +54,34 @@ export function SourceTile({
 
   if (isLoading) {
     return (
-      <Card className="card-surface">
+      <Card
+        className="card-surface"
+        aria-busy="true"
+        aria-label="Source loading"
+      >
         <CardHeader className="pb-2">
-          <Skeleton className="h-5 w-24" />
+          <div className="flex items-center gap-2">
+            <Loader2
+              className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+              aria-hidden
+            />
+            <Skeleton className="h-5 w-24 rounded-md" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-8 w-full" />
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            Loading source…
+          </p>
+          <Skeleton className="h-4 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
         </CardContent>
       </Card>
     )
   }
+
+  const statusLabel =
+    status === 'unhealthy' ? 'Error' : status === 'degraded' ? 'Degraded' : 'OK'
+  const cardAriaLabel = `Source ${name}, status ${statusLabel}, ${metrics.itemsProcessed ?? 0} items processed`
 
   return (
     <Card
@@ -72,10 +89,14 @@ export function SourceTile({
         'card-surface transition-all duration-200',
         'hover:shadow-card-hover hover:-translate-y-0.5'
       )}
+      aria-label={cardAriaLabel}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon
+            className="h-4 w-4 text-muted-foreground"
+            aria-hidden
+          />
           {name}
         </CardTitle>
         <Badge
@@ -86,12 +107,13 @@ export function SourceTile({
                 ? 'accent'
                 : 'success'
           }
+          aria-label={`Status: ${statusLabel}`}
         >
-          {status === 'unhealthy' ? 'Error' : status === 'degraded' ? 'Degraded' : 'OK'}
+          {statusLabel}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-3 text-sm" role="group" aria-label="Source metrics">
           <span className="text-muted-foreground">
             Items: <span className="font-semibold text-foreground">{metrics.itemsProcessed ?? 0}</span>
           </span>
@@ -106,18 +128,25 @@ export function SourceTile({
           </span>
         </div>
         {(metrics.rateLimitTotal ?? 0) > 0 && (
-          <div className="space-y-1">
+          <div className="space-y-1" role="group" aria-label={`Rate limit ${metrics.rateLimitUsed ?? 0} of ${metrics.rateLimitTotal} used`}>
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Rate limit</span>
               <span>
                 {metrics.rateLimitUsed ?? 0} / {metrics.rateLimitTotal}
               </span>
             </div>
-            <Progress value={ratePct} className="h-1.5" />
+            <Progress
+              value={ratePct}
+              className="h-1.5 bg-muted"
+              aria-valuenow={Math.round(ratePct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Rate limit usage"
+            />
           </div>
         )}
         {Array.isArray(sparklineData) && sparklineData.length >= 2 && (
-          <div className="h-8">
+          <div className="h-8" aria-label="Activity sparkline">
             <Sparkline data={sparklineData} height={32} />
           </div>
         )}
