@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useQuery, useQueries, useMutation } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ipiApi } from '@/api/ipi'
 import { toast } from 'sonner'
 import type { NarrativeEvent } from '@/types/narrative'
@@ -11,6 +11,7 @@ export const ipiKeys = {
     ['ipi', 'snapshot', companyId, start, end] as const,
   dashboard: (companyIds: string[], start: string, end: string) =>
     ['ipi', 'dashboard', companyIds.join(','), start, end] as const,
+  provenance: (provenanceId: string) => ['ipi', 'provenance', provenanceId] as const,
   narrativeEvents: (
     narrativeId: string,
     page: number,
@@ -93,6 +94,35 @@ export function useRawPayload(rawPayloadId: string) {
     queryKey: ipiKeys.rawPayload(rawPayloadId),
     queryFn: () => ipiApi.getRawPayload(rawPayloadId),
     enabled: !!rawPayloadId,
+  })
+}
+
+export function useProvenance(provenanceId: string) {
+  return useQuery({
+    queryKey: ipiKeys.provenance(provenanceId),
+    queryFn: () => ipiApi.getProvenance(provenanceId),
+    enabled: !!provenanceId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useCalculateIPI() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (params: {
+      companyId: string
+      windowStart: string
+      windowEnd: string
+      topN?: number
+    }) => ipiApi.calculate(params),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ipiKeys.snapshot(variables.companyId, variables.windowStart, variables.windowEnd),
+      })
+      queryClient.invalidateQueries({ queryKey: ['ipi', 'dashboard'] })
+      toast.success('IPI calculated successfully')
+    },
+    onError: (err: Error) => toast.error(err.message ?? 'IPI calculation failed'),
   })
 }
 

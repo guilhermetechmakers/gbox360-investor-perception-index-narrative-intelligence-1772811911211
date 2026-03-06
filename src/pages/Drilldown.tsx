@@ -10,12 +10,14 @@ import {
   TimelineReplay,
   FiltersPanel,
   DrilldownAuditExportPanel,
+  ProvenancePanel,
 } from '@/components/drilldown'
 import {
   useMovement,
   useNarrativeEvents,
   useRawPayload,
   useIPISnapshot,
+  useProvenance,
 } from '@/hooks/useIPI'
 import type { DrilldownFilters } from '@/types/drilldown'
 import type { Movement } from '@/types/drilldown'
@@ -34,6 +36,7 @@ export function Drilldown() {
   const companyId = searchParams.get('company') ?? ''
   const start = searchParams.get('start') ?? ''
   const end = searchParams.get('end') ?? ''
+  const provenanceId = searchParams.get('provenance') ?? ''
 
   const [page, setPage] = useState(0)
   const [payloadModalId, setPayloadModalId] = useState<string | null>(null)
@@ -53,6 +56,8 @@ export function Drilldown() {
   )
 
   const { data: snapshot } = useIPISnapshot(companyId, start, end)
+  const provenanceIdToFetch = provenanceId ? provenanceId : (snapshot?.provenance_id ?? '')
+  const { data: auditProvenance, isLoading: provenanceLoading } = useProvenance(provenanceIdToFetch)
 
   const movement: Movement | null = useMemo(() => {
     const m = movementData ?? null
@@ -213,6 +218,10 @@ export function Drilldown() {
             onViewPayload={(id) => setPayloadModalId(id)}
           />
 
+          <ProvenancePanel
+            provenance={auditProvenance ?? null}
+            isLoading={provenanceLoading && !!provenanceIdToFetch}
+          />
           <DrilldownAuditExportPanel
             movement={movement}
             events={filteredByCredibility}

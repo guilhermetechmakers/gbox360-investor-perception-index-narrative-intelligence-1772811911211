@@ -2,8 +2,9 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useIPISnapshot, useCompanyTimelineEvents } from '@/hooks/useIPI'
+import { useIPISnapshot, useCompanyTimelineEvents, useCalculateIPI } from '@/hooks/useIPI'
 import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
+import { Button } from '@/components/ui/button'
 import {
   CompanySelector,
   IPISummaryPanel,
@@ -13,6 +14,7 @@ import {
   AuditExportPanel,
   PeerSnapshotPanel,
   RawPayloadViewer,
+  IPITimelineChart,
 } from '@/components/company-view'
 import type { CompanySelectorValue } from '@/components/company-view'
 import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
@@ -56,11 +58,18 @@ export function CompanyView() {
     }
   }, [startParam, endParam])
 
-  const { data: snapshot, isLoading: snapshotLoading } = useIPISnapshot(
+  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } = useIPISnapshot(
     id ?? '',
     windowStart,
     windowEnd
   )
+
+  const [lastProvenanceId, setLastProvenanceId] = useState<string | null>(null)
+  const calculateMutation = useCalculateIPI()
+
+  useEffect(() => {
+    setLastProvenanceId(null)
+  }, [id, windowStart, windowEnd])
 
   const narrativeIds = useMemo(
     () => (snapshot?.top_narratives ?? []).map((n) => n.id).filter(Boolean),
@@ -130,6 +139,15 @@ export function CompanyView() {
       ...(n.event_count != null && { authority: `~${n.event_count} events` }),
     }))
   }, [snapshot?.top_narratives])
+
+  const timelineData = useMemo(() => {
+    const score = snapshot?.score
+    if (typeof score !== 'number') return []
+    return [
+      { date: windowStart, value: score },
+      { date: windowEnd, value: score },
+    ]
+  }, [snapshot?.score, windowStart, windowEnd])
 
   const viewContext: IPIViewContext = useMemo(
     () => ({
@@ -226,13 +244,38 @@ export function CompanyView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() =>
+                calculateMutation.mutate(
+                  { companyId: id, windowStart, windowEnd, topN: 3 },
+                  {
+                    onSuccess: (data) => {
+                      setLastProvenanceId(data.provenanceId)
+                      refetchSnapshot()
+                    },
+                  }
+                )
+              }
+              disabled={calculateMutation.isPending}
+            >
+              {calculateMutation.isPending ? 'Calculating…' : 'Recalculate IPI'}
+            </Button>
             <DrilldownCTA
               companyId={id}
               narrativeId={narrativesForList[0]?.narrativeId}
               windowStart={windowStart}
               windowEnd={windowEnd}
+              provenanceId={lastProvenanceId ?? snapshot?.provenance_id}
             />
           </div>
+
+          <IPITimelineChart
+            data={timelineData}
+            currentScore={snapshot?.score}
+            height={200}
+          />
 
           <TimelineView
             events={timelineEvents}

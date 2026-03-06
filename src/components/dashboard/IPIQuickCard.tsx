@@ -84,7 +84,7 @@ export const IPIQuickCard = memo(function IPIQuickCard({
               className="w-full transition-transform duration-200 group-hover:scale-[1.02]"
             >
               <Link
-                to={`/dashboard/drilldown/${topNarratives[0].id}?company=${snapshot.company_id}&start=${windowStart}&end=${windowEnd}`}
+                to={`/dashboard/drilldown/${topNarratives[0].id}?company=${snapshot.company_id}&start=${windowStart}&end=${windowEnd}&provenance=${encodeURIComponent(snapshot.provenance_id ?? `prov-${snapshot.company_id}-${windowStart}-${windowEnd}`)}`}
               >
                 Why did this move?
                 <HelpCircle className="ml-2 h-4 w-4" />

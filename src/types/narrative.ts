@@ -27,6 +27,30 @@ export interface Narrative {
   window_end: string
 }
 
+/** Narrative contribution for IPI calculation display */
+export interface NarrativeContribution {
+  narrativeId: string
+  label: string
+  contribution: number
+  sourceRefs: string[]
+}
+
+/** Audit provenance for IPI calculation traceability */
+export interface AuditProvenance {
+  provenanceId: string
+  companyId: string
+  windowStart: string
+  windowEnd: string
+  inputVector: {
+    narrativeMetrics: Record<string, unknown>
+    credibilityProxies: Record<string, unknown>
+    riskFlags: Record<string, unknown>
+  }
+  weightsUsed: { narrative: number; credibility: number; risk: number }
+  computedIPI: number
+  timestamp: string
+}
+
 export interface IPIBreakdown {
   narrative: number
   credibility: number
@@ -44,4 +68,25 @@ export interface IPISnapshot {
   window_start: string
   window_end: string
   weight_version: string
+  /** Provenance ID for audit drill-down */
+  provenance_id?: string
+  /** Timestamp of calculation */
+  timestamp?: string
+}
+
+/** IPI calculate request */
+export interface IPICalculateRequest {
+  companyId: string
+  windowStart: string
+  windowEnd: string
+  topN?: number
+}
+
+/** IPI calculate response */
+export interface IPICalculateResponse {
+  currentIPI: number
+  direction: 'UP' | 'DOWN' | 'FLAT'
+  topNarratives: NarrativeContribution[]
+  timestamp: string
+  provenanceId: string
 }

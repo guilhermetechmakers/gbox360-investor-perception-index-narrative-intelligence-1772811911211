@@ -14,9 +14,10 @@ import {
   type CompanySelectorValue,
 } from '@/components/company-view'
 import { useSavedCompanies, useRecentCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
-import { useDashboardCards } from '@/hooks/useIPI'
+import { useDashboardCards, useCalculateIPI } from '@/hooks/useIPI'
 import { useSystemStatus } from '@/hooks/useSystemStatus'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const DEFAULT_WINDOW: TimeWindow = {
   label: '1M',
@@ -36,6 +37,7 @@ export function Dashboard() {
   const saveCompany = useSaveCompany()
   const removeSaved = useRemoveSavedCompany()
   const companyIds = useMemo(() => (saved ?? []).map((c) => c.id), [saved])
+  const calculateIPI = useCalculateIPI()
   const { data: cards = [], isLoading: cardsLoading, refetch: refetchCards } = useDashboardCards(
     companyIds,
     windowStart,
@@ -109,7 +111,32 @@ export function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          {selectedCompanyId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                calculateIPI.mutate({
+                  companyId: selectedCompanyId,
+                  windowStart,
+                  windowEnd,
+                  topN: 3,
+                })
+              }
+              disabled={calculateIPI.isPending}
+              className="gap-2"
+            >
+              {calculateIPI.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Calculate IPI
+            </Button>
+          )}
+        </div>
         <CompanySelector
           value={selectedCompany}
           onChange={handleCompanyChange}

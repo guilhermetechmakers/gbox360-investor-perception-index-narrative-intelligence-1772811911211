@@ -8,6 +8,7 @@ interface DrilldownCTAProps {
   narrativeId?: string
   windowStart: string
   windowEnd: string
+  provenanceId?: string
 }
 
 export function DrilldownCTA({
@@ -16,9 +17,17 @@ export function DrilldownCTA({
   narrativeId = '',
   windowStart,
   windowEnd,
+  provenanceId,
 }: DrilldownCTAProps) {
   const narrativeSegment = narrativeId || 'overview'
-  const drilldownUrl = `/dashboard/drilldown/${narrativeSegment}?company=${companyId}&start=${windowStart}&end=${windowEnd}`
+  const prov = provenanceId ?? `prov-${companyId}-${windowStart}-${windowEnd}`
+  const params = new URLSearchParams({
+    company: companyId,
+    start: windowStart,
+    end: windowEnd,
+    provenance: prov,
+  })
+  const drilldownUrl = `/dashboard/drilldown/${narrativeSegment}?${params.toString()}`
 
   return (
     <Button
