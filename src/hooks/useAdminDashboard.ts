@@ -2,13 +2,14 @@ import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminDashboardApi, type AdminNotification } from '@/api/admin-dashboard'
 import { adminApi } from '@/api/admin'
-import type { SignEventsParams } from '@/types/admin'
+import type { SignEventsParams, PayloadSearchFilters, GenerateAuditExportParams } from '@/types/admin'
 import { toast } from 'sonner'
 
 const INGESTION_KEY = ['admin', 'ingestion-status']
 const SYSTEM_HEALTH_KEY = ['admin', 'system-health']
 const ADMIN_ACTIONS_KEY = ['admin', 'admin-actions']
 const PAYLOADS_KEY = ['admin', 'payloads']
+const PAYLOAD_DETAIL_KEY = ['admin', 'payload-detail']
 const INGEST_MONITOR_KEY = ['admin', 'ingest-monitor']
 
 export function useIngestionStatus(refetchInterval?: number) {
@@ -35,16 +36,18 @@ export function useAdminActions(params?: { limit?: number }) {
   })
 }
 
-export function usePayloads(params?: {
-  page?: number
-  limit?: number
-  source?: string
-  from?: string
-  to?: string
-}) {
+export function usePayloads(params?: PayloadSearchFilters) {
   return useQuery({
     queryKey: [...PAYLOADS_KEY, params],
     queryFn: () => adminDashboardApi.getPayloads(params),
+  })
+}
+
+export function usePayloadDetail(id: string | null) {
+  return useQuery({
+    queryKey: [...PAYLOAD_DETAIL_KEY, id],
+    queryFn: () => (id ? adminDashboardApi.getPayloadDetail(id) : Promise.reject(new Error('No id'))),
+    enabled: !!id,
   })
 }
 
@@ -62,11 +65,71 @@ export function useReplayPayload() {
     mutationFn: (id: string) => adminDashboardApi.replayPayload(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
+      queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })
       queryClient.invalidateQueries({ queryKey: INGESTION_KEY })
       toast.success('Payload replay initiated')
     },
     onError: (e) => {
       toast.error(e instanceof Error ? e.message : 'Replay failed')
+    },
+  })
+}
+
+export function useReplayPayloadsBatch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payloadIds: string[]) => adminDashboardApi.replayPayloadsBatch(payloadIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
+      queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })
+      queryClient.invalidateQueries({ queryKey: INGESTION_KEY })
+      toast.success('Batch replay initiated')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Batch replay failed')
+    },
+  })
+}
+
+export function useSetPayloadRetention() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, retain }: { id: string; retain: boolean }) =>
+      adminDashboardApi.setPayloadRetention(id, retain),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
+      queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })
+      toast.success('Retention updated')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Retention update failed')
+    },
+  })
+}
+
+export function usePurgePayload() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminDashboardApi.purgePayload(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
+      queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })
+      toast.success('Payload purged')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Purge failed')
+    },
+  })
+}
+
+export function useGenerateAuditExport() {
+  return useMutation({
+    mutationFn: (params: GenerateAuditExportParams) => adminDashboardApi.generateAuditExport(params),
+    onSuccess: () => {
+      toast.success('Audit export generated')
+    },
+    onError: (e) => {
+      toast.error(e instanceof Error ? e.message : 'Export generation failed')
     },
   })
 }

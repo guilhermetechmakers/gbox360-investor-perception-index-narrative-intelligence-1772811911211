@@ -112,19 +112,79 @@ export interface AdminActionsResponse {
   actions: AdminAction[]
 }
 
+export type PayloadStatus = 'ingested' | 'failed' | 'retried' | 'pending'
+
 export interface RawPayload {
   id: string
   rawPayload?: string
+  payloadJson?: string
   provenance?: Record<string, unknown>
+  provenanceId?: string
   timestamp: string
   source?: string
+  ticker?: string
+  batchId?: string
+  status?: PayloadStatus
+  hash?: string
+  retentionFlag?: boolean
+  retryCount?: number
 }
 
 export interface PayloadsResponse {
   data: RawPayload[]
   count: number
+  total?: number
   page: number
   limit: number
+}
+
+/** Payload search filters for Raw Payload Browser */
+export interface PayloadSearchFilters {
+  source?: string
+  ticker?: string
+  batchId?: string
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  pageSize?: number
+}
+
+/** Provenance data for a payload */
+export interface ProvenanceData {
+  id?: string
+  payloadId?: string
+  events?: NarrativeEventProvenance[]
+  provenanceChain?: string
+  createdAt?: string
+}
+
+export interface NarrativeEventProvenance {
+  id: string
+  eventId?: string
+  eventData?: Record<string, unknown>
+  createdAt?: string
+}
+
+/** Payload detail response with provenance and narrative events */
+export interface PayloadDetailResponse {
+  payload: RawPayload
+  provenance?: ProvenanceData
+  narrativeEvents?: NarrativeEvent[]
+}
+
+/** Generate audit artifact export request params */
+export interface GenerateAuditExportParams {
+  narrativeEventIds: string[]
+  signingMethod: string
+  exportFormat?: 'json' | 'pdf'
+}
+
+/** Audit export response */
+export interface AuditExportResponse {
+  exportId: string
+  status: string
+  downloadUrls?: { json?: string; pdf?: string }
 }
 
 export interface NarrativeEvent {

@@ -1,140 +1,190 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { RawPayloadAccessPanel } from '@/components/admin-dashboard'
-import { usePayloads, useReplayPayload } from '@/hooks/useAdminDashboard'
-import { FileJson, Download, Search } from 'lucide-react'
+  PayloadSearchFilters,
+  PayloadList,
+  PayloadViewerPanel,
+  ProvenancePanel,
+  ReplayControl,
+  ExportArtifactBuilder,
+  RetentionControls,
+  AdminDashboardLinkCard,
+} from '@/components/payload-browser'
+import { SystemHealthPanel } from '@/components/admin-dashboard'
+import {
+  usePayloads,
+  usePayloadDetail,
+  useReplayPayload,
+  useReplayPayloadsBatch,
+  useSetPayloadRetention,
+  usePurgePayload,
+  useGenerateAuditExport,
+  useSystemHealth,
+  useUserSummary,
+} from '@/hooks/useAdminDashboard'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import type { PayloadSearchFilters as PayloadSearchFiltersType } from '@/types/admin'
 import type { RawPayload } from '@/types/admin'
 
 export function RawPayloadBrowser() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<PayloadSearchFiltersType>({
+    page: 1,
+    pageSize: 20,
+  })
   const [selectedPayload, setSelectedPayload] = useState<RawPayload | null>(null)
+  const [selectedPayloadIds, setSelectedPayloadIds] = useState<string[]>([])
 
-  const { data: payloadsData } = usePayloads({ limit: 20 })
+  const { data: payloadsData } = usePayloads(filters)
+  const { data: systemHealth } = useSystemHealth()
+  const userSummary = useUserSummary()
+
+  const payloads = Array.isArray(payloadsData?.data) ? payloadsData.data : []
+  const total = payloadsData?.count ?? payloadsData?.total ?? 0
+  const page = filters.page ?? 1
+  const pageSize = filters.pageSize ?? 20
+
+  const { data: payloadDetail } = usePayloadDetail(
+    selectedPayload?.id ?? null
+  )
+  const provenance = payloadDetail?.provenance ?? null
+  const narrativeEvents = Array.isArray(payloadDetail?.narrativeEvents)
+    ? payloadDetail.narrativeEvents
+    : []
+
   const replayPayload = useReplayPayload()
-  const payloads = payloadsData?.data ?? []
+  const replayBatch = useReplayPayloadsBatch()
+  const setRetention = useSetPayloadRetention()
+  const purgePayload = usePurgePayload()
+  const generateExport = useGenerateAuditExport()
+
+  const handleFiltersChange = useCallback((newFilters: PayloadSearchFiltersType) => {
+    setFilters(newFilters)
+  }, [])
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setFilters((prev) => ({ ...prev, page: newPage }))
+    },
+    []
+  )
+
+  const handlePageSizeChange = useCallback(
+    (newSize: number) => {
+      setFilters((prev) => ({ ...prev, pageSize: newSize, page: 1 }))
+    },
+    []
+  )
+
+  const handleSelectPayloads = useCallback((ids: string[]) => {
+    setSelectedPayloadIds(ids)
+  }, [])
+
+  const handleRowClick = useCallback((payload: RawPayload) => {
+    setSelectedPayload(payload)
+  }, [])
+
+  const handleGenerateExport = useCallback(
+    (params: {
+      narrativeEventIds: string[]
+      signingMethod: string
+      exportFormat: 'json' | 'pdf'
+    }) => {
+      generateExport.mutate({
+        narrativeEventIds: params.narrativeEventIds,
+        signingMethod: params.signingMethod,
+        exportFormat: params.exportFormat,
+      })
+    },
+    [generateExport]
+  )
+
+  const queues = systemHealth?.queues ?? []
 
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Raw payload browser</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin">Back to overview</Link>
+            <Link to="/admin" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to overview
+            </Link>
           </Button>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search payloads..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-          <Button variant="outline" disabled>
-            <Download className="mr-2 h-4 w-4" />
-            Export artifact
-          </Button>
+          <h1 className="text-2xl font-semibold">Raw Payload Browser & Audit Export</h1>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payloads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Append-only store. Use filters and open a payload to view JSON. Replay and retention
-                controls available for operators.
-              </p>
-              <div className="mt-4 rounded-md border bg-muted/30 p-4">
-                {payloads.length === 0 ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      No payloads loaded. Connect to API and add filters to list payloads.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() =>
-                        setSelectedPayload({
-                          id: 'sample',
-                          source: 'news',
-                          timestamp: new Date().toISOString(),
-                          provenance: { source: 'news', external_id: 'sample-1' },
-                        })
-                      }
-                    >
-                      <FileJson className="mr-2 h-4 w-4" />
-                      Open sample
-                    </Button>
-                  </>
-                ) : (
-                  <div className="space-y-2">
-                    {(payloads ?? []).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedPayload(p)}
-                        className="w-full text-left rounded-md border border-border p-3 hover:bg-muted/50 transition-colors"
-                      >
-                        <span className="font-medium">{p.source ?? p.id}</span>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          {new Date(p.timestamp).toLocaleString()}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      <PayloadSearchFilters
+        onChangeFilters={handleFiltersChange}
+        initialFilters={filters}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-6">
+          <PayloadList
+            payloads={payloads}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onSelectPayloads={handleSelectPayloads}
+            selectedIds={selectedPayloadIds}
+            onRowClick={handleRowClick}
+          />
         </div>
-        <div>
-          <RawPayloadAccessPanel
-            payload={selectedPayload}
-            onReplay={(id) => replayPayload.mutate(id)}
-            isReplaying={replayPayload.isPending}
+
+        <div className="lg:col-span-4 space-y-6">
+          <SystemHealthPanel
+            queues={queues}
+            healthScore={systemHealth?.healthScore}
+          />
+          <AdminDashboardLinkCard
+            metrics={{
+              userCount: userSummary.total,
+              healthScore: systemHealth?.healthScore,
+            }}
+          />
+          <ReplayControl
+            selectedPayloadId={selectedPayload?.id}
+            selectedPayloadIds={selectedPayloadIds}
+            onReplayPayload={(id) => replayPayload.mutate(id)}
+            onReplaySelected={(ids) => replayBatch.mutate(ids)}
+            isReplaying={replayPayload.isPending || replayBatch.isPending}
           />
         </div>
       </div>
 
-      <Dialog open={!!selectedPayload} onOpenChange={() => setSelectedPayload(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Payload viewer</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="flex-1 rounded-md border bg-muted/30 p-4 font-mono text-xs">
-            <pre className="whitespace-pre-wrap break-words">
-              {selectedPayload != null
-                ? JSON.stringify(
-                    {
-                      id: selectedPayload.id,
-                      source: selectedPayload.source,
-                      timestamp: selectedPayload.timestamp,
-                      provenance: selectedPayload.provenance,
-                      rawPayload: selectedPayload.rawPayload,
-                    },
-                    null,
-                    2
-                  )
-                : ''}
-            </pre>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      {selectedPayload && (
+        <div className="grid gap-6 lg:grid-cols-12 mt-6 border-t border-border pt-6">
+          <div className="lg:col-span-6 space-y-6">
+            <PayloadViewerPanel
+              payload={selectedPayload}
+              onClose={() => setSelectedPayload(null)}
+              onReplay={(id) => replayPayload.mutate(id)}
+              isReplaying={replayPayload.isPending}
+            />
+            <ProvenancePanel provenanceData={provenance} />
+          </div>
+          <div className="lg:col-span-6 space-y-6">
+            <ExportArtifactBuilder
+              selectedNarrativeEvents={narrativeEvents as { id: string }[]}
+              onGenerateExport={handleGenerateExport}
+              isGenerating={generateExport.isPending}
+            />
+            <RetentionControls
+              payloadsSelected={selectedPayloadIds.map((id) => {
+                const p = payloads.find((x) => x.id === id)
+                return { id, retentionFlag: p?.retentionFlag ?? false }
+              })}
+              onMarkRetention={(id, retain) => setRetention.mutate({ id, retain })}
+              onPurge={(id) => purgePayload.mutate(id)}
+              isAdmin
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

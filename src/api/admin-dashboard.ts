@@ -13,6 +13,11 @@ import type {
   AdminActionsResponse,
   RawPayload,
   PayloadsResponse,
+  PayloadSearchFilters,
+  PayloadDetailResponse,
+  ProvenanceData,
+  GenerateAuditExportParams,
+  AuditExportResponse,
   SignEventsParams,
   SignEventsResponse,
 } from '@/types/admin'
@@ -127,24 +132,77 @@ export const adminDashboardApi = {
     )
   },
 
-  getPayloads: async (params?: {
-    page?: number
-    limit?: number
-    source?: string
-  }): Promise<PayloadsResponse> => {
+  getPayloads: async (params?: PayloadSearchFilters): Promise<PayloadsResponse> => {
     const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ''
     return safeGet(
       () => api.get<PayloadsResponse>(`${ADMIN_BASE}/payloads${qs}`),
-      { data: MOCK_PAYLOADS, count: 0, page: 1, limit: 20 }
+      { data: MOCK_PAYLOADS, count: 0, total: 0, page: 1, limit: 20 }
     )
   },
 
-  replayPayload: async (id: string): Promise<{ success: boolean }> => {
-    return api.post<{ success: boolean }>(`${ADMIN_BASE}/payloads/${id}/replay`, {})
+  getPayloadDetail: async (id: string): Promise<PayloadDetailResponse> => {
+    return safeGet(
+      () => api.get<PayloadDetailResponse>(`${ADMIN_BASE}/payloads/${id}`),
+      {
+        payload: {
+          id,
+          timestamp: new Date().toISOString(),
+          source: 'unknown',
+          rawPayload: '{}',
+        },
+        provenance: { events: [] },
+        narrativeEvents: [],
+      }
+    )
   },
 
-  getPayloadProvenance: async (id: string): Promise<Record<string, unknown>> => {
-    return api.get<Record<string, unknown>>(`${ADMIN_BASE}/payloads/${id}/provenance`)
+  replayPayload: async (id: string): Promise<{ success: boolean; jobId?: string; message?: string }> => {
+    return api.post<{ success: boolean; jobId?: string; message?: string }>(
+      `${ADMIN_BASE}/payloads/${id}/replay`,
+      {}
+    )
+  },
+
+  replayPayloadsBatch: async (payloadIds: string[]): Promise<{
+    success: boolean
+    jobId?: string
+    scheduledCount?: number
+  }> => {
+    return api.post<{ success: boolean; jobId?: string; scheduledCount?: number }>(
+      `${ADMIN_BASE}/payloads/replay`,
+      { payloadIds }
+    )
+  },
+
+  getPayloadProvenance: async (id: string): Promise<ProvenanceData> => {
+    return safeGet(
+      () => api.get<ProvenanceData>(`${ADMIN_BASE}/payloads/${id}/provenance`),
+      { events: [] }
+    )
+  },
+
+  setPayloadRetention: async (id: string, retain: boolean): Promise<{ success: boolean }> => {
+    return api.patch<{ success: boolean }>(`${ADMIN_BASE}/payloads/${id}/retention`, { retain })
+  },
+
+  purgePayload: async (id: string): Promise<{ success: boolean }> => {
+    return api.delete<{ success: boolean }>(`${ADMIN_BASE}/payloads/${id}`)
+  },
+
+  generateAuditExport: async (params: GenerateAuditExportParams): Promise<AuditExportResponse> => {
+    return api.post<AuditExportResponse>(`${ADMIN_BASE}/audit/export`, params)
+  },
+
+  getAuditExport: async (exportId: string): Promise<{
+    signedArtifactJson?: unknown
+    pdfBlobUrl?: string
+    status: string
+  }> => {
+    return api.get<Record<string, unknown>>(`${ADMIN_BASE}/audit/export/${exportId}`) as Promise<{
+      signedArtifactJson?: unknown
+      pdfBlobUrl?: string
+      status: string
+    }>
   },
 
   signEvents: async (params: SignEventsParams): Promise<SignEventsResponse> => {
