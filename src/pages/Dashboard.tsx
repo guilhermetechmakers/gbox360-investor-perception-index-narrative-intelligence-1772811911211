@@ -43,7 +43,7 @@ export function Dashboard() {
     windowStart,
     windowEnd
   )
-  const { data: systemStatus, refetch: refetchStatus } = useSystemStatus()
+  const { data: systemStatus, isLoading: statusLoading, refetch: refetchStatus } = useSystemStatus()
 
   const safeCards = Array.isArray(cards) ? cards : []
   const safeSaved = Array.isArray(saved) ? saved : []
@@ -151,9 +151,10 @@ export function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
 
-          {systemStatus && systemStatus.status !== 'ok' && (
+          {(statusLoading || (systemStatus && systemStatus.status !== 'ok')) && (
             <SystemStatusBanner
-              status={systemStatus}
+              status={systemStatus ?? null}
+              isLoading={statusLoading}
               canRetry
               onRetry={handleRetryStatus}
             />
