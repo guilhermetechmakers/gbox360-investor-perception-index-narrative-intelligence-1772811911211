@@ -1,6 +1,8 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useQuery, useQueries, useMutation } from '@tanstack/react-query'
 import { ipiApi } from '@/api/ipi'
 import { toast } from 'sonner'
+import type { NarrativeEvent } from '@/types/narrative'
 
 export const ipiKeys = {
   snapshot: (companyId: string, start: string, end: string) =>
@@ -70,6 +72,47 @@ export function useRawPayload(rawPayloadId: string) {
     queryFn: () => ipiApi.getRawPayload(rawPayloadId),
     enabled: !!rawPayloadId,
   })
+}
+
+/** Fetches events from top narratives and merges/sorts by timestamp for timeline view */
+export function useCompanyTimelineEvents(
+  narrativeIds: string[],
+  limitPerNarrative = 10
+) {
+  const ids = Array.isArray(narrativeIds) ? narrativeIds.slice(0, 3) : []
+
+  const results = useQueries({
+    queries: ids.map((nid) => ({
+      queryKey: ipiKeys.narrativeEvents(nid, 0, limitPerNarrative),
+      queryFn: () =>
+        ipiApi.getNarrativeEvents(nid, 0, limitPerNarrative),
+      enabled: !!nid,
+    })),
+  })
+
+  const events = useMemo(() => {
+    const all: NarrativeEvent[] = []
+    const seen = new Set<string>()
+    for (const r of results) {
+      const data = r.data
+      const items = Array.isArray(data?.data) ? data.data : []
+      for (const ev of items) {
+        if (ev?.event_id && !seen.has(ev.event_id)) {
+          seen.add(ev.event_id)
+          all.push(ev)
+        }
+      }
+    }
+    return all.sort((a, b) => {
+      const ta = a.original_timestamp ?? a.ingestion_timestamp ?? ''
+      const tb = b.original_timestamp ?? b.ingestion_timestamp ?? ''
+      return tb.localeCompare(ta)
+    })
+  }, [results])
+
+  const isLoading = results.some((r) => r.isLoading)
+
+  return { data: events, isLoading }
 }
 
 export function useRequestExport() {

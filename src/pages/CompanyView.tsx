@@ -1,169 +1,254 @@
-import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { format, subDays } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useIPISnapshot, useRequestExport } from '@/hooks/useIPI'
+import { useIPISnapshot, useCompanyTimelineEvents } from '@/hooks/useIPI'
+import { useSavedCompanies } from '@/hooks/useCompanies'
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from 'recharts'
-import { TrendingUp, TrendingDown, Minus, Download, ArrowRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+  CompanySelector,
+  IPISummaryPanel,
+  TopNarrativesList,
+  TimelineView,
+  DrilldownCTA,
+  AuditExportPanel,
+  PeerSnapshotPanel,
+  RawPayloadViewer,
+} from '@/components/company-view'
+import type { CompanySelectorValue } from '@/components/company-view'
+import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
+import type { IPIViewContext } from '@/types/company-view'
 
-const COLORS = ['rgb(var(--primary))', 'rgb(var(--accent))', 'rgb(var(--success))']
+const DEFAULT_WINDOW: TimeWindow = {
+  label: '1M',
+  start: subDays(new Date(), 30),
+  end: new Date(),
+}
 
 export function CompanyView() {
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
-  const start = searchParams.get('start') ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const end = searchParams.get('end') ?? new Date().toISOString().slice(0, 10)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+
+  const startParam = searchParams.get('start')
+  const endParam = searchParams.get('end')
+
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>(() => {
+    if (startParam && endParam) {
+      const start = new Date(startParam)
+      const end = new Date(endParam)
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        return { start, end, label: 'Custom' }
+      }
+    }
+    return DEFAULT_WINDOW
+  })
+
+  const windowStart = format(timeWindow.start, 'yyyy-MM-dd')
+  const windowEnd = format(timeWindow.end, 'yyyy-MM-dd')
+
+  useEffect(() => {
+    if (startParam && endParam) {
+      const start = new Date(startParam)
+      const end = new Date(endParam)
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        setTimeWindow({ start, end, label: 'Custom' })
+      }
+    }
+  }, [startParam, endParam])
 
   const { data: snapshot, isLoading: snapshotLoading } = useIPISnapshot(
     id ?? '',
-    start,
-    end
+    windowStart,
+    windowEnd
   )
-  const exportMutation = useRequestExport()
+
+  const narrativeIds = useMemo(
+    () => (snapshot?.top_narratives ?? []).map((n) => n.id).filter(Boolean),
+    [snapshot?.top_narratives]
+  )
+
+  const { data: timelineEvents = [] } = useCompanyTimelineEvents(narrativeIds)
+
+  const { data: savedCompanies = [] } = useSavedCompanies()
+  const safeSaved = Array.isArray(savedCompanies) ? savedCompanies : []
+
+  const selectedCompany: CompanySelectorValue | null = useMemo(() => {
+    if (!snapshot) return null
+    return {
+      id: snapshot.company_id,
+      name: snapshot.company_name,
+    }
+  }, [snapshot])
+
+  const recentAndSaved: CompanySelectorValue[] = useMemo(
+    () =>
+      safeSaved.map((c) => ({
+        id: c.id,
+        name: c.name,
+        ticker: c.ticker,
+      })),
+    [safeSaved]
+  )
+
+  const handleCompanyChange = useCallback(
+    (company: CompanySelectorValue) => {
+      navigate(`/dashboard/company/${company.id}?start=${windowStart}&end=${windowEnd}`)
+    },
+    [navigate, windowStart, windowEnd]
+  )
+
+  const handleTimeWindowChange = useCallback(
+    (window: TimeWindow) => {
+      setTimeWindow(window)
+      const start = format(window.start, 'yyyy-MM-dd')
+      const end = format(window.end, 'yyyy-MM-dd')
+      setSearchParams({ start, end }, { replace: true })
+    },
+    [setSearchParams]
+  )
+
+  const [payloadModalId, setPayloadModalId] = useState<string | null>(null)
+
+  const narrativesForList = useMemo(() => {
+    const top = snapshot?.top_narratives ?? []
+    return top.slice(0, 3).map((n) => ({
+      narrativeId: n.id,
+      name: n.label,
+      contribution: n.contribution ?? 0,
+      ...(n.event_count != null && { authority: `~${n.event_count} events` }),
+    }))
+  }, [snapshot?.top_narratives])
+
+  const viewContext: IPIViewContext = useMemo(
+    () => ({
+      companyId: snapshot?.company_id ?? id ?? '',
+      companyName: snapshot?.company_name,
+      windowStart,
+      windowEnd,
+      ipi: snapshot?.score,
+      delta: snapshot?.percent_change,
+      direction: snapshot?.direction,
+      breakdown: snapshot?.breakdown,
+      narratives: narrativesForList,
+      events: timelineEvents,
+      timestamp: snapshot?.window_end,
+    }),
+    [
+      snapshot,
+      id,
+      windowStart,
+      windowEnd,
+      narrativesForList,
+      timelineEvents,
+    ]
+  )
 
   const isLoading = snapshotLoading
 
-  if (isLoading || !snapshot) {
+  if (isLoading && !snapshot) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-40 w-full" />
+      <div className="space-y-8 animate-fade-in-up">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64 rounded-[10px]" />
+          <Skeleton className="h-64 rounded-[10px]" />
+        </div>
+        <Skeleton className="h-48 rounded-[10px]" />
       </div>
     )
   }
 
-  const pieData = [
-    { name: 'Narrative', value: snapshot.breakdown.narrative * 100, color: COLORS[0] },
-    { name: 'Credibility', value: snapshot.breakdown.credibility * 100, color: COLORS[1] },
-    { name: 'Risk', value: snapshot.breakdown.risk * 100, color: COLORS[2] },
-  ]
-
-  const DirectionIcon = snapshot.direction === 'up' ? TrendingUp : snapshot.direction === 'down' ? TrendingDown : Minus
+  if (!id) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        <p>No company selected. Select a company from the dashboard.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold">{snapshot.company_name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {start} – {end} · Weight version: {snapshot.weight_version}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() =>
-              exportMutation.mutate({
-                companyId: snapshot.company_id,
-                windowStart: start,
-                windowEnd: end,
-                format: 'both',
-              })
-            }
-            disabled={exportMutation.isPending}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export snapshot
-          </Button>
+    <div className="space-y-8 animate-fade-in-up">
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+            {snapshot?.company_name ?? 'Company'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {windowStart} – {windowEnd}
+            {snapshot?.weight_version && (
+              <> · Weight version: {snapshot.weight_version}</>
+            )}
+          </p>
         </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>IPI score</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold">{Math.round(snapshot.score)}</span>
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-1 text-sm font-medium',
-                    snapshot.direction === 'up' && 'text-success',
-                    snapshot.direction === 'down' && 'text-destructive',
-                    snapshot.direction === 'flat' && 'text-muted-foreground'
-                  )}
-                >
-                  <DirectionIcon className="h-4 w-4" />
-                  {snapshot.direction !== 'flat'
-                    ? `${snapshot.percent_change > 0 ? '+' : ''}${snapshot.percent_change.toFixed(1)}%`
-                    : 'No change'}
-                </span>
-              </div>
-              <div className="mt-6 h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                      nameKey="name"
-                    >
-                      {pieData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(v: number) => `${v.toFixed(0)}%`} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Top narratives</CardTitle>
-              <p className="text-sm text-muted-foreground">Contributions to IPI</p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {snapshot.top_narratives?.slice(0, 5).map((n) => (
-                  <li key={n.id} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{n.label}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {(n.contribution * 100).toFixed(0)}%
-                    </span>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link
-                        to={`/dashboard/drilldown/${n.id}?company=${snapshot.company_id}&start=${start}&end=${end}`}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="mt-4 w-full" variant="outline">
-                <Link
-                  to={`/dashboard/drilldown/${snapshot.top_narratives?.[0]?.id ?? ''}?company=${snapshot.company_id}&start=${start}&end=${end}`}
-                >
-                  Why did this move?
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Provisional weights: Narrative 40%, Credibility 40%, Risk 20%. 
-              Full methodology and provenance in About & Help.
-            </p>
-          </CardContent>
-        </Card>
+        <CompanySelector
+          value={selectedCompany}
+          onChange={handleCompanyChange}
+          recentCompanies={recentAndSaved}
+          savedCompanies={recentAndSaved}
+          timeWindow={timeWindow}
+          onTimeWindowChange={handleTimeWindowChange}
+        />
       </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <IPISummaryPanel
+              ipiValue={snapshot?.score}
+              direction={snapshot?.direction}
+              delta={snapshot?.percent_change}
+              topContributions={narrativesForList.map((n) => ({
+                name: n.name,
+                value: n.contribution,
+              }))}
+              breakdown={snapshot?.breakdown}
+              timestamp={snapshot?.window_end}
+            />
+
+            <TopNarrativesList
+              narratives={narrativesForList}
+              companyId={id}
+              windowStart={windowStart}
+              windowEnd={windowEnd}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <DrilldownCTA
+              companyId={id}
+              narrativeId={narrativesForList[0]?.narrativeId}
+              windowStart={windowStart}
+              windowEnd={windowEnd}
+            />
+          </div>
+
+          <TimelineView
+            events={timelineEvents}
+            onViewPayload={(rawPayloadId) => setPayloadModalId(rawPayloadId)}
+          />
+        </div>
+
+        <div className="space-y-6">
+          <AuditExportPanel viewContext={viewContext} status="ready" />
+
+          <PeerSnapshotPanel
+            windowStart={windowStart}
+            windowEnd={windowEnd}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-[10px] border border-border bg-card p-6">
+        <p className="text-sm text-muted-foreground">
+          <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk
+          20%. Full methodology and provenance in About & Help.
+        </p>
+      </div>
+
+      <RawPayloadViewer
+        rawPayloadId={payloadModalId}
+        onClose={() => setPayloadModalId(null)}
+      />
+    </div>
   )
 }
