@@ -14,6 +14,7 @@ import {
   PanelLeft,
   Menu,
   FileUp,
+  ListOrdered,
 } from 'lucide-react'
 
 const STORAGE_KEY = 'admin-sidebar-collapsed'
@@ -23,6 +24,7 @@ const adminNav = [
   { to: '/admin/users', label: 'User Management', icon: Users },
   { to: '/admin/ingest-monitor', label: 'Ingest Monitor', icon: Database },
   { to: '/admin/transcript-ingestion', label: 'Transcript Batch', icon: FileUp },
+  { to: '/admin/narrative-events', label: 'Narrative Events', icon: ListOrdered },
   { to: '/admin/payloads', label: 'Raw Payloads', icon: FileJson },
   { to: '/admin/audit-exports', label: 'Audit Exports', icon: FileDown },
 ]

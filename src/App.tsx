@@ -32,6 +32,7 @@ import { IngestMonitor } from '@/pages/admin/IngestMonitor'
 import { TranscriptIngestion } from '@/pages/admin/TranscriptIngestion'
 import { RawPayloadBrowser } from '@/pages/admin/RawPayloadBrowser'
 import { AuditExports } from '@/pages/admin/AuditExports'
+import { NarrativeEventsAdmin } from '@/pages/admin/NarrativeEventsAdmin'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,7 @@ export default function App() {
             <Route path="transcript-ingestion" element={<TranscriptIngestion />} />
             <Route path="payloads" element={<RawPayloadBrowser />} />
             <Route path="audit-exports" element={<AuditExports />} />
+            <Route path="narrative-events" element={<NarrativeEventsAdmin />} />
           </Route>
 
           <Route path="/company/:id" element={<Navigate to="/dashboard" replace />} />

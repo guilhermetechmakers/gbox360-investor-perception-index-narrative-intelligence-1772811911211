@@ -44,7 +44,14 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle()
 
-      if (error) return errorResponse(error.message, 500)
+      if (error) {
+        return jsonResponse({
+          status: 'idle',
+          progress: 0,
+          message: null,
+          lastCompletedAt: null,
+        })
+      }
 
       const row = data as Record<string, unknown> | null
       const status = row?.status ?? 'idle'

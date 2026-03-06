@@ -1,83 +1,66 @@
 /**
  * Narrative Events Validation - Supabase Edge Function
- * GET /functions/v1/narrative-events-validation - validate payload structure
- * POST /functions/v1/narrative-events-validation - validate payload from body
- * Returns { valid: boolean, errors?: string[] }
+ * POST /functions/v1/narrative-events-validation - validate incoming payload structure
+ * GET /functions/v1/narrative-events-validation - return schema validation rules
  */
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-function jsonResponse(data: unknown, status = 200) {
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function jsonResponse<T>(data: T, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 }
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-function isValidUUID(s: string): boolean {
-  return UUID_REGEX.test(s ?? '')
+function errorResponse(message: string, status: number) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 }
 
-function validatePayload(body: unknown): { valid: boolean; errors: string[] } {
+function validatePayload(body: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = []
-  if (body == null || typeof body !== 'object') {
-    return { valid: false, errors: ['Payload must be an object'] }
-  }
 
-  const b = body as Record<string, unknown>
+  if (!body?.raw_payload_id?.trim()) errors.push('raw_payload_id is required')
+  else if (!UUID_REGEX.test(String(body.raw_payload_id))) errors.push('raw_payload_id must be a valid UUID')
 
-  if (!b.event_id || typeof b.event_id !== 'string' || !isValidUUID(b.event_id.trim())) {
-    errors.push('event_id is required and must be a valid UUID')
-  }
-  if (!b.raw_payload_id || typeof b.raw_payload_id !== 'string' || !isValidUUID(b.raw_payload_id.trim())) {
-    errors.push('raw_payload_id is required and must be a valid UUID')
-  }
-  if (!b.source || typeof b.source !== 'string' || !String(b.source).trim()) {
-    errors.push('source is required')
-  }
-  if (!b.raw_text || typeof b.raw_text !== 'string') {
-    errors.push('raw_text is required')
-  }
-  if (!b.ingestion_timestamp || typeof b.ingestion_timestamp !== 'string' || !String(b.ingestion_timestamp).trim()) {
-    errors.push('ingestion_timestamp is required (ISO string)')
-  }
-  if (!b.original_timestamp || typeof b.original_timestamp !== 'string' || !String(b.original_timestamp).trim()) {
-    errors.push('original_timestamp is required (ISO string)')
-  }
+  if (!body?.source?.trim()) errors.push('source is required')
 
-  const prov = b.provenance
-  if (!prov || typeof prov !== 'object') {
-    errors.push('provenance is required (object)')
+  if (body?.raw_text == null && body?.text == null) errors.push('raw_text or text is required')
+  else if (typeof (body?.raw_text ?? body?.text) !== 'string') errors.push('raw_text must be a string')
+
+  if (!body?.provenance || typeof body.provenance !== 'object') {
+    errors.push('provenance is required (object with operator_id, ingest_system_id, write_timestamp)')
   } else {
-    const p = prov as Record<string, unknown>
+    const p = body.provenance as Record<string, unknown>
     if (!p.operator_id && !p.ingest_system_id) {
       errors.push('provenance must include operator_id or ingest_system_id')
     }
-    if (!p.write_timestamp) {
-      errors.push('provenance must include write_timestamp')
-    }
+    if (!p.write_timestamp) errors.push('provenance.write_timestamp is required')
   }
 
-  if (b.platform != null && typeof b.platform !== 'string') {
-    errors.push('platform must be a string if provided')
-  }
-  if (b.authority_score != null) {
-    const v = Number(b.authority_score)
-    if (Number.isNaN(v) || v < 0 || v > 1) {
-      errors.push('authority_score must be a number between 0 and 1 if provided')
-    }
+  if (body?.original_timestamp) {
+    const t = new Date(String(body.original_timestamp))
+    if (isNaN(t.getTime())) errors.push('original_timestamp must be a valid ISO timestamp')
   }
 
-  return {
-    valid: errors.length === 0,
-    errors: errors.length > 0 ? errors : undefined as unknown as string[],
+  if (body?.metadata != null && typeof body.metadata !== 'object') {
+    errors.push('metadata must be an object')
   }
+
+  if (body?.authority_score != null) {
+    const n = Number(body.authority_score)
+    if (isNaN(n) || n < 0 || n > 1) errors.push('authority_score must be between 0 and 1')
+  }
+
+  return { valid: errors.length === 0, errors }
 }
 
 Deno.serve(async (req) => {
@@ -85,36 +68,25 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return jsonResponse({ valid: false, errors: ['Method not allowed'] }, 405)
-  }
-
-  let body: unknown = null
-  if (req.method === 'POST') {
-    try {
-      body = await req.json()
-    } catch {
-      return jsonResponse({ valid: false, errors: ['Invalid JSON body'] }, 400)
+  try {
+    if (req.method === 'GET') {
+      return jsonResponse({
+        schema: {
+          required: ['raw_payload_id', 'source', 'raw_text', 'provenance'],
+          optional: ['platform', 'speaker_entity', 'speaker_role', 'audience_class', 'metadata', 'authority_score', 'credibility_flags', 'original_timestamp'],
+          provenance_required: ['operator_id or ingest_system_id', 'write_timestamp'],
+        },
+      })
     }
-  } else {
-    const url = new URL(req.url)
-    const payloadParam = url.searchParams.get('payload')
-    if (payloadParam) {
-      try {
-        body = JSON.parse(decodeURIComponent(payloadParam))
-      } catch {
-        return jsonResponse({ valid: false, errors: ['Invalid payload query parameter (must be JSON)'] }, 400)
-      }
+
+    if (req.method === 'POST') {
+      const body = (await req.json()) as Record<string, unknown>
+      const { valid, errors } = validatePayload(body ?? {})
+      return jsonResponse({ valid, errors })
     }
-  }
 
-  if (body == null) {
-    return jsonResponse({
-      valid: false,
-      errors: ['No payload provided. Use POST with JSON body or GET ?payload=<encoded JSON>'],
-    }, 400)
+    return errorResponse('Method not allowed', 405)
+  } catch (err) {
+    return errorResponse(err instanceof Error ? err.message : 'Internal error', 500)
   }
-
-  const result = validatePayload(body)
-  return jsonResponse(result)
 })
