@@ -8,7 +8,7 @@ async function getCurrentFromSupabase(): Promise<User | null> {
   if (!session?.user) return null
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, org, role, avatar_url, created_at, updated_at')
+    .select('full_name, org, role, avatar_url, locale, timezone, created_at, updated_at')
     .eq('id', session.user.id)
     .single()
   const meta = session.user.user_metadata ?? {}
@@ -19,6 +19,8 @@ async function getCurrentFromSupabase(): Promise<User | null> {
     avatar_url: (profile?.avatar_url ?? meta.avatar_url) as string | undefined,
     role: (profile?.role ?? meta.role) as User['role'],
     org: profile?.org ?? meta.org,
+    locale: (profile as { locale?: string })?.locale,
+    timezone: (profile as { timezone?: string })?.timezone,
     email_verified: !!session.user.email_confirmed_at,
     created_at: profile?.created_at ?? session.user.created_at,
     updated_at: profile?.updated_at ?? new Date().toISOString(),

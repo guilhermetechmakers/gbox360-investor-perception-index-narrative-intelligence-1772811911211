@@ -7,6 +7,8 @@ export interface User {
   avatar_url?: string
   role?: UserRole
   org?: string
+  locale?: string
+  timezone?: string
   email_verified?: boolean
   created_at: string
   updated_at: string
@@ -19,6 +21,8 @@ export interface UpdateUserInput {
   org?: string
   role?: UserRole
   roles?: string[]
+  locale?: string
+  timezone?: string
 }
 
 export interface UserWithAdminFields extends User {

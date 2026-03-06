@@ -1,3 +1,4 @@
+import { useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsApi } from '@/api/settings'
 import { authKeys } from '@/hooks/useAuth'
@@ -103,10 +104,66 @@ export function useDataExport() {
   })
 }
 
+export type GdprExportStatus = 'idle' | 'pending' | 'completed' | 'failed'
+
+export function useGdprExport() {
+  const [exportId, setExportId] = useState<string | null>(null)
+  const [status, setStatus] = useState<GdprExportStatus>('idle')
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const initiate = useCallback(async () => {
+    setError(null)
+    setDownloadUrl(null)
+    const result = await settingsApi.initiateGdprExport()
+    if (result?.id) {
+      setExportId(result.id)
+      setStatus('pending')
+      return result.id
+    }
+    setStatus('failed')
+    setError('Could not start export')
+    return null
+  }, [])
+
+  useEffect(() => {
+    if (!exportId || status !== 'pending') return
+
+    const poll = async () => {
+      const res = await settingsApi.getExportStatus(exportId)
+      if (!res) return
+      if (res.status === 'completed' && res.artifact_url) {
+        setStatus('completed')
+        setDownloadUrl(res.artifact_url)
+        return
+      }
+      if (res.status === 'failed') {
+        setStatus('failed')
+        setError('Export failed')
+        return
+      }
+      setTimeout(poll, 2000)
+    }
+    poll()
+  }, [exportId, status])
+
+  const reset = useCallback(() => {
+    setExportId(null)
+    setStatus('idle')
+    setDownloadUrl(null)
+    setError(null)
+  }, [])
+
+  return { status, downloadUrl, error, initiate, reset }
+}
+
 export function useDeleteAccount() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => settingsApi.deleteAccount(),
+    mutationFn: (opts?: string | { password?: string }) => {
+      const password = typeof opts === 'object' && opts?.password ? opts.password : typeof opts === 'string' ? opts : undefined
+      return settingsApi.deleteAccount(undefined, password)
+    },
     onSuccess: (ok) => {
       if (ok) {
         queryClient.clear()

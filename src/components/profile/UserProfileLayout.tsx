@@ -2,6 +2,7 @@ import { UserInfoCard } from './UserInfoCard'
 import { SavedCompaniesPanel } from './SavedCompaniesPanel'
 import { RecentActivityList } from './RecentActivityList'
 import { PreferencesPanel } from './PreferencesPanel'
+import { WeightScenariosPreviewCard } from './WeightScenariosPreviewCard'
 import { AccountActionsPanel } from './AccountActionsPanel'
 import type { User } from '@/types/user'
 import type { Company } from '@/types/company'
@@ -58,6 +59,7 @@ export function UserProfileLayout({
           />
         </div>
         <div className="lg:col-span-6 space-y-6">
+          <WeightScenariosPreviewCard />
           <PreferencesPanel />
           <AccountActionsPanel />
         </div>

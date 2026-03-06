@@ -18,6 +18,9 @@ export const settingsApi = {
         email: user.email ?? '',
         organization: user.org,
         role: user.role,
+        avatar_url: user.avatar_url,
+        locale: user.locale,
+        timezone: user.timezone,
         twoFactorEnabled: false,
       }
     } catch {
@@ -25,7 +28,7 @@ export const settingsApi = {
     }
   },
 
-  updateProfile: async (updates: Partial<Pick<UserProfile, 'name' | 'organization' | 'role'>>): Promise<UserProfile | null> => {
+  updateProfile: async (updates: Partial<Pick<UserProfile, 'name' | 'organization' | 'role' | 'avatar_url' | 'locale' | 'timezone'>>): Promise<UserProfile | null> => {
     try {
       const user = await usersApi.getCurrent()
       if (!user?.id) return null
@@ -34,6 +37,9 @@ export const settingsApi = {
         full_name: updates.name,
         org: updates.organization,
         role: updates.role as 'user' | 'admin' | 'operator' | 'auditor' | undefined,
+        avatar_url: updates.avatar_url ?? undefined,
+        locale: updates.locale ?? undefined,
+        timezone: updates.timezone ?? undefined,
       })
       if (!updated) return null
       return {
@@ -42,6 +48,9 @@ export const settingsApi = {
         email: updated.email ?? '',
         organization: updated.org,
         role: updated.role,
+        avatar_url: updated.avatar_url ?? undefined,
+        locale: updated.locale,
+        timezone: updated.timezone,
         twoFactorEnabled: false,
       }
     } catch {
@@ -189,12 +198,38 @@ export const settingsApi = {
     }
   },
 
-  deleteAccount: async (confirmation?: string): Promise<boolean> => {
+  deleteAccount: async (confirmation?: string, password?: string): Promise<boolean> => {
     try {
-      await api.post('/settings/delete', { confirmation: confirmation ?? 'DELETE' })
+      if (password) {
+        await api.post('/users/me/delete', { password })
+      } else {
+        await api.post('/settings/delete', { confirmation: confirmation ?? 'DELETE' })
+      }
       return true
     } catch {
       return false
+    }
+  },
+
+  /** Initiate GDPR export job - returns export id for status polling */
+  initiateGdprExport: async (): Promise<{ id: string; status: string } | null> => {
+    try {
+      const res = await api.post<{ id?: string; exportId?: string; status?: string }>('/users/me/export', { format: 'zip' })
+      const id = res?.id ?? res?.exportId
+      return res && typeof id === 'string' ? { id, status: res.status ?? 'pending' } : null
+    } catch {
+      return null
+    }
+  },
+
+  /** Get export job status and download URL */
+  getExportStatus: async (exportId: string): Promise<{ status: string; artifact_url?: string } | null> => {
+    try {
+      const res = await api.get<{ status?: string; artifact_url?: string }>(`/exports/${exportId}`)
+      if (!res) return null
+      return { status: res.status ?? 'pending', artifact_url: res.artifact_url }
+    } catch {
+      return null
     }
   },
 

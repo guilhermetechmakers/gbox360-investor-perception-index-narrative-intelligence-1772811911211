@@ -134,6 +134,8 @@ export default function App() {
 
           <Route path="/company/:id" element={<Navigate to="/dashboard" replace />} />
           <Route path="/drilldown/:narrativeId" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
+          <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
 
           <Route path="/500" element={<ServerError />} />
           <Route path="*" element={<NotFound />} />

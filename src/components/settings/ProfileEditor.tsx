@@ -19,14 +19,18 @@ import { useUpdateUser } from '@/hooks/useUsers'
 import { useChangePassword } from '@/hooks/useSettings'
 import { PasswordResetLink } from '@/components/login/PasswordResetLink'
 import { PasswordStrengthBar } from '@/components/signup/PasswordStrengthBar'
+import { AvatarUploader } from '@/components/profile'
 import { Skeleton } from '@/components/ui/skeleton'
+import { uploadAvatar } from '@/lib/avatar-upload'
 import { KeyRound, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 const profileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
   organization: z.string().optional(),
   role: z.string().optional(),
+  locale: z.string().max(10).optional(),
+  timezone: z.string().max(50).optional(),
 })
 
 type ProfileFormValues = z.infer<typeof profileSchema>
@@ -39,7 +43,39 @@ const ROLE_OPTIONS = [
   { value: 'auditor', label: 'Auditor' },
 ]
 
-function mapUserToProfile(user: { id: string; email: string; full_name?: string; org?: string; role?: string } | null) {
+const LOCALE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'de', label: 'German' },
+  { value: 'fr', label: 'French' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'ja', label: 'Japanese' },
+]
+
+const TIMEZONE_OPTIONS = [
+  { value: 'UTC', label: 'UTC' },
+  { value: 'America/New_York', label: 'Eastern (US)' },
+  { value: 'America/Chicago', label: 'Central (US)' },
+  { value: 'America/Denver', label: 'Mountain (US)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (US)' },
+  { value: 'Europe/London', label: 'London' },
+  { value: 'Europe/Paris', label: 'Paris' },
+  { value: 'Europe/Berlin', label: 'Berlin' },
+  { value: 'Asia/Tokyo', label: 'Tokyo' },
+  { value: 'Asia/Singapore', label: 'Singapore' },
+]
+
+function mapUserToProfile(user: {
+  id: string
+  email: string
+  full_name?: string
+  org?: string
+  role?: string
+  locale?: string
+  timezone?: string
+  avatar_url?: string
+} | null) {
   if (!user) return null
   return {
     id: user.id,
@@ -47,6 +83,9 @@ function mapUserToProfile(user: { id: string; email: string; full_name?: string;
     email: user.email ?? '',
     organization: user.org,
     role: user.role,
+    locale: user.locale,
+    timezone: user.timezone,
+    avatar_url: user.avatar_url,
   }
 }
 
@@ -59,6 +98,7 @@ export function ProfileEditor() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -66,6 +106,8 @@ export function ProfileEditor() {
       name: '',
       organization: '',
       role: '',
+      locale: '',
+      timezone: '',
     },
   })
 
@@ -75,9 +117,28 @@ export function ProfileEditor() {
         name: profile.name ?? '',
         organization: profile.organization ?? '',
         role: profile.role ?? '',
+        locale: profile.locale ?? '',
+        timezone: profile.timezone ?? '',
       })
     }
   }, [profile, form])
+
+  const handleAvatarUpload = async (file: File): Promise<string | null> => {
+    setAvatarUploading(true)
+    try {
+      const url = await uploadAvatar(file)
+      if (url && profile?.id) {
+        updateProfile.mutate(
+          { id: profile.id, avatar_url: url },
+          { onSuccess: () => toast.success('Avatar updated') }
+        )
+        return url
+      }
+      return null
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   const onSubmit = (values: ProfileFormValues) => {
     if (!profile?.id) return
@@ -87,6 +148,8 @@ export function ProfileEditor() {
         full_name: values.name,
         org: values.organization || undefined,
         role: values.role as 'user' | 'admin' | 'operator' | 'auditor' | undefined,
+        locale: values.locale || undefined,
+        timezone: values.timezone || undefined,
       },
       {
         onSuccess: () => form.reset(values),
@@ -131,14 +194,22 @@ export function ProfileEditor() {
             Update your personal details. Email is read-only; use Change Email below if needed.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <CardContent className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-6">
+            <AvatarUploader
+              currentUrl={profile?.avatar_url ?? user?.avatar_url}
+              displayName={profile?.name ?? user?.full_name ?? 'User'}
+              onUpload={handleAvatarUpload}
+              disabled={avatarUploading || updateProfile.isPending}
+            />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 {...form.register('name')}
                 placeholder="Your full name"
+                maxLength={100}
                 className="transition-colors duration-150"
                 aria-invalid={!!form.formState.errors.name}
               />
@@ -190,10 +261,49 @@ export function ProfileEditor() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" disabled={updateProfile.isPending}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="locale">Language</Label>
+                <Select
+                  value={form.watch('locale') ?? ''}
+                  onValueChange={(v) => form.setValue('locale', v)}
+                >
+                  <SelectTrigger id="locale">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(LOCALE_OPTIONS ?? []).map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="timezone">Timezone</Label>
+                <Select
+                  value={form.watch('timezone') ?? ''}
+                  onValueChange={(v) => form.setValue('timezone', v)}
+                >
+                  <SelectTrigger id="timezone">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(TIMEZONE_OPTIONS ?? []).map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button type="submit" disabled={updateProfile.isPending} className="transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
               {updateProfile.isPending ? 'Saving…' : 'Save changes'}
             </Button>
           </form>
+          </div>
         </CardContent>
       </Card>
 
