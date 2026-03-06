@@ -42,9 +42,28 @@ export function TopNarrativesList({
           <p className="text-sm text-muted-foreground">Contributions to IPI</p>
         </CardHeader>
         <CardContent>
-          <div className="py-8 text-center text-muted-foreground">
-            <FileText className="mx-auto h-10 w-10 mb-2 opacity-50" />
-            <p>No narrative data for this window</p>
+          <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+            <div
+              className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+              aria-hidden
+            >
+              <FileText className="h-6 w-6" />
+            </div>
+            <h3 className="text-sm font-medium text-foreground">No narrative data for this window</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Try a different time range or explore all narratives in the platform.
+            </p>
+            <Button
+              variant="default"
+              size="sm"
+              className="mt-4 min-h-[44px] min-w-[120px]"
+              asChild
+            >
+              <Link to="/dashboard/narratives" className="inline-flex items-center gap-2">
+                Explore narratives
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
