@@ -1,5 +1,6 @@
 export { IngestionOverviewPanel } from './IngestionOverviewPanel'
 export { SystemHealthPanel } from './SystemHealthPanel'
+export { HealthStatusCard } from './HealthStatusCard'
 export { AdminNotificationsBar } from './AdminNotificationsBar'
 export { QuickAccessTiles } from './QuickAccessTiles'
 export { AdminActionsPanel } from './AdminActionsPanel'

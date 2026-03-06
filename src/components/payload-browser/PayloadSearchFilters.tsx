@@ -51,6 +51,7 @@ export function PayloadSearchFilters({
   const [ticker, setTicker] = useState(initialFilters?.ticker ?? '')
   const [batchId, setBatchId] = useState(initialFilters?.batchId ?? '')
   const [status, setStatus] = useState(initialFilters?.status ?? 'all')
+  const [provenance, setProvenance] = useState(initialFilters?.provenance ?? '')
   const [dateFrom, setDateFrom] = useState(initialFilters?.dateFrom ?? '')
   const [dateTo, setDateTo] = useState(initialFilters?.dateTo ?? '')
 
@@ -62,17 +63,19 @@ export function PayloadSearchFilters({
       ...(ticker ? { ticker: ticker.trim() } : {}),
       ...(batchId ? { batchId: batchId.trim() } : {}),
       ...(status && status !== 'all' ? { status } : {}),
+      ...(provenance ? { provenance: provenance.trim() } : {}),
       ...(dateFrom ? { dateFrom } : {}),
       ...(dateTo ? { dateTo } : {}),
     }
     onChangeFilters(filters)
-  }, [source, ticker, batchId, status, dateFrom, dateTo, onChangeFilters, initialFilters?.pageSize])
+  }, [source, ticker, batchId, status, provenance, dateFrom, dateTo, onChangeFilters, initialFilters?.pageSize])
 
   const resetFilters = useCallback(() => {
     setSource('all')
     setTicker('')
     setBatchId('')
     setStatus('all')
+    setProvenance('')
     setDateFrom('')
     setDateTo('')
     onChangeFilters({
@@ -155,6 +158,20 @@ export function PayloadSearchFilters({
               onChange={(e) => setBatchId(e.target.value)}
               className="h-10"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="filter-provenance">Provenance</Label>
+            <Input
+              id="filter-provenance"
+              placeholder="e.g. source-id or chain ref"
+              value={provenance}
+              onChange={(e) => setProvenance(e.target.value)}
+              className="h-10"
+              aria-describedby="filter-provenance-desc"
+            />
+            <p id="filter-provenance-desc" className="text-xs text-muted-foreground">
+              Filter by provenance chain or source reference
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-4">

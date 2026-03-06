@@ -7,6 +7,7 @@ import {
   AdminUserDetailPanel,
   BulkActionsPanel,
   AuditExportPanel,
+  AdminAuditLogsCard,
 } from '@/components/admin-user-management'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
@@ -169,6 +170,7 @@ export function UserManagement() {
             onExport={handleAuditExport}
             isLoading={auditExportLoading}
           />
+          <AdminAuditLogsCard />
         </div>
       </div>
 

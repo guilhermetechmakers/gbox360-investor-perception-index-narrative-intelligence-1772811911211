@@ -99,6 +99,24 @@ export function RawPayloadBrowser() {
     [generateExport]
   )
 
+  const handleReplayPayload = useCallback(
+    (id: string, params?: { idempotencyKey?: string; reason?: string }) => {
+      replayPayload.mutate({ id, idempotencyKey: params?.idempotencyKey, reason: params?.reason })
+    },
+    [replayPayload]
+  )
+
+  const handleReplaySelected = useCallback(
+    (ids: string[], params?: { idempotencyKey?: string; reason?: string }) => {
+      replayBatch.mutate({
+        payloadIds: ids,
+        idempotencyKey: params?.idempotencyKey,
+        reason: params?.reason,
+      })
+    },
+    [replayBatch]
+  )
+
   const queues = systemHealth?.queues ?? []
 
   return (
@@ -149,8 +167,8 @@ export function RawPayloadBrowser() {
           <ReplayControl
             selectedPayloadId={selectedPayload?.id}
             selectedPayloadIds={selectedPayloadIds}
-            onReplayPayload={(id) => replayPayload.mutate(id)}
-            onReplaySelected={(ids) => replayBatch.mutate(ids)}
+            onReplayPayload={handleReplayPayload}
+            onReplaySelected={handleReplaySelected}
             isReplaying={replayPayload.isPending || replayBatch.isPending}
           />
         </div>
@@ -162,7 +180,7 @@ export function RawPayloadBrowser() {
             <PayloadViewerPanel
               payload={selectedPayload}
               onClose={() => setSelectedPayload(null)}
-              onReplay={(id) => replayPayload.mutate(id)}
+              onReplay={(id) => handleReplayPayload(id)}
               isReplaying={replayPayload.isPending}
             />
             <ProvenancePanel provenanceData={provenance} />

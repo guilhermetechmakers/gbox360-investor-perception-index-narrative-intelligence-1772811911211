@@ -8,6 +8,7 @@ import {
   UserManagementShortcutCard,
   IngestMonitorPanel,
   ActivityAuditExportPanel,
+  HealthStatusCard,
 } from '@/components/admin-dashboard'
 import {
   useIngestionStatus,
@@ -16,6 +17,8 @@ import {
   useIngestMonitor,
   useUserSummary,
   useAdminNotifications,
+  useAdminHealth,
+  useAdminIngestStatus,
 } from '@/hooks/useAdminDashboard'
 
 export function AdminDashboard() {
@@ -24,14 +27,30 @@ export function AdminDashboard() {
 
   const { data: ingestionData, isLoading: ingestionLoading } = useIngestionStatus()
   const { data: healthData, isLoading: healthLoading } = useSystemHealth()
+  const { data: adminHealth } = useAdminHealth()
+  const { data: ingestStatus } = useAdminIngestStatus()
   const { data: actionsData, isLoading: actionsLoading } = useAdminActions({ limit: 10 })
   const { data: ingestMonitorData, isLoading: ingestMonitorLoading } = useIngestMonitor()
   const userSummary = useUserSummary()
   const { notifications, dismiss, acknowledge } = useAdminNotifications()
 
-  const sources = ingestionData?.sources ?? []
+  const ingestionSources = ingestionData?.sources ?? []
+  const ingestStatusSources = ingestStatus?.sources ?? []
+  const sources =
+    ingestionSources.length > 0
+      ? ingestionSources
+      : ingestStatusSources.map((s) => ({
+          id: s.id,
+          name: s.name,
+          lastIngestTime: undefined,
+          throughput: s.throughput,
+          errorCount: 0,
+          rateLimit: undefined,
+          rateLimitWarnings: [],
+          status: 'healthy' as const,
+        }))
   const queues = healthData?.queues ?? []
-  const healthScore = healthData?.healthScore ?? 100
+  const healthScore = healthData?.healthScore ?? (adminHealth?.status === 'healthy' ? 100 : 80)
   const actions = actionsData?.actions ?? []
   const ingestSources = ingestMonitorData?.sources ?? []
   return (
@@ -56,12 +75,13 @@ export function AdminDashboard() {
             onTimeWindowChange={setTimeWindow}
           />
         </div>
-        <div>
+        <div className="space-y-6">
           <SystemHealthPanel
             queues={queues}
             healthScore={healthScore}
             isLoading={healthLoading}
           />
+          <HealthStatusCard />
         </div>
       </div>
 

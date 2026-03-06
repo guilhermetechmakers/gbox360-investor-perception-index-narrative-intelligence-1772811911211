@@ -1,6 +1,7 @@
 /**
  * Admin Dashboard API
- * Endpoints: ingestion-status, system-health, admin-actions, ingest-monitor, payloads, audit-exports
+ * Endpoints: health, status/ingest, ingestion-status, system-health, admin-actions,
+ * ingest-monitor, payloads, audit-exports, audit-logs
  * Uses internal admin APIs; falls back to mock data for MVP when endpoints unavailable.
  */
 import { api } from '@/lib/api'
@@ -20,9 +21,27 @@ import type {
   AuditExportResponse,
   SignEventsParams,
   SignEventsResponse,
+  AuditLogsParams,
+  AuditLogsResponse,
+  AdminActionAudit,
 } from '@/types/admin'
 
 const ADMIN_BASE = '/admin'
+
+/** Admin health response - GET /admin/health */
+export interface AdminHealthResponse {
+  status: 'ok' | 'degraded' | 'error'
+  services?: { name: string; status: string; latencyMs?: number }[]
+  dbLatencyMs?: number
+  timestamp?: string
+}
+
+/** Admin status ingest - GET /admin/status/ingest */
+export interface AdminStatusIngestResponse {
+  status: string
+  queueHealth?: Record<string, { depth: number; errors: number }>
+  lastUpdated?: string
+}
 
 /** Admin notification for SLA alerts and critical events */
 export interface AdminNotification {
@@ -108,6 +127,93 @@ function safeGet<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 }
 
 export const adminDashboardApi = {
+  /** GET /admin/health - system health checks */
+  getHealth: async (): Promise<{
+    status: 'healthy' | 'degraded' | 'unhealthy'
+    dbLatencyMs?: number
+    queueHealth?: string
+    uptime?: number
+  }> => {
+    const res = await safeGet(
+      () => api.get<{ status?: string; dbLatencyMs?: number; queueHealth?: string; uptime?: number }>(`${ADMIN_BASE}/health`),
+      { status: 'healthy', dbLatencyMs: 5, queueHealth: 'ok', uptime: 86400 }
+    )
+    const status = (res?.status === 'degraded' || res?.status === 'unhealthy'
+      ? res.status
+      : 'healthy') as 'healthy' | 'degraded' | 'unhealthy'
+    return { ...res, status }
+  },
+
+  /** GET /admin/status/ingest - ingestion status summary */
+  getIngestStatus: async (): Promise<{
+    sources: { id: string; name: string; queueSize: number; throughput?: number }[]
+    lastUpdated?: string
+  }> => {
+    const res = await safeGet(
+      () => api.get<{ sources?: unknown[]; lastUpdated?: string }>(`${ADMIN_BASE}/status/ingest`),
+      {
+        sources: MOCK_INGESTION_SOURCES.map((s) => ({
+          id: s.id,
+          name: s.name,
+          queueSize: 0,
+          throughput: s.throughput,
+        })),
+        lastUpdated: new Date().toISOString(),
+      }
+    )
+    const sources = (Array.isArray(res?.sources) ? res.sources : [])
+      .filter((x): x is { id: string; name: string; queueSize?: number; throughput?: number } =>
+        x != null && typeof x === 'object' && 'id' in x && 'name' in x
+      )
+      .map((x) => ({
+        id: String(x.id),
+        name: String(x.name),
+        queueSize: Number(x.queueSize) ?? 0,
+        throughput: x.throughput != null ? Number(x.throughput) : undefined,
+      }))
+    return {
+      sources: sources.length > 0 ? sources : MOCK_INGESTION_SOURCES.map((s) => ({
+        id: s.id,
+        name: s.name,
+        queueSize: 0,
+        throughput: s.throughput,
+      })),
+      lastUpdated: res?.lastUpdated,
+    }
+  },
+
+  /** GET /admin/audit-logs - admin action audit trail */
+  getAuditLogs: async (params?: AuditLogsParams): Promise<AuditLogsResponse> => {
+    const qs = params
+      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
+      : ''
+    const res = await safeGet(
+      () => api.get<AuditLogsResponse | { data?: AdminActionAudit[] }>(`${ADMIN_BASE}/audit-logs${qs}`),
+      { data: [], count: 0 }
+    )
+    const data = Array.isArray(res?.data) ? res.data : (res as { data?: AdminActionAudit[] })?.data ?? []
+    return { data: data ?? [], count: (res as AuditLogsResponse)?.count ?? data.length }
+  },
+
+  /** Export audit logs as JSON/CSV */
+  exportAuditLogs: async (params?: AuditLogsParams & { format?: 'json' | 'csv' }): Promise<Blob> => {
+    const base =
+      (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:3000/api'
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== '') searchParams.set(k, String(v))
+      })
+    }
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : ''
+    const res = await fetch(`${base}${ADMIN_BASE}/audit-logs/export${qs}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) throw new Error(`Audit export failed: ${res.status}`)
+    return res.blob()
+  },
+
   getIngestionStatus: async (): Promise<IngestionStatusResponse> => {
     return safeGet(
       () => api.get<IngestionStatusResponse>(`${ADMIN_BASE}/ingestion-status`),
@@ -156,21 +262,29 @@ export const adminDashboardApi = {
     )
   },
 
-  replayPayload: async (id: string): Promise<{ success: boolean; jobId?: string; message?: string }> => {
+  replayPayload: async (
+    id: string,
+    options?: { idempotencyKey?: string; reason?: string }
+  ): Promise<{ success: boolean; jobId?: string; message?: string }> => {
     return api.post<{ success: boolean; jobId?: string; message?: string }>(
       `${ADMIN_BASE}/payloads/${id}/replay`,
-      {}
+      { idempotencyKey: options?.idempotencyKey ?? `replay-${id}-${Date.now()}`, reason: options?.reason }
     )
   },
 
-  replayPayloadsBatch: async (payloadIds: string[]): Promise<{
+  replayPayloadsBatch: async (
+    payloadIds: string[],
+    options?: { idempotencyKey?: string; reason?: string }
+  ): Promise<{
     success: boolean
     jobId?: string
     scheduledCount?: number
   }> => {
+    const idempotencyKey =
+      options?.idempotencyKey ?? `batch-replay-${Date.now()}-${payloadIds.join(',')}`
     return api.post<{ success: boolean; jobId?: string; scheduledCount?: number }>(
       `${ADMIN_BASE}/payloads/replay`,
-      { payloadIds }
+      { narrativeEventIds: payloadIds, payloadIds, idempotencyKey, reason: options?.reason }
     )
   },
 
@@ -190,7 +304,7 @@ export const adminDashboardApi = {
   },
 
   generateAuditExport: async (params: GenerateAuditExportParams): Promise<AuditExportResponse> => {
-    return api.post<AuditExportResponse>(`${ADMIN_BASE}/audit/export`, params)
+    return api.post<AuditExportResponse>(`${ADMIN_BASE}/payloads/audit-export`, params)
   },
 
   getAuditExport: async (exportId: string): Promise<{

@@ -16,6 +16,37 @@ import { FileJson } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { RawPayload } from '@/types/admin'
 
+function ProvenanceChips({ provenance }: { provenance?: Record<string, unknown> | string[] | null }) {
+  if (!provenance) return <span className="text-muted-foreground text-xs">—</span>
+  const items: string[] = Array.isArray(provenance)
+    ? provenance.filter((x): x is string => typeof x === 'string')
+    : typeof provenance === 'object' && provenance != null
+      ? Object.entries(provenance)
+          .filter(([, v]) => v != null && v !== '')
+          .map(([k, v]) => `${k}: ${String(v)}`)
+      : []
+  if (items.length === 0) return <span className="text-muted-foreground text-xs">—</span>
+  return (
+    <div className="flex flex-wrap gap-1 max-w-[140px]">
+      {items.slice(0, 2).map((label, i) => (
+        <Badge
+          key={i}
+          variant="outline"
+          className="text-[10px] px-1.5 py-0 bg-accent/10 text-accent border-accent/30 truncate max-w-[60px]"
+          title={label}
+        >
+          {label.length > 8 ? `${label.slice(0, 6)}…` : label}
+        </Badge>
+      ))}
+      {items.length > 2 && (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted">
+          +{items.length - 2}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 const STATUS_VARIANTS: Record<string, string> = {
   ingested: 'bg-success/20 text-success border-success/30',
   failed: 'bg-destructive/20 text-destructive border-destructive/30',
@@ -112,6 +143,7 @@ export function PayloadList({
                     <TableHead>Source</TableHead>
                     <TableHead>Ticker</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Provenance</TableHead>
                     <TableHead>Batch ID</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -155,6 +187,9 @@ export function PayloadList({
                             {status}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <ProvenanceChips provenance={p.provenance} />
+                        </TableCell>
                         <TableCell className="font-mono text-xs max-w-[100px] truncate" title={p.batchId ?? ''}>
                           {p.batchId ?? '—'}
                         </TableCell>
@@ -196,9 +231,12 @@ export function PayloadList({
                         <p className="text-xs text-muted-foreground mt-1">
                           {p.timestamp ? new Date(p.timestamp).toLocaleString() : '—'}
                         </p>
-                        <Badge variant="outline" className={cn('mt-2 capitalize', statusClass)}>
-                          {status}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <Badge variant="outline" className={cn('capitalize', statusClass)}>
+                            {status}
+                          </Badge>
+                          <ProvenanceChips provenance={p.provenance} />
+                        </div>
                       </div>
                     </div>
                   </div>

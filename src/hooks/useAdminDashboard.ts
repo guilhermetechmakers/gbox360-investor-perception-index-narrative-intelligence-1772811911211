@@ -2,7 +2,12 @@ import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminDashboardApi, type AdminNotification } from '@/api/admin-dashboard'
 import { adminApi } from '@/api/admin'
-import type { SignEventsParams, PayloadSearchFilters, GenerateAuditExportParams } from '@/types/admin'
+import type {
+  SignEventsParams,
+  PayloadSearchFilters,
+  GenerateAuditExportParams,
+  AuditLogsParams,
+} from '@/types/admin'
 import { toast } from 'sonner'
 
 const INGESTION_KEY = ['admin', 'ingestion-status']
@@ -11,6 +16,32 @@ const ADMIN_ACTIONS_KEY = ['admin', 'admin-actions']
 const PAYLOADS_KEY = ['admin', 'payloads']
 const PAYLOAD_DETAIL_KEY = ['admin', 'payload-detail']
 const INGEST_MONITOR_KEY = ['admin', 'ingest-monitor']
+const HEALTH_KEY = ['admin', 'health']
+const INGEST_STATUS_KEY = ['admin', 'ingest-status']
+const AUDIT_LOGS_KEY = ['admin', 'audit-logs']
+
+export function useAdminHealth(refetchInterval?: number) {
+  return useQuery({
+    queryKey: HEALTH_KEY,
+    queryFn: () => adminDashboardApi.getHealth(),
+    refetchInterval: refetchInterval ?? 30000,
+  })
+}
+
+export function useAdminIngestStatus(refetchInterval?: number) {
+  return useQuery({
+    queryKey: INGEST_STATUS_KEY,
+    queryFn: () => adminDashboardApi.getIngestStatus(),
+    refetchInterval: refetchInterval ?? 30000,
+  })
+}
+
+export function useAuditLogs(params?: AuditLogsParams) {
+  return useQuery({
+    queryKey: [...AUDIT_LOGS_KEY, params],
+    queryFn: () => adminDashboardApi.getAuditLogs(params),
+  })
+}
 
 export function useIngestionStatus(refetchInterval?: number) {
   return useQuery({
@@ -62,7 +93,15 @@ export function useIngestMonitor(refetchInterval?: number) {
 export function useReplayPayload() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => adminDashboardApi.replayPayload(id),
+    mutationFn: (params: {
+      id: string
+      idempotencyKey?: string
+      reason?: string
+    }) =>
+      adminDashboardApi.replayPayload(params.id, {
+        idempotencyKey: params.idempotencyKey,
+        reason: params.reason,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
       queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })
@@ -78,7 +117,15 @@ export function useReplayPayload() {
 export function useReplayPayloadsBatch() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payloadIds: string[]) => adminDashboardApi.replayPayloadsBatch(payloadIds),
+    mutationFn: (params: {
+      payloadIds: string[]
+      idempotencyKey?: string
+      reason?: string
+    }) =>
+      adminDashboardApi.replayPayloadsBatch(params.payloadIds, {
+        idempotencyKey: params.idempotencyKey,
+        reason: params.reason,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PAYLOADS_KEY })
       queryClient.invalidateQueries({ queryKey: PAYLOAD_DETAIL_KEY })

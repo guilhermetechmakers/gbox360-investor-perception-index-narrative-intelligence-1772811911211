@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import { RequireAdminRole } from '@/components/auth/RequireAdminRole'
 
 import { Landing } from '@/pages/Landing'
 import { Login } from '@/pages/Login'
@@ -123,7 +124,9 @@ export default function App() {
             path="/admin"
             element={
               <RequireAuth>
-                <AdminLayout />
+                <RequireAdminRole>
+                  <AdminLayout />
+                </RequireAdminRole>
               </RequireAuth>
             }
           >

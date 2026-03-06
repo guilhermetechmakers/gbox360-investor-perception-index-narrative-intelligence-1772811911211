@@ -10,13 +10,16 @@ export type UserRole = 'admin' | 'operator' | 'auditor' | 'user'
 export interface AdminUser {
   id: string
   username: string
+  name?: string
   email: string
   roles: string[]
   status: UserStatus
   lastLogin?: string
+  lastActiveAt?: string
   createdAt: string
   updatedAt: string
   isVerified: boolean
+  verificationSentAt?: string
   metadata?: Record<string, unknown>
   /** Legacy field mapping */
   full_name?: string
@@ -67,10 +70,28 @@ export interface AuditExportParams {
   limit?: number
 }
 
+/** Audit logs list (admin actions) - GET /admin/audit-logs */
+export interface AuditLogsParams {
+  from?: string
+  to?: string
+  actionType?: string
+  operatorUserId?: string
+  targetResource?: string
+  page?: number
+  limit?: number
+  offset?: number
+}
+
+export interface AuditLogsResponse {
+  data: AdminActionAudit[]
+  count: number
+  page?: number
+  limit?: number
+}
+
 /** Alias for audit export params */
 export type AdminAuditsParams = AuditExportParams
 
-/** Admin Dashboard - Ingestion & System Health */
 export interface IngestionSource {
   id: string
   name: string
@@ -146,6 +167,7 @@ export interface PayloadSearchFilters {
   status?: string
   dateFrom?: string
   dateTo?: string
+  provenance?: string
   page?: number
   pageSize?: number
 }
@@ -177,7 +199,7 @@ export interface PayloadDetailResponse {
 export interface GenerateAuditExportParams {
   narrativeEventIds: string[]
   signingMethod: string
-  exportFormat?: 'json' | 'pdf'
+  exportFormat?: 'json' | 'pdf' | 'csv'
 }
 
 /** Audit export response */
@@ -189,12 +211,38 @@ export interface AuditExportResponse {
 
 export interface NarrativeEvent {
   id: string
+  sourcePlatform?: string
   source?: string
   speaker?: string
+  role?: string
+  audienceClass?: string
   audience?: string
+  rawText?: string
   raw_text?: string
-  timestamps?: Record<string, string>
+  timestamps?: { eventTime: string; receivedAt: string } & Record<string, string>
+  provenance?: string[]
+  replayable?: boolean
   signedArtifactUrl?: string
+}
+
+/** Admin action audit log entry (recorded for every admin action) */
+export interface AdminActionAudit {
+  actionId: string
+  operatorUserId: string
+  actionType: string
+  targetResource: string
+  justification: string
+  timestamp: string
+  result: string
+}
+
+/** Ingest queue metrics per source */
+export interface IngestQueueMetrics {
+  source: string
+  queueSize: number
+  rateLimitUsage: number
+  errorsLastHour: number
+  lastRetryCount: number
 }
 
 export interface AuditArtifact {
@@ -226,7 +274,20 @@ export interface AdminNotification {
 
 /** Normalize API User to AdminUser for admin UI */
 export function toAdminUser(
-  u: { id: string; email: string; full_name?: string; email_verified?: boolean; created_at: string; updated_at: string; role?: string; last_login?: string; roles?: string[] }
+  u: {
+    id: string
+    email: string
+    full_name?: string
+    name?: string
+    email_verified?: boolean
+    created_at: string
+    updated_at: string
+    role?: string
+    last_login?: string
+    last_active_at?: string
+    verification_sent_at?: string
+    roles?: string[]
+  }
 ): AdminUser {
   const roles = Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : ['user'])
   const isVerified = u.email_verified === true
@@ -234,14 +295,17 @@ export function toAdminUser(
     u.email_verified === false ? 'pending_verification' : 'active'
   return {
     id: u.id,
-    username: u.full_name ?? u.email?.split('@')[0] ?? '—',
+    username: u.full_name ?? u.name ?? u.email?.split('@')[0] ?? '—',
+    name: u.full_name ?? u.name,
     email: u.email,
     roles,
     status,
     lastLogin: u.last_login,
+    lastActiveAt: u.last_active_at,
     createdAt: u.created_at,
     updatedAt: u.updated_at,
     isVerified,
-    full_name: u.full_name,
+    verificationSentAt: u.verification_sent_at,
+    full_name: u.full_name ?? u.name,
   }
 }
