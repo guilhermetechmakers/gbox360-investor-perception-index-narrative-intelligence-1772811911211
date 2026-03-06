@@ -220,16 +220,16 @@ export function EmailAdmin() {
   })
 
   const metrics = (metricsResponse?.metrics ?? metricsResponse ?? {}) as Record<string, number | undefined>
-  const templatesList: EmailTemplate[] = Array.isArray((templatesResponse as { templates?: EmailTemplate[] })?.templates)
-    ? ((templatesResponse as { templates: EmailTemplate[] }).templates ?? [])
+  const templatesList: EmailTemplate[] = Array.isArray((templatesResponse as unknown as { templates?: EmailTemplate[] })?.templates)
+    ? ((templatesResponse as unknown as { templates: EmailTemplate[] }).templates ?? [])
     : []
-  const queueList: EmailQueueItem[] = Array.isArray((queueResponse as { items?: EmailQueueItem[] })?.items)
-    ? ((queueResponse as { items: EmailQueueItem[] }).items ?? [])
+  const queueList: EmailQueueItem[] = Array.isArray((queueResponse as unknown as { items?: EmailQueueItem[] })?.items)
+    ? ((queueResponse as unknown as { items: EmailQueueItem[] }).items ?? [])
     : []
-  const logs: EmailLogItem[] = Array.isArray((logsData as { logs?: EmailLogItem[] })?.logs)
-    ? ((logsData as { logs: EmailLogItem[] }).logs ?? [])
+  const logs: EmailLogItem[] = Array.isArray((logsData as unknown as { logs?: EmailLogItem[] })?.logs)
+    ? ((logsData as unknown as { logs: EmailLogItem[] }).logs ?? [])
     : []
-  const logsCount = (logsData as { count?: number })?.count ?? 0
+  const logsCount = (logsData as unknown as { count?: number })?.count ?? 0
 
   return (
     <div className="space-y-8 animate-fade-in-up">
@@ -391,7 +391,7 @@ export function EmailAdmin() {
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {queueList.slice(0, 10).map((q) => {
-                  const row = q as Record<string, unknown>
+                  const row = q as unknown as Record<string, unknown>
                   const created = row.created_at ?? row.createdAt
                   const retries = row.retry_count ?? row.retryCount
                   return (
