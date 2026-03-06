@@ -1,8 +1,10 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
+import { RefreshCw, Loader2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkipLinks } from '@/components/shared/SkipLinks'
+import { ErrorBanner } from '@/components/shared/ErrorBanner'
 import { useIPISnapshot, useCompanyTimelineEvents, useCalculateIPI } from '@/hooks/useIPI'
 import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
 import { Button } from '@/components/ui/button'
@@ -60,7 +62,7 @@ export function CompanyView() {
     }
   }, [startParam, endParam])
 
-  const { data: snapshot, isLoading: snapshotLoading, refetch: refetchSnapshot } = useIPISnapshot(
+  const { data: snapshot, isLoading: snapshotLoading, isError: snapshotError, error: snapshotErr, refetch: refetchSnapshot } = useIPISnapshot(
     id ?? '',
     windowStart,
     windowEnd
@@ -181,21 +183,139 @@ export function CompanyView() {
 
   if (isLoading && !snapshot) {
     return (
-      <div className="space-y-8 animate-fade-in-up">
-        <Skeleton className="h-12 w-64" />
+      <div
+        className="space-y-8 animate-fade-in-up"
+        aria-busy="true"
+        aria-live="polite"
+        aria-label="Loading company IPI data"
+      >
+        <Skeleton className="h-12 w-64 rounded-lg" />
         <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-64 rounded-[10px]" />
-          <Skeleton className="h-64 rounded-[10px]" />
+          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
         </div>
-        <Skeleton className="h-48 rounded-[10px]" />
+        <Skeleton className="h-48 rounded-lg" />
       </div>
     )
   }
 
   if (!id) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
+      <div className="py-12 text-center text-muted-foreground" role="status">
         <p>No company selected. Select a company from the dashboard.</p>
+      </div>
+    )
+  }
+
+  const errorMessage =
+    snapshotError && snapshotErr instanceof Error
+      ? snapshotErr.message
+      : snapshotError
+        ? 'Failed to load snapshot data.'
+        : null
+
+  if (snapshotError && !snapshot) {
+    return (
+      <div className="space-y-6 animate-fade-in-up" role="main" aria-label="Company IPI Detail">
+        <SkipLinks
+          links={[
+            { href: '#company-main', label: 'Skip to main content' },
+            { href: '#ipi-summary', label: 'Skip to IPI summary' },
+            { href: '#top-narratives', label: 'Skip to top narratives' },
+          ]}
+        />
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+          Company
+        </h1>
+        <ErrorBanner
+          message={errorMessage ?? 'Unable to load IPI snapshot for this company and time window.'}
+          onDismiss={undefined}
+        />
+        <div className="rounded-lg border border-border bg-card p-6 flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Check your connection and try again, or select a different company or time range.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => refetchSnapshot()}
+            aria-label="Retry loading IPI snapshot"
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden />
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!snapshot && !snapshotLoading && !snapshotError) {
+    return (
+      <div className="space-y-6 animate-fade-in-up" role="main" aria-label="Company IPI Detail">
+        <SkipLinks
+          links={[
+            { href: '#company-main', label: 'Skip to main content' },
+            { href: '#ipi-summary', label: 'Skip to IPI summary' },
+            { href: '#top-narratives', label: 'Skip to top narratives' },
+          ]}
+        />
+        <div className="flex flex-col gap-4" aria-label="Company selector and time window">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Company</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {windowStart} – {windowEnd}
+            </p>
+          </div>
+          <CompanySelector
+            value={null}
+            onChange={handleCompanyChange}
+            recentCompanies={recentList}
+            savedCompanies={savedList}
+            timeWindow={timeWindow}
+            onTimeWindowChange={handleTimeWindowChange}
+          />
+        </div>
+        <div
+          className="rounded-lg border border-border bg-card p-8 text-center"
+          role="status"
+          aria-label="No IPI data"
+        >
+          <p className="text-muted-foreground mb-4">
+            No IPI data for this company and time window yet.
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Try recalculating IPI below or choose a different time range.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() =>
+              calculateMutation.mutate(
+                { companyId: id!, windowStart, windowEnd, topN: 3 },
+                {
+                  onSuccess: (data) => {
+                    setLastProvenanceId(data.provenanceId)
+                    refetchSnapshot()
+                  },
+                }
+              )
+            }
+            disabled={calculateMutation.isPending}
+            aria-label="Calculate IPI for this company and time window"
+            className="gap-2"
+          >
+            {calculateMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Calculating…
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" aria-hidden />
+                Calculate IPI
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -209,6 +329,13 @@ export function CompanyView() {
           { href: '#top-narratives', label: 'Skip to top narratives' },
         ]}
       />
+      {errorMessage && (
+        <ErrorBanner
+          message={errorMessage}
+          onDismiss={undefined}
+          role="alert"
+        />
+      )}
       <div className="flex flex-col gap-4" aria-label="Company selector and time window">
         <div>
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
@@ -274,6 +401,7 @@ export function CompanyView() {
                 )
               }
               disabled={calculateMutation.isPending}
+              aria-label={calculateMutation.isPending ? 'Calculating IPI' : 'Recalculate IPI for current company and time window'}
             >
               {calculateMutation.isPending ? 'Calculating…' : 'Recalculate IPI'}
             </Button>
@@ -296,6 +424,8 @@ export function CompanyView() {
             events={timelineEvents}
             onViewPayload={(rawPayloadId) => setPayloadModalId(rawPayloadId)}
           />
+          </div>
+
         </div>
 
         <div className="space-y-6">
@@ -307,13 +437,12 @@ export function CompanyView() {
 
           <PeerSnapshotPanel
             windowStart={windowStart}
-              windowEnd={windowEnd}
-            />
-            </div>
-          </div>
+            windowEnd={windowEnd}
+          />
+        </div>
       </div>
 
-      <div className="rounded-[10px] border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <p className="text-sm text-muted-foreground">
           <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk
           20%. Full methodology and provenance in About & Help.

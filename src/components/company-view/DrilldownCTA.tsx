@@ -9,6 +9,8 @@ interface DrilldownCTAProps {
   windowStart: string
   windowEnd: string
   provenanceId?: string
+  /** Accessible label for the drilldown link (default: "Go to drilldown to see why the IPI moved") */
+  ariaLabel?: string
 }
 
 export function DrilldownCTA({
@@ -18,6 +20,7 @@ export function DrilldownCTA({
   windowStart,
   windowEnd,
   provenanceId,
+  ariaLabel = 'Go to drilldown to see why the IPI moved',
 }: DrilldownCTAProps) {
   const narrativeSegment = narrativeId || 'overview'
   const prov = provenanceId ?? `prov-${companyId}-${windowStart}-${windowEnd}`
@@ -34,6 +37,7 @@ export function DrilldownCTA({
       asChild
       size="lg"
       className="w-full sm:w-auto transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+      aria-label={ariaLabel}
     >
       <Link
         to={drilldownUrl}
