@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { syncAuthTokenFromSession, clearAuthToken } from '@/lib/auth-token-sync'
 import { api } from '@/lib/api'
+import { emailApi } from '@/api/email'
 import type {
   AuthResponse,
   SignInInput,
@@ -219,11 +220,28 @@ export const authApi = {
   },
 
   resendVerification: async (email: string): Promise<ResendVerificationResponse> => {
-    if (!supabase) {
+    try {
+      const res = await emailApi.resendVerification(email)
+      return {
+        success: res?.success ?? false,
+        message: res?.message ?? '',
+        nextAllowedAt: res?.nextAllowedAt,
+      }
+    } catch {
+      if (supabase) {
+        try {
+          const { error } = await supabase.auth.resend({ type: 'signup', email })
+          if (error) throw error
+          return { success: true, message: 'Verification email sent' }
+        } catch (err) {
+          return {
+            success: false,
+            message: err instanceof Error ? err.message : 'Failed to resend',
+          }
+        }
+      }
       try {
-        const res = await api.post<ResendVerificationResponse>('/auth/resend-verification', {
-          email,
-        })
+        const res = await api.post<ResendVerificationResponse>('/auth/resend-verification', { email })
         return {
           success: res?.success ?? false,
           message: res?.message ?? '',
@@ -234,19 +252,6 @@ export const authApi = {
           success: false,
           message: err instanceof Error ? err.message : 'Failed to resend',
         }
-      }
-    }
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      })
-      if (error) throw error
-      return { success: true, message: 'Verification email sent' }
-    } catch (err) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : 'Failed to resend',
       }
     }
   },
