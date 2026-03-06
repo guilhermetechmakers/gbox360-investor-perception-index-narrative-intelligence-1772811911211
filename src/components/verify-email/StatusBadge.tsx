@@ -7,9 +7,9 @@ const statusConfig: Record<
   { label: string; variant: 'default' | 'secondary' | 'accent' | 'success' | 'destructive' | 'outline' }
 > = {
   sent: { label: 'Sent', variant: 'accent' },
-  delivered: { label: 'Delivered', variant: 'success' },
+  delivered: { label: 'Verified', variant: 'success' },
   bounced: { label: 'Bounced', variant: 'destructive' },
-  pending: { label: 'Pending', variant: 'secondary' },
+  pending: { label: 'Verification Pending', variant: 'secondary' },
   idle: { label: 'Idle', variant: 'outline' },
   unknown: { label: 'Unknown', variant: 'outline' },
 }

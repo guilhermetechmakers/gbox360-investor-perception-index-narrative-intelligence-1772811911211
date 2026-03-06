@@ -35,6 +35,7 @@ import { TranscriptIngestion } from '@/pages/admin/TranscriptIngestion'
 import { RawPayloadBrowser } from '@/pages/admin/RawPayloadBrowser'
 import { AuditExports } from '@/pages/admin/AuditExports'
 import { NarrativeEventsAdmin } from '@/pages/admin/NarrativeEventsAdmin'
+import { EmailAdmin } from '@/pages/admin/EmailAdmin'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<PasswordReset />} />
           <Route path="/forgot-password/reset" element={<PasswordReset />} />
+          <Route path="/reset-password" element={<PasswordReset />} />
           <Route path="/reset" element={<PasswordReset />} />
           <Route path="/about" element={<About />} />
           <Route path="/about-help" element={<About />} />
@@ -131,6 +133,7 @@ export default function App() {
             }
           >
             <Route index element={<AdminDashboard />} />
+            <Route path="email" element={<EmailAdmin />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="ingest-monitor" element={<IngestMonitor />} />
             <Route path="transcript-ingestion" element={<TranscriptIngestion />} />

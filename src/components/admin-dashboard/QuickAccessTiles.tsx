@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, FileJson, Database, FileDown, ChevronRight } from 'lucide-react'
+import { Users, FileJson, Database, FileDown, ChevronRight, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TileConfig {
@@ -16,6 +16,12 @@ const TILES: TileConfig[] = [
     label: 'User Management',
     description: 'Manage users, roles, and support actions',
     icon: Users,
+  },
+  {
+    to: '/admin/email',
+    label: 'Email Notifications',
+    description: 'Delivery metrics, templates, queue, and audit logs',
+    icon: Mail,
   },
   {
     to: '/admin/payloads',

@@ -1,116 +1,211 @@
 /**
- * Email Notifications API
- * Calls Supabase Edge Function "email" with action header.
+ * Email Notifications & System Alerts API
+ * Integrates with Supabase Edge Functions (email-templates, email-metrics, etc.)
  */
 import { supabase } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import type {
   EmailTemplate,
   EmailMetricsResponse,
-  EmailLogEntry,
+  EmailQueueItem,
+  EmailLogItem,
 } from '@/types/email'
 
-const supabaseUrl = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_SUPABASE_URL as string) ?? '' : ''
-const supabaseAnonKey = typeof import.meta !== 'undefined' ? (import.meta.env?.VITE_SUPABASE_ANON_KEY as string) ?? '' : ''
-const FUNCTIONS_BASE = supabaseUrl ? `${supabaseUrl.replace(/\/$/, '')}/functions/v1` : ''
+const ACTION_MAP: Record<string, string> = {
+  templates: 'templates',
+  'templates-publish': 'templates-publish',
+  'send-test': 'send-test',
+  'set-email': 'set-email',
+  metrics: 'metrics',
+  queue: 'queue',
+  logs: 'logs',
+  'opt-out': 'opt-out',
+}
 
-async function emailAction<T>(
-  action: string,
-  options: { method?: string; body?: Record<string, unknown> }
+async function invokeEmailFunction<T>(
+  key: string,
+  body?: Record<string, unknown>
 ): Promise<T> {
-  if (supabase && FUNCTIONS_BASE) {
+  if (supabase) {
+    const action = ACTION_MAP[key] ?? key
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token ?? (typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null)
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'x-email-action': action,
-    }
+    const headers: Record<string, string> = { 'x-email-action': action }
     if (token) headers['Authorization'] = `Bearer ${token}`
-
-    const res = await fetch(`${FUNCTIONS_BASE}/email`, {
-      method: options.method ?? 'POST',
+    const res = await supabase.functions.invoke('email', {
+      body: body ?? {},
       headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
     })
-    const json = (await res.json().catch(() => ({}))) as T & { error?: string }
-    if (!res.ok) {
-      throw new Error(json?.error ?? `Request failed: ${res.status}`)
+    if (res.error) throw new Error(res.error.message ?? 'Email API error')
+    return (res.data ?? {}) as T
+  }
+  const path = key.replace(/-/g, '/')
+  if (body && Object.keys(body).length > 0) {
+    if (key === 'logs') {
+      const qs = new URLSearchParams()
+      for (const [k, v] of Object.entries(body)) {
+        if (v !== undefined && v !== '') qs.set(k, String(v))
+      }
+      const suffix = qs.toString() ? `?${qs.toString()}` : ''
+      return api.get<T>(`/email/${path}${suffix}`) ?? ({} as T)
     }
-    return json as T
+    return api.post<T>(`/email/${path}`, body) ?? ({} as T)
   }
-  const base = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'http://localhost:3000/api'
-  const endpoint = `${base}/email/${action.replace(/-/g, '/')}`
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-
-  const res = await fetch(endpoint, {
-    method: options.method ?? 'POST',
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
-  const json = (await res.json().catch(() => ({}))) as T & { error?: string }
-  if (!res.ok) {
-    throw new Error(json?.error ?? `Request failed: ${res.status}`)
-  }
-  return json as T
+  return api.get<T>(`/email/${path}`) ?? ({} as T)
 }
 
 export const emailApi = {
-  resendVerification: (email: string) =>
-    emailAction<{ success: boolean; message: string; messageId?: string; nextAllowedAt?: string }>(
-      'resend-verification',
-      { body: { email } }
-    ),
+  resendVerification: async (email: string): Promise<{ success: boolean; messageId?: string }> => {
+    if (supabase) {
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      if (error) throw error
+      return { success: true }
+    }
+    const res = await api.post<{ success: boolean; messageId?: string }>(
+      '/email/resend-verification',
+      { email }
+    )
+    return { success: res?.success ?? false, messageId: res?.messageId }
+  },
 
-  requestPasswordReset: (email: string, redirectTo?: string) =>
-    emailAction<{ success: boolean; message: string; messageId?: string }>(
-      'request-password-reset',
-      { body: { email, redirectTo } }
-    ),
+  requestPasswordReset: async (email: string): Promise<{ success: boolean; messageId?: string }> => {
+    if (supabase) {
+      const redirectTo = `${typeof window !== 'undefined' ? window.location.origin : ''}/reset`
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      if (error) throw error
+      return { success: true }
+    }
+    const res = await api.post<{ success: boolean; messageId?: string }>(
+      '/email/request-password-reset',
+      { email }
+    )
+    return { success: res?.success ?? false, messageId: res?.messageId }
+  },
 
-  resetPassword: (token: string, newPassword: string) =>
-    emailAction<{ success: boolean; message: string }>(
-      'reset-password',
-      { body: { token, newPassword } }
-    ),
+  resetPassword: async (token: string, newPassword: string): Promise<{ success: boolean }> => {
+    if (supabase) {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      return { success: true }
+    }
+    const res = await api.post<{ success: boolean }>('/email/reset-password', {
+      token,
+      newPassword,
+    })
+    return { success: res?.success ?? false }
+  },
 
-  setEmail: (newEmail: string) =>
-    emailAction<{ success: boolean; message: string }>(
-      'set-email',
-      { body: { newEmail } }
-    ),
+  setEmail: async (newEmail: string, _userId?: string): Promise<{ success: boolean; message?: string }> => {
+    if (supabase) {
+      try {
+        const res = await invokeEmailFunction<{ success: boolean; message?: string }>('set-email', { newEmail })
+        return res ?? { success: true }
+      } catch {
+        const { error } = await supabase.auth.updateUser({ email: newEmail })
+        if (error) throw error
+        return { success: true, message: 'Verification email sent to new address' }
+      }
+    }
+    const res = await api.post<{ success: boolean }>('/email/set-email', { newEmail })
+    return { success: res?.success ?? false }
+  },
 
-  getTemplates: () =>
-    emailAction<{ templates: EmailTemplate[] }>('templates', { method: 'POST', body: {} }),
+  getTemplates: async (): Promise<EmailTemplate[]> => {
+    try {
+      const res = await invokeEmailFunction<{ templates?: EmailTemplate[] } | EmailTemplate[]>(
+        'templates',
+        {}
+      )
+      const list = Array.isArray(res) ? res : (res?.templates ?? (res as { data?: EmailTemplate[] })?.data ?? [])
+      return list ?? []
+    } catch {
+      return []
+    }
+  },
 
-  publishTemplate: (id: string, updates: { subject?: string; bodyHtml?: string; bodyText?: string }) =>
-    emailAction<{ success: boolean; message: string }>(
+  publishTemplate: async (
+    id: string,
+    payload: { subject?: string; bodyHtml?: string; bodyText?: string }
+  ): Promise<EmailTemplate> => {
+    const res = await invokeEmailFunction<EmailTemplate | { data?: EmailTemplate }>(
       'templates-publish',
-      { body: { id, ...updates } }
-    ),
+      { id, ...payload }
+    )
+    return (res && 'id' in res ? res : (res as { data?: EmailTemplate })?.data) as EmailTemplate
+  },
 
-  sendTest: (templateId: string, to: string) =>
-    emailAction<{ success: boolean; messageId?: string; message?: string }>(
-      'send-test',
-      { body: { templateId, to } }
-    ),
+  sendTestEmail: async (
+    templateId: string,
+    to: string
+  ): Promise<{ success: boolean; messageId?: string }> => {
+    return invokeEmailFunction('send-test', { templateId, to })
+  },
 
-  getMetrics: () =>
-    emailAction<EmailMetricsResponse>('metrics', { method: 'POST', body: {} }),
+  getMetrics: async (): Promise<EmailMetricsResponse> => {
+    try {
+      const res = await invokeEmailFunction<EmailMetricsResponse & { metrics?: Record<string, number> }>('metrics', {})
+      return (
+        res ?? {
+          metrics: { delivered: 0, sent: 0, bounced: 0, failed: 0, queued: 0, openRate: 0 },
+          deliveries: 0,
+          opens: 0,
+          bounces: 0,
+          failures: 0,
+          retries: 0,
+          timeSeries: [],
+        }
+      ) as EmailMetricsResponse
+    } catch {
+      return {
+        deliveries: 0,
+        opens: 0,
+        bounces: 0,
+        failures: 0,
+        retries: 0,
+        timeSeries: [],
+      }
+    }
+  },
 
-  getQueue: () =>
-    emailAction<{ items: Array<Record<string, unknown>> }>('queue', { method: 'POST', body: {} }),
+  getQueue: async (): Promise<EmailQueueItem[]> => {
+    try {
+      const res = await invokeEmailFunction<{ items?: EmailQueueItem[] } | EmailQueueItem[]>(
+        'queue',
+        {}
+      )
+      const list = Array.isArray(res) ? res : (res?.items ?? (res as { data?: EmailQueueItem[] })?.data ?? [])
+      return list ?? []
+    } catch {
+      return []
+    }
+  },
 
-  getLogs: (params?: { page?: number; limit?: number; templateId?: string; from?: string; to?: string }) =>
-    emailAction<{ logs: EmailLogEntry[]; count: number; page: number; limit: number }>(
-      'logs',
-      { body: params ?? {} }
-    ),
+  getLogs: async (params?: {
+    from?: string
+    to?: string
+    templateId?: string
+    userId?: string
+    page?: number
+    limit?: number
+  }): Promise<{ data: EmailLogItem[]; count: number }> => {
+    try {
+      const res = await invokeEmailFunction<
+        | { logs: EmailLogItem[]; count: number }
+        | { data: EmailLogItem[]; count: number }
+        | EmailLogItem[]
+      >('logs', params as Record<string, unknown>)
+      if (Array.isArray(res)) {
+        return { data: res ?? [], count: (res ?? []).length }
+      }
+      const out = res as { logs?: EmailLogItem[]; data?: EmailLogItem[]; count?: number }
+      const list = out?.logs ?? out?.data ?? []
+      return { data: list, count: out?.count ?? list.length }
+    } catch {
+      return { data: [], count: 0 }
+    }
+  },
 
-  optOut: (templateId?: string, optIn = false) =>
-    emailAction<{ success: boolean; message: string }>(
-      'opt-out',
-      { body: { templateId, optIn } }
-    ),
+  optOut: async (userId: string, templateId?: string): Promise<{ success: boolean }> => {
+    return invokeEmailFunction('opt-out', { userId, templateId })
+  },
 }

@@ -3,7 +3,7 @@
  * Routes: resend-verification, request-password-reset, reset-password, set-email,
  *         templates, templates-publish, send-test, metrics, queue, logs, opt-out
  * Integrates with Supabase Auth for verification/password reset.
- * Stores audit records in email_messages and audit_payloads.
+ * Stores audit records in email_messages and email_audit_payloads.
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
             status: 'queued',
             idempotency_key: idempotencyKey,
           })
-          await adminClient.from('audit_payloads').insert({
+          await adminClient.from('email_audit_payloads').insert({
             email_message_id: messageId,
             raw_payload: { to: email, templateId: 'verification', userId: user.id },
           })
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
             payload: { redirectTo },
             status: 'queued',
           })
-          await adminClient.from('audit_payloads').insert({
+          await adminClient.from('email_audit_payloads').insert({
             email_message_id: messageId,
             raw_payload: { to: email, templateId: 'passwordReset' },
           })
@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
           status: 'sent',
           last_attempt_at: new Date().toISOString(),
         })
-        await adminClient.from('audit_payloads').insert({
+        await adminClient.from('email_audit_payloads').insert({
           email_message_id: messageId,
           raw_payload: { to, templateId, test: true },
         })
@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
       }
 
       case 'logs': {
-        if (!adminClient) return jsonResponse({ logs: [], count: 0 })
+        if (!adminClient) return jsonResponse({ logs: [], count: 0, page: 1, limit: 20 })
         if (authHeader) {
           const { data: { user } } = await authClient.auth.getUser(authHeader.replace('Bearer ', ''))
           if (user) {
@@ -336,9 +336,39 @@ Deno.serve(async (req) => {
         if (templateId) q = q.eq('template_id', templateId)
         if (from) q = q.gte('created_at', from)
         if (to) q = q.lte('created_at', to)
-        const { data, count, error } = await q.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+        const { data: messages, count, error } = await q.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
         if (error) return jsonResponse({ error: error.message }, 500)
-        return jsonResponse({ logs: data ?? [], count: count ?? 0, page, limit })
+        const list = (messages ?? []) as Array<{ id: string; to: string; template_id: string; status: string; created_at: string; user_id?: string }>
+        const ids = list.map((m) => m.id)
+        let payloadMap = new Map<string, { raw_payload: unknown; received_at: string }>()
+        if (ids.length > 0) {
+          try {
+            const { data: payloads } = await adminClient
+              .from('email_audit_payloads')
+              .select('email_message_id, raw_payload, received_at')
+              .in('email_message_id', ids)
+            const arr = (payloads ?? []) as Array<{ email_message_id: string; raw_payload: unknown; received_at: string }>
+            for (const p of arr) {
+              payloadMap.set(p.email_message_id, { raw_payload: p.raw_payload, received_at: p.received_at })
+            }
+          } catch {
+            // email_audit_payloads may not exist in some migrations
+          }
+        }
+        const logs = list.map((m) => {
+          const audit = payloadMap.get(m.id)
+          return {
+            id: m.id,
+            to: m.to,
+            template_id: m.template_id,
+            status: m.status,
+            created_at: m.created_at,
+            user_id: m.user_id,
+            rawPayload: audit?.raw_payload,
+            receivedAt: audit?.received_at,
+          }
+        })
+        return jsonResponse({ logs, count: count ?? 0, page, limit })
       }
 
       case 'opt-out': {

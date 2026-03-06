@@ -21,12 +21,16 @@ export interface EmailTemplate {
   id: string
   name: string
   subject: string
-  body_html: string
-  body_text: string
+  body_html?: string
+  bodyHtml?: string
+  body_text?: string
+  bodyText?: string
   version: number
-  last_updated_at: string
+  last_updated_at?: string
+  lastUpdatedAt?: string
   active: boolean
   provider_template_id?: string
+  providerTemplateId?: string
 }
 
 export interface EmailDeliveryStats {
@@ -75,15 +79,51 @@ export interface EmailMetrics {
 }
 
 export interface EmailMetricsResponse {
-  metrics: EmailMetrics
-  timeSeries: Array<{ date: string; status: string; templateId: string }>
+  metrics?: EmailMetrics
+  deliveries?: number
+  opens?: number
+  bounces?: number
+  failures?: number
+  retries?: number
+  timeSeries?: Array<{
+    date: string
+    delivered: number
+    opened: number
+    bounced: number
+    failed: number
+  }>
 }
 
 export interface EmailLogEntry {
   id: string
   to: string
   template_id: string
+  templateId?: string
   status: string
   created_at: string
   user_id?: string
+  rawPayload?: unknown
+  receivedAt?: string
+}
+
+export interface EmailQueueItem {
+  id: string
+  to: string
+  templateId: string
+  status: EmailMessageStatus
+  retryCount: number
+  nextRetryAt?: string
+  createdAt: string
+}
+
+export interface EmailLogItem {
+  id: string
+  emailMessageId?: string
+  to: string
+  templateId?: string
+  template_id?: string
+  status: string
+  rawPayload?: unknown
+  receivedAt?: string
+  created_at?: string
 }

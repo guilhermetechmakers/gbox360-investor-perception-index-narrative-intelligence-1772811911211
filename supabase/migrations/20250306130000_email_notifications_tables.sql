@@ -108,9 +108,11 @@ CREATE POLICY "Admin can view email_messages"
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
-CREATE POLICY "Service role can insert email_messages"
+CREATE POLICY "Admin can insert email_messages"
   ON public.email_messages FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  );
 
 CREATE POLICY "Admin can view email_delivery_stats"
   ON public.email_delivery_stats FOR SELECT

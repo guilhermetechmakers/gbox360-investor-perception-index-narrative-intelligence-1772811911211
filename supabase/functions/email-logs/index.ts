@@ -24,13 +24,14 @@ Deno.serve(async (req) => {
       )
     }
 
+    const body = await req.json().catch(() => ({}))
     const url = new URL(req.url)
-    const from = url.searchParams.get('from') ?? undefined
-    const to = url.searchParams.get('to') ?? undefined
-    const templateId = url.searchParams.get('templateId') ?? undefined
-    const userId = url.searchParams.get('userId') ?? undefined
-    const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10))
-    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20', 10)))
+    const from = body?.from ?? url.searchParams.get('from') ?? undefined
+    const to = body?.to ?? url.searchParams.get('to') ?? undefined
+    const templateId = body?.templateId ?? body?.template_id ?? url.searchParams.get('templateId') ?? undefined
+    const userId = body?.userId ?? body?.user_id ?? url.searchParams.get('userId') ?? undefined
+    const page = Math.max(1, parseInt(String(body?.page ?? url.searchParams.get('page') ?? '1'), 10))
+    const limit = Math.min(100, Math.max(1, parseInt(String(body?.limit ?? url.searchParams.get('limit') ?? '20'), 10)))
     const offset = (page - 1) * limit
 
     const supabase = createClient(

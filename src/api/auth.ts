@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { syncAuthTokenFromSession, clearAuthToken } from '@/lib/auth-token-sync'
 import { api } from '@/lib/api'
-import { emailApi } from '@/api/email'
 import type {
   AuthResponse,
   SignInInput,
@@ -135,7 +134,7 @@ export const authApi = {
   },
 
   resetPasswordRequest: async (email: string): Promise<void> => {
-    if (supabase) {
+    if (supabase && typeof window !== 'undefined') {
       const redirectTo = `${window.location.origin}/reset`
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
       if (error) throw error
@@ -220,38 +219,29 @@ export const authApi = {
   },
 
   resendVerification: async (email: string): Promise<ResendVerificationResponse> => {
-    try {
-      const res = await emailApi.resendVerification(email)
-      return {
-        success: res?.success ?? false,
-        message: res?.message ?? '',
-        nextAllowedAt: res?.nextAllowedAt,
-      }
-    } catch {
-      if (supabase) {
-        try {
-          const { error } = await supabase.auth.resend({ type: 'signup', email })
-          if (error) throw error
-          return { success: true, message: 'Verification email sent' }
-        } catch (err) {
-          return {
-            success: false,
-            message: err instanceof Error ? err.message : 'Failed to resend',
-          }
-        }
-      }
+    if (supabase) {
       try {
-        const res = await api.post<ResendVerificationResponse>('/auth/resend-verification', { email })
-        return {
-          success: res?.success ?? false,
-          message: res?.message ?? '',
-          nextAllowedAt: res?.nextAllowedAt,
-        }
+        const { error } = await supabase.auth.resend({ type: 'signup', email })
+        if (error) throw error
+        return { success: true, message: 'Verification email sent' }
       } catch (err) {
         return {
           success: false,
           message: err instanceof Error ? err.message : 'Failed to resend',
         }
+      }
+    }
+    try {
+      const res = await api.post<ResendVerificationResponse>('/auth/resend-verification', { email })
+      return {
+        success: res?.success ?? false,
+        message: res?.message ?? '',
+        nextAllowedAt: res?.nextAllowedAt,
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to resend',
       }
     }
   },
@@ -266,9 +256,7 @@ export const authApi = {
           email: newEmail,
           ...(currentPassword && { password: currentPassword }),
         })
-        if (error) {
-          return { success: false, message: error.message }
-        }
+        if (error) return { success: false, message: error.message }
         return { success: true, message: 'Verification email sent to new address' }
       } catch (err) {
         return {
@@ -282,10 +270,7 @@ export const authApi = {
         newEmail,
         currentPassword: currentPassword ?? undefined,
       })
-      return {
-        success: res?.success ?? false,
-        message: res?.message ?? '',
-      }
+      return { success: res?.success ?? false, message: res?.message ?? '' }
     } catch (err) {
       return {
         success: false,
