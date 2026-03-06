@@ -1,8 +1,6 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { FileJson, FileText, Loader2 } from 'lucide-react'
-import { downloadAuditJSON, downloadAuditPDF } from '@/lib/audit-export'
+import { AuditArtifactExporterButton } from '@/components/shared/AuditArtifactExporterButton'
 import type { IPIViewContext } from '@/types/company-view'
 import type { Movement } from '@/types/drilldown'
 import type { NarrativeEvent } from '@/types/narrative'
@@ -24,59 +22,40 @@ export function DrilldownAuditExportPanel({
   windowStart,
   windowEnd,
 }: DrilldownAuditExportPanelProps) {
-  const [isExporting, setIsExporting] = useState(false)
-
   const safeEvents = Array.isArray(events) ? events : []
 
-  const viewContext: IPIViewContext = {
-    companyId,
-    companyName: companyName || companyId,
-    windowStart,
-    windowEnd,
-    ipi: movement?.currentIPI,
-    delta: movement?.contributionDelta ?? 0,
-    direction:
-      (movement?.contributionDelta ?? 0) > 0
-        ? 'up'
-        : (movement?.contributionDelta ?? 0) < 0
-          ? 'down'
-          : 'flat',
-    breakdown: {
-      narrative: 0.4,
-      credibility: 0.4,
-      risk: 0.2,
-    },
-    narratives: movement
-      ? [
-          {
-            narrativeId: movement.movementId,
-            name: movement.narrativeTitle,
-            contribution: movement.contributionDelta,
-          },
-        ]
-      : [],
-    events: safeEvents,
-  }
-
-  const handleDownloadJSON = () => {
-    setIsExporting(true)
-    try {
-      downloadAuditJSON(viewContext)
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const handleDownloadPDF = () => {
-    setIsExporting(true)
-    try {
-      downloadAuditPDF(viewContext)
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const busy = isExporting
+  const viewContext: IPIViewContext = useMemo(
+    () => ({
+      companyId,
+      companyName: companyName || companyId,
+      windowStart,
+      windowEnd,
+      ipi: movement?.currentIPI,
+      delta: movement?.contributionDelta ?? 0,
+      direction:
+        (movement?.contributionDelta ?? 0) > 0
+          ? 'up'
+          : (movement?.contributionDelta ?? 0) < 0
+            ? 'down'
+            : 'flat',
+      breakdown: {
+        narrative: 0.4,
+        credibility: 0.4,
+        risk: 0.2,
+      },
+      narratives: movement
+        ? [
+            {
+              narrativeId: movement.movementId,
+              name: movement.narrativeTitle,
+              contribution: movement.contributionDelta,
+            },
+          ]
+        : [],
+      events: safeEvents,
+    }),
+    [movement, companyId, companyName, windowStart, windowEnd, safeEvents]
+  )
 
   return (
     <Card className="card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
@@ -87,36 +66,13 @@ export function DrilldownAuditExportPanel({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadJSON}
-            disabled={busy}
-            className="gap-2"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileJson className="h-4 w-4" />
-            )}
-            Download JSON
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPDF}
-            disabled={busy}
-            className="gap-2"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-            Download PDF
-          </Button>
-        </div>
+        <AuditArtifactExporterButton
+          viewContext={viewContext}
+          variant="default"
+          size="lg"
+          narrativeId={movement?.movementId}
+          className="w-full gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-[#93C5FD]"
+        />
         <p className="text-xs text-muted-foreground">
           Provisional weights: Narrative 40%, Credibility 40%, Risk 20%. Full
           methodology in About & Help.

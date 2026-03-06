@@ -1,8 +1,5 @@
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { FileJson, FileText, Loader2 } from 'lucide-react'
-import { downloadAuditJSON, downloadAuditPDF } from '@/lib/audit-export'
+import { AuditArtifactExporterButton } from '@/components/shared/AuditArtifactExporterButton'
 import type { IPIViewContext } from '@/types/company-view'
 
 type ExportStatus = 'idle' | 'exporting' | 'ready'
@@ -18,30 +15,6 @@ export function AuditExportPanel({
   onExport,
   status = 'idle',
 }: AuditExportPanelProps) {
-  const [isExporting, setIsExporting] = useState(false)
-
-  const handleDownloadJSON = () => {
-    setIsExporting(true)
-    try {
-      downloadAuditJSON(viewContext)
-      onExport?.()
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const handleDownloadPDF = () => {
-    setIsExporting(true)
-    try {
-      downloadAuditPDF(viewContext)
-      onExport?.()
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
-  const busy = isExporting || status === 'exporting'
-
   return (
     <Card className="card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
       <CardHeader>
@@ -51,36 +24,13 @@ export function AuditExportPanel({
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadJSON}
-            disabled={busy}
-            className="gap-2"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileJson className="h-4 w-4" />
-            )}
-            Download JSON
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPDF}
-            disabled={busy}
-            className="gap-2"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-            Download PDF
-          </Button>
-        </div>
+        <AuditArtifactExporterButton
+          viewContext={viewContext}
+          variant="default"
+          size="lg"
+          className="w-full gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-[#93C5FD]"
+          onSuccess={() => onExport?.()}
+        />
         {status === 'ready' && (
           <p className="text-xs text-success">
             Signed artifact available. Both formats include raw payload references and

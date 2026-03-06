@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ipiApi } from '@/api/ipi'
+import { exportApi } from '@/api/export'
 import { toast } from 'sonner'
 import type { NarrativeEvent } from '@/types/narrative'
 
@@ -187,5 +188,30 @@ export function useRequestExport() {
       toast.success(data?.message ?? 'Export started. You will receive an email when ready.')
     },
     onError: (err: Error) => toast.error(err.message || 'Export request failed'),
+  })
+}
+
+export function useExportIPIArtifact() {
+  return useMutation({
+    mutationFn: (params: {
+      companyId: string
+      windowStart: string
+      windowEnd: string
+      viewId?: string
+      narrativeId?: string
+      includeNarratives?: string[]
+      format?: 'json' | 'pdf' | 'both'
+    }) =>
+      exportApi.postExportIPIArtifact({
+        companyId: params.companyId,
+        windowStart: params.windowStart,
+        windowEnd: params.windowEnd,
+        viewId: params.viewId,
+        includeNarratives:
+          params.includeNarratives ??
+          (params.narrativeId ? [params.narrativeId] : undefined),
+        format: params.format,
+      }),
+    onError: (err: Error) => toast.error(err.message ?? 'Export failed'),
   })
 }

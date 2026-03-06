@@ -58,3 +58,16 @@ export interface ExportAuditResponse {
   url: string
   artifactMeta: ArtifactMeta
 }
+
+/** Response from POST export-ipi-artifact (Supabase Edge Function) */
+export interface ExportIPIArtifactResponse {
+  artifactId: string
+  status: 'ready' | 'pending' | 'exporting' | 'failed'
+  signatureHash?: string
+  artifactMeta?: ArtifactMeta
+  /** Decoded JSON string when Edge Function returns jsonBase64 */
+  artifactJson?: string
+  artifactPdfBase64?: string
+  downloadUrl_json?: string
+  downloadUrl_pdf?: string
+}

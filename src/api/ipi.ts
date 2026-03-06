@@ -7,10 +7,44 @@ import type {
   IPICalculateResponse,
   AuditProvenance,
 } from '@/types/narrative'
-import type { Movement, ExportAuditResponse } from '@/types/drilldown'
+import type { Movement, ExportAuditResponse, ExportIPIArtifactResponse } from '@/types/drilldown'
 import type { PaginatedResponse } from '@/types/api'
 
 const PROVISIONAL_WEIGHTS = { narrative: 0.4, credibility: 0.4, risk: 0.2 }
+
+function normalizeExportResponse(res: {
+  artifactId: string
+  status: string
+  jsonBase64?: string
+  pdfBase64?: string
+  artifactJson?: string
+  signatureHash?: string
+  artifactMeta?: ExportIPIArtifactResponse['artifactMeta']
+  downloadUrl_json?: string
+  downloadUrl_pdf?: string
+}): ExportIPIArtifactResponse {
+  let artifactJson: string | undefined = res.artifactJson
+  if (!artifactJson && res.jsonBase64) {
+    try {
+      const binary = atob(res.jsonBase64)
+      artifactJson = new TextDecoder().decode(
+        Uint8Array.from(binary, (c) => c.charCodeAt(0))
+      )
+    } catch {
+      artifactJson = undefined
+    }
+  }
+  return {
+    artifactId: res.artifactId,
+    status: (res.status === 'ready' ? 'ready' : res.status === 'failed' ? 'failed' : res.status === 'exporting' ? 'exporting' : 'pending') as ExportIPIArtifactResponse['status'],
+    signatureHash: res.signatureHash,
+    artifactMeta: res.artifactMeta,
+    artifactJson,
+    artifactPdfBase64: res.pdfBase64,
+    downloadUrl_json: res.downloadUrl_json,
+    downloadUrl_pdf: res.downloadUrl_pdf,
+  }
+}
 
 function mockCalculateIPI(
   companyId: string,
@@ -207,6 +241,59 @@ export const ipiApi = {
     format: 'json' | 'pdf'
   }): Promise<ExportAuditResponse> =>
     api.post<ExportAuditResponse>('/api/export/audit', body),
+
+  /** POST export-ipi-artifact — Supabase Edge Function for signed JSON/PDF artifacts */
+  exportIPIArtifact: async (params: {
+    companyId: string
+    windowStart: string
+    windowEnd: string
+    viewId?: string
+    narrativeId?: string
+    includeNarratives?: string[]
+    format?: 'json' | 'pdf' | 'both'
+  }): Promise<ExportIPIArtifactResponse> => {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.functions.invoke<{
+          artifactId: string
+          status: string
+          jsonBase64?: string
+          pdfBase64?: string
+          signatureHash?: string
+          artifactMeta?: ExportIPIArtifactResponse['artifactMeta']
+          downloadUrl_json?: string
+          downloadUrl_pdf?: string
+        }>('export-ipi-artifact', {
+          body: {
+            ...params,
+            includeNarratives: params.includeNarratives?.length
+              ? params.includeNarratives
+              : params.narrativeId
+                ? [params.narrativeId]
+                : [],
+          },
+        })
+        if (!error && data) {
+          return normalizeExportResponse(data)
+        }
+      } catch {
+        // Fall through to REST API
+      }
+    }
+    const res = await api.post<ExportIPIArtifactResponse & { jsonBase64?: string; pdfBase64?: string; artifactJson?: string }>(
+      '/api/export/ipI-artifact',
+      {
+        companyId: params.companyId,
+        windowStart: params.windowStart,
+        windowEnd: params.windowEnd,
+        viewId: params.viewId,
+        narrativeId: params.narrativeId,
+        includeNarratives: params.includeNarratives ?? [],
+        format: params.format ?? 'both',
+      }
+    )
+    return normalizeExportResponse(res)
+  },
 
   /** POST /ipi/calculate - on-demand IPI computation with provenance */
   calculate: async (
