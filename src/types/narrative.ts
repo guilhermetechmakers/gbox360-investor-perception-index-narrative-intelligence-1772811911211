@@ -1,4 +1,7 @@
+import type { SignalRecord } from './signals'
+
 export interface NarrativeEvent {
+  id?: string
   event_id: string
   raw_payload_id: string
   source: string
@@ -10,11 +13,20 @@ export interface NarrativeEvent {
   ingestion_timestamp: string
   original_timestamp: string
   metadata?: Record<string, unknown>
-  authority_score?: number
+  authority_score?: number | null | null
   credibility_flags?: string[]
+  /** Credibility score 0–1 (Credibility Proxy & Risk Signals) */
+  credibility_score?: number | null
+  /** Risk score 0–1 (Credibility Proxy & Risk Signals) */
+  risk_score?: number | null
+  /** Embedded signals for provenance */
+  signals?: SignalRecord[]
   company_id?: string
   narrative_id?: string
 }
+
+/** Re-export for convenience */
+export type { SignalRecord, SignalType } from './signals'
 
 export interface Narrative {
   id: string
@@ -25,6 +37,10 @@ export interface Narrative {
   company_id: string
   window_start: string
   window_end: string
+  /** Credibility score 0–1 (Credibility Proxy & Risk Signals) */
+  credibility?: number | null
+  /** Risk score 0–1 (Credibility Proxy & Risk Signals) */
+  risk?: number | null
 }
 
 /** Narrative contribution for IPI calculation display */

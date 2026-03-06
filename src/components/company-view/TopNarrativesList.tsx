@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ScorePill } from '@/components/signals/ScorePill'
 import { Link } from 'react-router-dom'
 import { ArrowRight, FileText } from 'lucide-react'
 
@@ -10,6 +11,8 @@ export interface NarrativeItem {
   summary?: string
   contribution: number
   authority?: string
+  credibility?: number | null
+  risk?: number | null
 }
 
 interface TopNarrativesListProps {
@@ -70,10 +73,16 @@ export function TopNarrativesList({
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <Badge variant="accent" className="text-xs">
                     {(n.contribution * 100).toFixed(0)}%
                   </Badge>
+                  {typeof n.credibility === 'number' && (
+                    <ScorePill score={n.credibility} variant="credibility" size="sm" showLabel={false} />
+                  )}
+                  {typeof n.risk === 'number' && (
+                    <ScorePill score={n.risk} variant="risk" size="sm" showLabel={false} />
+                  )}
                   {n.authority && (
                     <span className="text-xs text-muted-foreground">
                       {n.authority}

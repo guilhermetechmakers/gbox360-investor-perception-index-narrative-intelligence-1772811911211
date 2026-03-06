@@ -37,15 +37,15 @@ export interface NarrativeEventWithTopics {
   id: string
   event_id: string
   source: string
-  platform: string
-  speaker: string
-  speaker_role: string
-  audience_class: string
+  platform?: string
+  speaker?: string
+  speaker_role?: string
+  audience_class?: string
   text: string
   timestamp: string
-  event_type: string
-  provenance: Record<string, unknown>
-  raw_payload: Record<string, unknown>
+  event_type?: string
+  provenance?: Record<string, unknown>
+  raw_payload?: Record<string, unknown>
   topic_labels: TopicLabel[]
   primary_topic: string
   clustering_id: string | null

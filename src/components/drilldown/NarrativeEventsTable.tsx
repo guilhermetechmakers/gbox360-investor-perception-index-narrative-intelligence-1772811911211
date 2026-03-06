@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataTablePagination } from '@/components/ui/data-table-pagination'
+import { ScorePill } from '@/components/signals/ScorePill'
+import { SignalBadge } from '@/components/signals/SignalBadge'
 import { format } from 'date-fns'
 import { FileJson, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -112,7 +114,7 @@ export function NarrativeEventsTable({
     return 'outline'
   }
 
-  const getAuthorityTier = (score?: number) => {
+  const getAuthorityTier = (score?: number | null) => {
     if (score == null) return '—'
     if (score >= 0.8) return 'Analyst'
     if (score >= 0.5) return 'Media'
@@ -185,7 +187,7 @@ export function NarrativeEventsTable({
                 />
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">
-                Credibility
+                Credibility / Risk
               </TableHead>
               <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm w-12">
                 <span className="sr-only">View raw</span>
@@ -255,18 +257,49 @@ export function NarrativeEventsTable({
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {credibilityFlags.slice(0, 2).map((f) => (
-                        <Badge
-                          key={f}
-                          variant="success"
-                          className="text-[10px] py-0"
-                        >
-                          {f}
-                        </Badge>
-                      ))}
-                      {credibilityFlags.length === 0 && (
-                        <span className="text-xs text-muted-foreground">—</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ev.credibility_score != null ? (
+                        <ScorePill
+                          score={ev.credibility_score}
+                          variant="credibility"
+                          size="sm"
+                          showLabel={false}
+                        />
+                      ) : null}
+                      {ev.risk_score != null ? (
+                        <ScorePill
+                          score={ev.risk_score}
+                          variant="risk"
+                          size="sm"
+                          showLabel={false}
+                        />
+                      ) : null}
+                      {(ev.credibility_score == null && ev.risk_score == null) && (
+                        <>
+                          {credibilityFlags.slice(0, 2).map((f) => (
+                            <Badge
+                              key={f}
+                              variant="success"
+                              className="text-[10px] py-0"
+                            >
+                              {f}
+                            </Badge>
+                          ))}
+                          {credibilityFlags.length === 0 && (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </>
+                      )}
+                      {Array.isArray(ev.signals) && ev.signals.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {ev.signals.slice(0, 2).map((s) => (
+                            <SignalBadge
+                              key={s.id}
+                              signal={s}
+                              variant={s.type.includes('earnings') || s.type.includes('legal') ? 'risk' : 'credibility'}
+                            />
+                          ))}
+                        </div>
                       )}
                     </div>
                   </TableCell>

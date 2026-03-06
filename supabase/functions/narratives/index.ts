@@ -1,11 +1,12 @@
 /**
- * Narratives API - Topic Classification & Narrative Persistence
+ * Narratives API - Topic Classification, Signals & Narrative Persistence
  * GET - list narratives with topic labels (query: company_id, window_start, window_end, topics_only, limit, offset)
  * GET ?id= - fetch single narrative with full details
- * POST - ingest narrative event (append-only, with rule-based classification)
+ * POST - ingest narrative event (append-only, with rule-based classification and credibility/risk signals)
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { classifyNarrative } from '../_shared/topic-classifier.ts'
+import { computeSignals } from '../_shared/signals-engine.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -136,6 +137,20 @@ Deno.serve(async (req) => {
       const classification = classifyNarrative(text)
       const now = new Date().toISOString()
 
+      const eventIdPlaceholder = `evt-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const signalsOutput = computeSignals(
+        {
+          raw_text: text,
+          source_platform: source,
+          speaker_entity: speaker,
+          speaker_role: speakerRole,
+          audience_class: audienceClass,
+          event_time: timestamp,
+          source,
+        },
+        eventIdPlaceholder
+      )
+
       let rawPayloadId: string
       const existingRawId = body?.raw_payload_id as string | undefined
       if (existingRawId && UUID_REGEX.test(existingRawId)) {
@@ -178,16 +193,33 @@ Deno.serve(async (req) => {
         topic_labels: classification.top_topic_labels,
         primary_topic: classification.primary_topic,
         clustering_id: classification.clustering_id,
+        credibility_score: signalsOutput.credibility_score,
+        risk_score: signalsOutput.risk_score,
+        signals: signalsOutput.signals ?? [],
       }
 
-      const { data, error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('narrative_event_append')
         .insert(row)
         .select('event_id')
         .single()
 
       if (error) return errorResponse(error.message, 500)
-      return jsonResponse({ event_id: data?.event_id ?? '', success: true }, 201)
+      const eventId = inserted?.event_id ?? ''
+      const signalsWithNarrativeId = (signalsOutput.signals ?? []).map((s) => ({
+        ...s,
+        narrative_id: eventId,
+      }))
+      return jsonResponse(
+        {
+          event_id: eventId,
+          success: true,
+          credibility_score: signalsOutput.credibility_score,
+          risk_score: signalsOutput.risk_score,
+          signals: signalsWithNarrativeId,
+        },
+        201
+      )
     }
 
     return errorResponse('Method not allowed', 405)

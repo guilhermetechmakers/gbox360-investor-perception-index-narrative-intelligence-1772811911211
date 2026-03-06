@@ -1,6 +1,7 @@
 /** Drilldown — Why Did This Move? page types */
 
 import type { NarrativeEvent } from './narrative'
+import type { SignalRecord } from './signals'
 
 export interface Movement {
   movementId: string
@@ -10,6 +11,12 @@ export interface Movement {
   contributionDelta: number
   events?: NarrativeEvent[] | null
   calculationInputs?: Record<string, unknown> | null
+  /** Aggregated credibility score 0–1 (from events/signals) */
+  credibilityScore?: number | null
+  /** Aggregated risk score 0–1 (from events/signals) */
+  riskScore?: number | null
+  /** Collected signals from events */
+  signals?: SignalRecord[] | null
 }
 
 export type SortByField = 'timestamp' | 'source' | 'authority'

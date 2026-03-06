@@ -25,9 +25,15 @@ function getTopicStyle(topic: string): string {
   return TOPIC_COLORS[key] ?? TOPIC_COLORS.unknown
 }
 
+/** Minimum narrative shape for card display (API returns id, event_id, text, topic_labels, etc.) */
+type NarrativeCardNarrative = Pick<
+  NarrativeEventWithTopics,
+  'event_id' | 'source' | 'audience_class'
+> & { id?: string; text?: string; raw_text?: string; topic_labels?: TopicLabel[]; primary_topic?: string }
+
 /** Narrative variant: single narrative event with topic labels */
 interface NarrativeCardNarrativeProps {
-  narrative: NarrativeEventWithTopics
+  narrative: NarrativeCardNarrative
   variant?: 'narrative'
   aggregate?: never
   companyId?: string
@@ -109,7 +115,7 @@ export function NarrativeCard(props: NarrativeCardProps) {
 
   const topicLabels = ensureArray(narrative.topic_labels) as TopicLabel[]
   const primaryTopic = narrative.primary_topic ?? 'unknown'
-  const text = narrative.text ?? ''
+  const text = (narrative as { text?: string; raw_text?: string }).text ?? (narrative as { raw_text?: string }).raw_text ?? ''
   const snippet = text.length > 120 ? `${text.slice(0, 120)}…` : text
   const source = narrative.source ?? 'unknown'
   const audienceClass = narrative.audience_class ?? 'unknown'

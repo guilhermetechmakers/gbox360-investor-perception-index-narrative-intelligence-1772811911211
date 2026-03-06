@@ -70,7 +70,7 @@ export function NarrativeExplorer() {
   const { data: narrativesData, isLoading: narrativesLoading } = useNarratives(narrativeParams)
   const { data: topicsData, isLoading: topicsLoading } = useTopicsAggregate(topicsParams)
   const { data: selectedNarrative, isLoading: narrativeDetailLoading } = useNarrative(
-    selectedNarrativeId
+    selectedNarrativeId ?? ''
   )
 
   const narratives = ensureArray(narrativesData?.items)
@@ -174,7 +174,7 @@ export function NarrativeExplorer() {
                 >
                   {narratives.map((n) => (
                     <NarrativeCard
-                      key={n.id ?? n.event_id}
+                      key={n.id ?? n.event_id ?? ''}
                       narrative={n}
                       onSelect={setSelectedNarrativeId}
                     />
@@ -195,7 +195,7 @@ export function NarrativeExplorer() {
 
       <NarrativeDetailDrawer
         narrativeId={selectedNarrativeId}
-        narrative={selectedNarrative ?? null}
+        narrative={selectedNarrative as import('@/types/topic-classification').NarrativeEventWithTopics | null | undefined}
         isLoading={narrativeDetailLoading}
         onClose={() => setSelectedNarrativeId(null)}
         onDrilldown={handleDrilldown}

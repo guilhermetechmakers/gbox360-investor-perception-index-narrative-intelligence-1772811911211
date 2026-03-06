@@ -4,8 +4,10 @@
  * GET /functions/v1/narrative-events?event_id= - fetch single event
  * POST /functions/v1/narrative-events - ingest new event
  * Uses narrative_event_append table (append-only).
+ * Credibility & Risk Signals: computed on ingest via signals-engine.
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { computeSignals } from '../_shared/signals-engine.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -125,6 +127,14 @@ Deno.serve(async (req) => {
       }
 
       const now = new Date().toISOString()
+      const { credibility_score, risk_score, signals } = computeSignals({
+        raw_text: rawText,
+        source: source.trim(),
+        platform,
+        speaker_entity: body?.speaker_entity as string | undefined,
+        speaker_role: body?.speaker_role as string | undefined,
+      })
+
       const row = {
         raw_payload_id: rawPayloadId.trim(),
         source: source.trim(),
@@ -138,6 +148,9 @@ Deno.serve(async (req) => {
         metadata: (body?.metadata != null && typeof body.metadata === 'object') ? body.metadata : {},
         authority_score: body?.authority_score != null ? Number(body.authority_score) : null,
         credibility_flags: body?.credibility_flags ?? null,
+        credibility_score,
+        risk_score,
+        signals: Array.isArray(signals) ? signals : [],
         provenance: {
           ...provenance,
           write_timestamp: provenance.write_timestamp ?? now,

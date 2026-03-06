@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScorePill } from '@/components/signals/ScorePill'
 import { Sparkline } from '@/components/dashboard/Sparkline'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,12 +11,18 @@ interface NarrativeHeaderCardProps {
   movement: Movement | null | undefined
   isLoading?: boolean
   sparklineData?: number[]
+  /** Aggregated credibility score 0–1 from events */
+  credibilityScore?: number | null
+  /** Aggregated risk score 0–1 from events */
+  riskScore?: number | null
 }
 
 export function NarrativeHeaderCard({
   movement,
   isLoading,
   sparklineData = [],
+  credibilityScore,
+  riskScore,
 }: NarrativeHeaderCardProps) {
   if (isLoading) {
     return (
@@ -38,6 +45,8 @@ export function NarrativeHeaderCard({
   const persistence = movement?.persistenceScore ?? 0
   const contribution = movement?.contributionDelta ?? 0
   const safeSparkline = Array.isArray(sparklineData) ? sparklineData : []
+  const cred = movement?.credibilityScore ?? credibilityScore ?? null
+  const risk = movement?.riskScore ?? riskScore ?? null
 
   const trendIcon =
     contribution > 0 ? (
@@ -84,6 +93,18 @@ export function NarrativeHeaderCard({
               <div className="w-24">
                 <Sparkline data={safeSparkline} height={28} />
               </div>
+            </div>
+          )}
+          {cred != null && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Credibility</span>
+              <ScorePill score={cred} variant="credibility" size="sm" showLabel={false} />
+            </div>
+          )}
+          {risk != null && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Risk</span>
+              <ScorePill score={risk} variant="risk" size="sm" showLabel={false} />
             </div>
           )}
         </div>

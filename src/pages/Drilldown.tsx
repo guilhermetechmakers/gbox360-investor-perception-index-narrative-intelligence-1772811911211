@@ -14,6 +14,7 @@ import {
   ProvenancePanel,
   ProvenanceSignOffChips,
 } from '@/components/drilldown'
+import { NarrativeSignalList, IngestionLog } from '@/components/signals'
 import {
   useMovement,
   useNarrativeEvents,
@@ -21,6 +22,7 @@ import {
   useIPISnapshot,
   useProvenance,
 } from '@/hooks/useIPI'
+import { useRecomputeSignals } from '@/hooks/useSignals'
 import type { DrilldownFilters } from '@/types/drilldown'
 import type { Movement } from '@/types/drilldown'
 
@@ -125,6 +127,7 @@ export function Drilldown() {
   const { data: rawPayload, isLoading: payloadLoading } = useRawPayload(
     payloadModalId ?? ''
   )
+  const recomputeMutation = useRecomputeSignals()
 
   const events = eventsData?.data ?? []
   const total = eventsData?.count ?? 0
@@ -134,10 +137,31 @@ export function Drilldown() {
     const flags = filters.credibilityFlags ?? []
     if (flags.length === 0) return safeEvents
     return safeEvents.filter((ev) => {
-      const evFlags = ev.credibility_flags ?? []
+      const evFlags = Array.isArray(ev.credibility_flags) ? ev.credibility_flags : []
       return flags.some((f) => evFlags.includes(f))
     })
   }, [safeEvents, filters.credibilityFlags])
+
+  const { credibilityScore, riskScore, aggregatedSignals } = useMemo(() => {
+    const items = filteredByCredibility ?? []
+    const withCred = items.filter((e) => typeof e.credibility_score === 'number')
+    const withRisk = items.filter((e) => typeof e.risk_score === 'number')
+    const avgCred =
+      withCred.length > 0
+        ? withCred.reduce((s, e) => s + (e.credibility_score ?? 0), 0) / withCred.length
+        : null
+    const avgRisk =
+      withRisk.length > 0
+        ? withRisk.reduce((s, e) => s + (e.risk_score ?? 0), 0) / withRisk.length
+        : null
+    const allSignals = items.flatMap((e) => Array.isArray(e.signals) ? e.signals : [])
+    const byWeight = [...allSignals].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    return {
+      credibilityScore: avgCred,
+      riskScore: avgRisk,
+      aggregatedSignals: byWeight.slice(0, 8),
+    }
+  }, [filteredByCredibility])
 
   const handleFiltersApply = useCallback((newFilters: DrilldownFilters) => {
     setFilters(newFilters)
@@ -171,6 +195,23 @@ export function Drilldown() {
     ? filteredByCredibility.find((e) => e.raw_payload_id === payloadModalId)
     : null
   const provenance = selectedEventForModal?.metadata as { documentId?: string; url?: string } | undefined
+
+  const lastIngestionTimestamp = useMemo(() => {
+    const items = filteredByCredibility ?? []
+    if (items.length === 0) return null
+    const sorted = [...items].sort(
+      (a, b) =>
+        new Date(b.ingestion_timestamp ?? 0).getTime() -
+        new Date(a.ingestion_timestamp ?? 0).getTime()
+    )
+    return sorted[0]?.ingestion_timestamp ?? null
+  }, [filteredByCredibility])
+
+  const handleRecompute = useCallback(() => {
+    recomputeMutation.mutate({
+      window: start && end ? `${start}/${end}` : undefined,
+    })
+  }, [recomputeMutation, start, end])
 
   return (
     <div className="space-y-8 animate-fade-in-up relative" role="main" aria-label="Drilldown — Why did this move?">
@@ -206,6 +247,8 @@ export function Drilldown() {
           .slice(0, 10)
           .map((e) => e.authority_score ?? 0)
           .filter((v) => typeof v === 'number')}
+        credibilityScore={credibilityScore}
+        riskScore={riskScore}
       />
       <ProvenanceSignOffChips
         source={snapshot?.company_name ? 'IPI Snapshot' : undefined}
@@ -267,10 +310,29 @@ export function Drilldown() {
             onSpeedChange={setReplaySpeed}
           />
 
+          <NarrativeSignalList
+            signals={aggregatedSignals}
+            credibilityScore={credibilityScore ?? movement?.credibilityScore ?? undefined}
+            riskScore={riskScore ?? movement?.riskScore ?? undefined}
+            title="Credibility & risk signals"
+          />
+          <IngestionLog
+            lastIngestionAt={lastIngestionTimestamp ?? snapshot?.timestamp ?? snapshot?.window_end ?? undefined}
+            status={recomputeMutation.isSuccess ? 'success' : 'idle'}
+            message={recomputeMutation.isSuccess ? `Re-scored ${recomputeMutation.data?.updated_count ?? 0} events` : undefined}
+          />
           <ProvenancePanel
             provenance={auditProvenance ?? null}
             isLoading={provenanceLoading && !!provenanceIdToFetch}
           />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRecompute}
+            disabled={recomputeMutation.isPending || !companyId}
+          >
+            {recomputeMutation.isPending ? 'Re-scoring…' : 'Re-score signals'}
+          </Button>
           <DrilldownAuditExportPanel
             movement={movement}
             events={filteredByCredibility}

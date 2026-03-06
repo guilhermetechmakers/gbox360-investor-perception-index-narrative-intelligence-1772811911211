@@ -120,13 +120,13 @@ export function NarrativeDetailDrawer({
               <h3 className="text-sm font-medium text-muted-foreground mb-1">Metadata</h3>
               <div className="text-sm space-y-1">
                 <p>
-                  <span className="text-muted-foreground">Source:</span> {narrative.source}
+                  <span className="text-muted-foreground">Source:</span> {narrative.source ?? 'unknown'}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Platform:</span> {narrative.platform}
+                  <span className="text-muted-foreground">Platform:</span> {narrative.platform ?? 'unknown'}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">Audience:</span> {narrative.audience_class}
+                  <span className="text-muted-foreground">Audience:</span> {narrative.audience_class ?? 'unknown'}
                 </p>
                 <p>
                   <span className="text-muted-foreground">Timestamp:</span> {narrative.timestamp}

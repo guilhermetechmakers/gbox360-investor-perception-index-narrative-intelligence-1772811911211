@@ -17,6 +17,7 @@ import {
   RawPayloadViewer,
   IPITimelineChart,
 } from '@/components/company-view'
+import { IngestionLog } from '@/components/signals'
 import type { CompanySelectorValue } from '@/components/company-view'
 import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
 import type { IPIViewContext } from '@/types/company-view'
@@ -138,6 +139,8 @@ export function CompanyView() {
       name: n.label,
       contribution: n.contribution ?? 0,
       ...(n.event_count != null && { authority: `~${n.event_count} events` }),
+      ...(n.credibility != null && { credibility: n.credibility }),
+      ...(n.risk != null && { risk: n.risk }),
     }))
   }, [snapshot?.top_narratives])
 
@@ -296,6 +299,10 @@ export function CompanyView() {
         </div>
 
         <div className="space-y-6">
+          <IngestionLog
+            lastIngestionAt={snapshot?.timestamp ?? snapshot?.window_end}
+            status="success"
+          />
           <AuditExportPanel viewContext={viewContext} status="ready" />
 
           <PeerSnapshotPanel
