@@ -1,8 +1,30 @@
 import { api } from '@/lib/api'
 import type { IPISnapshot, NarrativeEvent } from '@/types/narrative'
+import type { Movement } from '@/types/drilldown'
 import type { PaginatedResponse } from '@/types/api'
 
 export const ipiApi = {
+  getMovement: async (
+    narrativeId: string,
+    companyId?: string,
+    windowStart?: string,
+    windowEnd?: string
+  ): Promise<Movement | null> => {
+    try {
+      const params = new URLSearchParams({ narrative_id: narrativeId })
+      if (companyId) params.set('company_id', companyId)
+      if (windowStart) params.set('window_start', windowStart)
+      if (windowEnd) params.set('window_end', windowEnd)
+      const res = await api.get<{ data?: Movement | null } | Movement>(
+        `/ipi/movement?${params}`
+      )
+      const data = res && typeof res === 'object' && 'data' in res ? res.data : res
+      return (data as Movement) ?? null
+    } catch {
+      return null
+    }
+  },
+
   getSnapshot: async (
     companyId: string,
     windowStart: string,
@@ -27,7 +49,12 @@ export const ipiApi = {
     narrativeId: string,
     page: number,
     limit: number,
-    filters?: { source?: string; authority_min?: number }
+    filters?: {
+      source?: string
+      authority_min?: number
+      date_start?: string
+      date_end?: string
+    }
   ): Promise<PaginatedResponse<NarrativeEvent>> => {
     const params = new URLSearchParams({
       narrative_id: narrativeId,
@@ -37,6 +64,8 @@ export const ipiApi = {
       ...(filters?.authority_min != null && {
         authority_min: String(filters.authority_min),
       }),
+      ...(filters?.date_start && { date_start: filters.date_start }),
+      ...(filters?.date_end && { date_end: filters.date_end }),
     })
     return api.get<PaginatedResponse<NarrativeEvent>>(
       `/ipi/narrative-events?${params}`

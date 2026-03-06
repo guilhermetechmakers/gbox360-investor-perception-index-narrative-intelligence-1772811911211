@@ -1,27 +1,32 @@
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChevronLeft } from 'lucide-react'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  NarrativeHeaderCard,
+  NarrativeEventsTable,
+  RawPayloadModal,
+  TimelineReplay,
+  FiltersPanel,
+  DrilldownAuditExportPanel,
+} from '@/components/drilldown'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useNarrativeEvents, useRawPayload, useRequestExport } from '@/hooks/useIPI'
-import { format } from 'date-fns'
-import { FileJson, Download, ChevronLeft } from 'lucide-react'
+  useMovement,
+  useNarrativeEvents,
+  useRawPayload,
+  useIPISnapshot,
+} from '@/hooks/useIPI'
+import type { DrilldownFilters } from '@/types/drilldown'
+import type { Movement } from '@/types/drilldown'
 
 const PAGE_SIZE = 10
+
+const AUTHORITY_TIER_MAP: Record<string, number> = {
+  analyst: 0.66,
+  media: 0.33,
+  retail: 0,
+}
 
 export function Drilldown() {
   const { narrativeId } = useParams<{ narrativeId: string }>()
@@ -31,175 +36,210 @@ export function Drilldown() {
   const end = searchParams.get('end') ?? ''
 
   const [page, setPage] = useState(0)
-  const [sourceFilter, setSourceFilter] = useState<string>('')
   const [payloadModalId, setPayloadModalId] = useState<string | null>(null)
+  const [currentReplayIndex, setCurrentReplayIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [loop, setLoop] = useState(false)
+  const [filters, setFilters] = useState<DrilldownFilters>({})
 
-  const { data: eventsData, isLoading } = useNarrativeEvents(
-    narrativeId ?? '',
+  const narrativeIdSafe = narrativeId ?? ''
+  const isOverview = narrativeIdSafe === 'overview' || !narrativeIdSafe
+
+  const { data: movementData } = useMovement(
+    narrativeIdSafe,
+    companyId || undefined,
+    start || undefined,
+    end || undefined
+  )
+
+  const { data: snapshot } = useIPISnapshot(companyId, start, end)
+
+  const movement: Movement | null = useMemo(() => {
+    const m = movementData ?? null
+    if (m) return m
+    if (isOverview || !narrativeIdSafe || !snapshot) return null
+    const top = snapshot?.top_narratives ?? []
+    const found = Array.isArray(top)
+      ? top.find((n) => n.id === narrativeIdSafe)
+      : null
+    if (found) {
+      return {
+        movementId: found.id,
+        narrativeTitle: found.label,
+        persistenceScore: found.persistence ?? 0,
+        contributionDelta: found.contribution ?? 0,
+        currentIPI: snapshot?.score,
+        events: null,
+        calculationInputs: null,
+      }
+    }
+    return {
+      movementId: narrativeIdSafe,
+      narrativeTitle: 'Narrative',
+      persistenceScore: 0,
+      contributionDelta: 0,
+      events: null,
+      calculationInputs: null,
+    }
+  }, [movementData, narrativeIdSafe, isOverview, snapshot])
+
+  const apiFilters = useMemo(() => {
+    const f: { source?: string; authority_min?: number; date_start?: string; date_end?: string } = {}
+    if (filters.sourceType) f.source = filters.sourceType
+    if (filters.authorityTier && String(filters.authorityTier) !== 'all') {
+      const min = AUTHORITY_TIER_MAP[filters.authorityTier]
+      if (min != null) f.authority_min = min
+    }
+    if (filters.dateStart) f.date_start = filters.dateStart
+    if (filters.dateEnd) f.date_end = filters.dateEnd
+    return f
+  }, [filters])
+
+  const { data: eventsData, isLoading: eventsLoading } = useNarrativeEvents(
+    narrativeIdSafe,
     page,
     PAGE_SIZE,
-    sourceFilter ? { source: sourceFilter } : undefined
+    Object.keys(apiFilters).length > 0 ? apiFilters : undefined
   )
+
   const { data: rawPayload, isLoading: payloadLoading } = useRawPayload(
     payloadModalId ?? ''
   )
-  const exportMutation = useRequestExport()
 
   const events = eventsData?.data ?? []
   const total = eventsData?.count ?? 0
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const safeEvents = Array.isArray(events) ? events : []
+
+  const filteredByCredibility = useMemo(() => {
+    const flags = filters.credibilityFlags ?? []
+    if (flags.length === 0) return safeEvents
+    return safeEvents.filter((ev) => {
+      const evFlags = ev.credibility_flags ?? []
+      return flags.some((f) => evFlags.includes(f))
+    })
+  }, [safeEvents, filters.credibilityFlags])
+
+  const handleFiltersApply = useCallback((newFilters: DrilldownFilters) => {
+    setFilters(newFilters)
+    setPage(0)
+    setCurrentReplayIndex(0)
+  }, [])
+
+  const handleFiltersReset = useCallback(() => {
+    setFilters({})
+    setPage(0)
+    setCurrentReplayIndex(0)
+  }, [])
+
+  const backUrl = `/dashboard/company/${companyId}?start=${start}&end=${end}`
+
+  const selectedEventForModal = payloadModalId
+    ? filteredByCredibility.find((e) => e.raw_payload_id === payloadModalId)
+    : null
+  const provenance = selectedEventForModal?.metadata as { documentId?: string; url?: string } | undefined
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to={`/dashboard/company/${companyId}?start=${start}&end=${end}`}>
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold">Why did this move?</h1>
-          <p className="text-sm text-muted-foreground">
-            Narrative events and raw payload traceability
-          </p>
+    <div className="space-y-8 animate-fade-in-up">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={backUrl} aria-label="Back to Company View">
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+              Why did this move?
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Traceable narrative events and raw payload provenance
+            </p>
+          </div>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <CardTitle>Events</CardTitle>
-            <div className="flex items-center gap-2">
-              <select
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                value={sourceFilter}
-                onChange={(e) => {
-                  setSourceFilter(e.target.value)
-                  setPage(0)
-                }}
-              >
-                <option value="">All sources</option>
-                <option value="news">News</option>
-                <option value="social">Social</option>
-                <option value="transcript">Transcript</option>
-              </select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  exportMutation.mutate({
-                    companyId,
-                    windowStart: start,
-                    windowEnd: end,
-                    format: 'both',
-                  })
-                }
-                disabled={exportMutation.isPending}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Audit export
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          )}
-          {!isLoading && events.length === 0 && (
-            <p className="py-8 text-center text-muted-foreground">
-              No events for this narrative in the selected window.
-            </p>
-          )}
-          {!isLoading && events.length > 0 && (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Excerpt</TableHead>
-                    <TableHead>Authority</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.map((ev) => (
-                    <TableRow key={ev.event_id}>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(ev.original_timestamp), 'MMM d, yyyy HH:mm')}
-                      </TableCell>
-                      <TableCell>{ev.source}</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {ev.raw_text?.slice(0, 80)}…
-                      </TableCell>
-                      <TableCell>
-                        {ev.authority_score != null
-                          ? (ev.authority_score * 100).toFixed(0) + '%'
-                          : '—'}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPayloadModalId(ev.raw_payload_id)}
-                        >
-                          <FileJson className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {totalPages > 1 && (
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Page {page + 1} of {totalPages} · {total} total
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => p - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page >= totalPages - 1}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+      <NarrativeHeaderCard
+        movement={movement}
+        isLoading={!movement && !isOverview}
+        sparklineData={(movement?.events ?? safeEvents)
+          .slice(0, 10)
+          .map((e) => e.authority_score ?? 0)
+          .filter((v) => typeof v === 'number')}
+      />
 
-      <Dialog open={!!payloadModalId} onOpenChange={() => setPayloadModalId(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Raw payload</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto rounded-md border bg-muted/30 p-4 font-mono text-xs">
-            {payloadLoading && <Skeleton className="h-32 w-full" />}
-            {!payloadLoading && rawPayload != null && (
-              <pre className="whitespace-pre-wrap break-words">
-                {JSON.stringify(rawPayload, null, 2)}
-              </pre>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="card-surface">
+            <CardHeader>
+              <CardTitle>Events</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                NarrativeEvents with source, speaker, authority, and raw payload links
+              </p>
+            </CardHeader>
+            <CardContent>
+              <NarrativeEventsTable
+                events={filteredByCredibility}
+                isLoading={eventsLoading}
+                page={page}
+                totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                total={total}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                onViewRaw={(id) => setPayloadModalId(id)}
+                highlightedEventId={
+                  filteredByCredibility[currentReplayIndex]?.event_id ?? null
+                }
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <FiltersPanel
+            filters={filters}
+            onApply={handleFiltersApply}
+            onReset={handleFiltersReset}
+            dateStart={start}
+            dateEnd={end}
+          />
+          <TimelineReplay
+            events={filteredByCredibility}
+            currentIndex={currentReplayIndex}
+            onIndexChange={setCurrentReplayIndex}
+            isPlaying={isPlaying}
+            onPlayPause={setIsPlaying}
+            loop={loop}
+            onLoopToggle={setLoop}
+            onViewPayload={(id) => setPayloadModalId(id)}
+          />
+
+          <DrilldownAuditExportPanel
+            movement={movement}
+            events={filteredByCredibility}
+            companyId={companyId}
+            companyName={snapshot?.company_name}
+            windowStart={start}
+            windowEnd={end}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <Button variant="outline" asChild>
+          <Link to={backUrl}>Back to Company View</Link>
+        </Button>
+      </div>
+
+      <RawPayloadModal
+        open={!!payloadModalId}
+        onOpenChange={(open) => !open && setPayloadModalId(null)}
+        payload={rawPayload}
+        isLoading={payloadLoading}
+        movementId={movement?.movementId}
+        narrativeTitle={movement?.narrativeTitle}
+        eventCount={filteredByCredibility.length}
+        provenance={provenance ?? undefined}
+      />
     </div>
   )
 }

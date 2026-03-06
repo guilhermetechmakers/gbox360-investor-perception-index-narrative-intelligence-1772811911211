@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import type { NarrativeEvent } from '@/types/narrative'
 
 export const ipiKeys = {
+  movement: (narrativeId: string, companyId?: string, start?: string, end?: string) =>
+    ['ipi', 'movement', narrativeId, companyId, start, end] as const,
   snapshot: (companyId: string, start: string, end: string) =>
     ['ipi', 'snapshot', companyId, start, end] as const,
   dashboard: (companyIds: string[], start: string, end: string) =>
@@ -16,6 +18,21 @@ export const ipiKeys = {
     filters?: Record<string, string | number>
   ) => ['ipi', 'events', narrativeId, page, limit, filters] as const,
   rawPayload: (id: string) => ['ipi', 'raw-payload', id] as const,
+}
+
+export function useMovement(
+  narrativeId: string,
+  companyId?: string,
+  windowStart?: string,
+  windowEnd?: string
+) {
+  return useQuery({
+    queryKey: ipiKeys.movement(narrativeId, companyId, windowStart, windowEnd),
+    queryFn: () =>
+      ipiApi.getMovement(narrativeId, companyId, windowStart, windowEnd),
+    enabled: !!narrativeId,
+    staleTime: 1000 * 60 * 2,
+  })
 }
 
 export function useIPISnapshot(
@@ -51,7 +68,12 @@ export function useNarrativeEvents(
   narrativeId: string,
   page: number,
   limit: number,
-  filters?: { source?: string; authority_min?: number }
+  filters?: {
+    source?: string
+    authority_min?: number
+    date_start?: string
+    date_end?: string
+  }
 ) {
   return useQuery({
     queryKey: ipiKeys.narrativeEvents(
