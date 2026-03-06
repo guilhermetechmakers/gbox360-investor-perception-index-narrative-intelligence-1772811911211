@@ -38,7 +38,7 @@ export function Profile() {
               <CardDescription>{user.email}</CardDescription>
             </div>
             <Button variant="outline" asChild className="ml-auto">
-              <Link to="/settings">
+              <Link to="/dashboard/settings">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Link>
