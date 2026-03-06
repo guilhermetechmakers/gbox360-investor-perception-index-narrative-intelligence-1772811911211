@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback } from 'react'
 import { format, subDays } from 'date-fns'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkipLinks } from '@/components/shared/SkipLinks'
+import { EmptyState } from '@/components/profile/EmptyState'
 import {
   NarrativeCard,
   TopicLegend,
@@ -16,7 +18,7 @@ import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
 import { useNarratives, useNarrative } from '@/hooks/useNarratives'
 import { useTopicsAggregate } from '@/hooks/useTopicsAggregate'
 import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
-import { FileText } from 'lucide-react'
+import { FileText, Loader2 } from 'lucide-react'
 import { ensureArray } from '@/lib/runtime-safe'
 
 const DEFAULT_WINDOW: TimeWindow = {
@@ -67,7 +69,7 @@ export function NarrativeExplorer() {
     [selectedCompanyId, windowStart, windowEnd]
   )
 
-  const { data: narrativesData, isLoading: narrativesLoading } = useNarratives(narrativeParams)
+  const { data: narrativesData, isLoading: narrativesLoading, refetch: refetchNarratives, isRefetching: narrativesRefetching } = useNarratives(narrativeParams)
   const { data: topicsData, isLoading: topicsLoading } = useTopicsAggregate(topicsParams)
   const { data: selectedNarrative, isLoading: narrativeDetailLoading } = useNarrative(
     selectedNarrativeId ?? ''
@@ -131,13 +133,13 @@ export function NarrativeExplorer() {
         savedCompanies={savedList}
       />
 
-      <div id="topic-legend" className="flex flex-wrap items-center gap-2" tabIndex={-1}>
+      <div id="topic-legend" className="flex flex-wrap items-center gap-2" tabIndex={-1} role="region" aria-label="Topic legend">
         <span className="text-sm font-medium text-muted-foreground">Topics:</span>
         <TopicLegend topics={topics.map((t) => t.topic_label)} />
       </div>
 
       <div id="narrative-main" className="grid gap-8 lg:grid-cols-3" tabIndex={-1}>
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6" role="region" aria-label="Top narratives list">
           <Card className="card-surface">
             <CardHeader>
               <CardTitle className="text-xl">Top Narratives</CardTitle>
@@ -155,14 +157,47 @@ export function NarrativeExplorer() {
               )}
 
               {!narrativesLoading && narratives.length === 0 && (
-                <div className="py-12 text-center">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No narratives for this window</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select a different time range or company. Ensure Supabase Edge Functions are
-                    deployed for topic classification.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<FileText className="h-6 w-6 text-muted-foreground" aria-hidden />}
+                  title="No narratives for this window"
+                  description="Select a different time range or company. Ensure Supabase Edge Functions are deployed for topic classification."
+                  action={
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setSelectedCompanyId(null)}
+                        className="min-h-[44px] min-w-[120px]"
+                        aria-label="Clear company filter to show all narratives"
+                      >
+                        Clear filters
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refetchNarratives()}
+                        disabled={narrativesRefetching}
+                        className="min-h-[44px] min-w-[120px] gap-2"
+                        aria-label={narrativesRefetching ? 'Refreshing narratives' : 'Refresh narratives'}
+                      >
+                        {narrativesRefetching ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : null}
+                        {narrativesRefetching ? 'Refreshing…' : 'Refresh'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-[44px] gap-2"
+                        asChild
+                        aria-label="Go to dashboard overview"
+                      >
+                        <Link to="/dashboard">Go to Dashboard</Link>
+                      </Button>
+                    </div>
+                  }
+                  className="py-12 text-center"
+                />
               )}
 
               {!narrativesLoading && narratives.length > 0 && (
@@ -185,7 +220,7 @@ export function NarrativeExplorer() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6" role="region" aria-label="Topic persistence chart">
           {topicsLoading && <Skeleton className="h-64 rounded-lg" />}
           {!topicsLoading && (
             <PersistenceChart data={topics} height={280} />
