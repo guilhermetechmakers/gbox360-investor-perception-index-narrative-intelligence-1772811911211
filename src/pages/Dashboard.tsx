@@ -1,22 +1,22 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  CompanySearchBar,
-  TimeWindowPicker,
   type TimeWindow,
   IPIQuickCard,
   SavedCompaniesPane,
   type SavedCompanyWithScore,
   SystemStatusBanner,
 } from '@/components/dashboard'
-import { useSavedCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
+import {
+  CompanySelector,
+  type CompanySelectorValue,
+} from '@/components/company-view'
+import { useSavedCompanies, useRecentCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
 import { useDashboardCards } from '@/hooks/useIPI'
 import { useSystemStatus } from '@/hooks/useSystemStatus'
 import { BarChart3 } from 'lucide-react'
-import type { CompanySearchResult } from '@/types/company'
 
 const DEFAULT_WINDOW: TimeWindow = {
   label: '1M',
@@ -25,7 +25,6 @@ const DEFAULT_WINDOW: TimeWindow = {
 }
 
 export function Dashboard() {
-  const [searchParams] = useSearchParams()
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(DEFAULT_WINDOW)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
 
@@ -33,6 +32,7 @@ export function Dashboard() {
   const windowEnd = format(timeWindow.end, 'yyyy-MM-dd')
 
   const { data: saved = [], isLoading: savedLoading } = useSavedCompanies()
+  const { data: recent = [] } = useRecentCompanies()
   const saveCompany = useSaveCompany()
   const removeSaved = useRemoveSavedCompany()
   const companyIds = useMemo(() => (saved ?? []).map((c) => c.id), [saved])
@@ -45,6 +45,8 @@ export function Dashboard() {
 
   const safeCards = Array.isArray(cards) ? cards : []
   const safeSaved = Array.isArray(saved) ? saved : []
+  const safeRecent = Array.isArray(recent) ? recent : []
+  const savedIds = useMemo(() => new Set(safeSaved.map((c) => c.id)), [safeSaved])
 
   const savedWithScores: SavedCompanyWithScore[] = useMemo(() => {
     return safeSaved.map((c) => {
@@ -57,16 +59,31 @@ export function Dashboard() {
     })
   }, [safeSaved, safeCards])
 
-  const handleCompanySelect = useCallback(
-    (company: CompanySearchResult) => {
-      saveCompany.mutate(company.id, {
-        onSuccess: () => {
-          setSelectedCompanyId(company.id)
-          refetchCards()
-        },
-      })
+  const selectedCompany: CompanySelectorValue | null = useMemo(() => {
+    if (!selectedCompanyId) return null
+    const c = safeSaved.find((x) => x.id === selectedCompanyId) ?? safeRecent.find((x) => x.id === selectedCompanyId)
+    return c ? { id: c.id, name: c.name, ticker: c.ticker } : null
+  }, [selectedCompanyId, safeSaved, safeRecent])
+
+  const recentList: CompanySelectorValue[] = useMemo(
+    () => safeRecent.map((c) => ({ id: c.id, name: c.name, ticker: c.ticker })),
+    [safeRecent]
+  )
+  const savedList: CompanySelectorValue[] = useMemo(
+    () => safeSaved.map((c) => ({ id: c.id, name: c.name, ticker: c.ticker })),
+    [safeSaved]
+  )
+
+  const handleCompanyChange = useCallback(
+    (company: CompanySelectorValue) => {
+      setSelectedCompanyId(company.id)
+      if (!savedIds.has(company.id)) {
+        saveCompany.mutate(company.id, {
+          onSuccess: () => refetchCards(),
+        })
+      }
     },
-    [saveCompany, refetchCards]
+    [savedIds, saveCompany, refetchCards]
   )
 
   const handleSelectCompany = useCallback((company: SavedCompanyWithScore) => {
@@ -76,10 +93,13 @@ export function Dashboard() {
   const handleUnpin = useCallback(
     (companyId: string) => {
       removeSaved.mutate(companyId, {
-        onSuccess: () => refetchCards(),
+        onSuccess: () => {
+          refetchCards()
+          if (selectedCompanyId === companyId) setSelectedCompanyId(null)
+        },
       })
     },
-    [removeSaved, refetchCards]
+    [removeSaved, refetchCards, selectedCompanyId]
   )
 
   const handleRetryStatus = useCallback(() => {
@@ -88,19 +108,21 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <TimeWindowPicker value={timeWindow} onChange={setTimeWindow} />
+        <CompanySelector
+          value={selectedCompany}
+          onChange={handleCompanyChange}
+          recentCompanies={recentList}
+          savedCompanies={savedList}
+          timeWindow={timeWindow}
+          onTimeWindowChange={setTimeWindow}
+          showSaveToggle
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <CompanySearchBar
-            onSelect={handleCompanySelect}
-            placeholder="Search company to add..."
-            className="max-w-md"
-            initialQuery={searchParams.get('q') ?? ''}
-          />
 
           {systemStatus && systemStatus.status !== 'ok' && (
             <SystemStatusBanner

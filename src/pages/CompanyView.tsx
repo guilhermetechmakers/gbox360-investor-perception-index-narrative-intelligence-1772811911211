@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { format, subDays } from 'date-fns'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIPISnapshot, useCompanyTimelineEvents } from '@/hooks/useIPI'
-import { useSavedCompanies } from '@/hooks/useCompanies'
+import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
 import {
   CompanySelector,
   IPISummaryPanel,
@@ -70,7 +70,9 @@ export function CompanyView() {
   const { data: timelineEvents = [] } = useCompanyTimelineEvents(narrativeIds)
 
   const { data: savedCompanies = [] } = useSavedCompanies()
+  const { data: recentCompanies = [] } = useRecentCompanies()
   const safeSaved = Array.isArray(savedCompanies) ? savedCompanies : []
+  const safeRecent = Array.isArray(recentCompanies) ? recentCompanies : []
 
   const selectedCompany: CompanySelectorValue | null = useMemo(() => {
     if (!snapshot) return null
@@ -80,7 +82,17 @@ export function CompanyView() {
     }
   }, [snapshot])
 
-  const recentAndSaved: CompanySelectorValue[] = useMemo(
+  const recentList: CompanySelectorValue[] = useMemo(
+    () =>
+      safeRecent.map((c) => ({
+        id: c.id,
+        name: c.name,
+        ticker: c.ticker,
+      })),
+    [safeRecent]
+  )
+
+  const savedList: CompanySelectorValue[] = useMemo(
     () =>
       safeSaved.map((c) => ({
         id: c.id,
@@ -183,8 +195,8 @@ export function CompanyView() {
         <CompanySelector
           value={selectedCompany}
           onChange={handleCompanyChange}
-          recentCompanies={recentAndSaved}
-          savedCompanies={recentAndSaved}
+          recentCompanies={recentList}
+          savedCompanies={savedList}
           timeWindow={timeWindow}
           onTimeWindowChange={handleTimeWindowChange}
         />

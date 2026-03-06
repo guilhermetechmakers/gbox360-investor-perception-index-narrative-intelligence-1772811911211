@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { format, subDays, startOfYear } from 'date-fns'
+import { useState, useEffect } from 'react'
+import { format, subDays, startOfYear, subYears } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Calendar } from 'lucide-react'
+import { Calendar, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface TimeWindow {
@@ -18,6 +18,8 @@ export interface TimeWindow {
   end: Date
   label: string
 }
+
+const DEFAULT_PRESET = '1M'
 
 const PRESETS: { label: string; getValue: () => { start: Date; end: Date } }[] = [
   { label: '1D', getValue: () => ({ start: subDays(new Date(), 1), end: new Date() }) },
@@ -27,6 +29,14 @@ const PRESETS: { label: string; getValue: () => { start: Date; end: Date } }[] =
   {
     label: 'YTD',
     getValue: () => ({ start: startOfYear(new Date()), end: new Date() }),
+  },
+  { label: '1Y', getValue: () => ({ start: subYears(new Date(), 1), end: new Date() }) },
+  {
+    label: 'All',
+    getValue: () => ({
+      start: subYears(new Date(), 5),
+      end: new Date(),
+    }),
   },
 ]
 
@@ -45,6 +55,14 @@ export function TimeWindowPicker({ value, onChange, className }: TimeWindowPicke
   const [validationError, setValidationError] = useState<string | null>(null)
 
   const today = format(new Date(), 'yyyy-MM-dd')
+
+  useEffect(() => {
+    if (customOpen) {
+      setCustomStart(format(value.start, 'yyyy-MM-dd'))
+      setCustomEnd(format(value.end, 'yyyy-MM-dd'))
+      setValidationError(null)
+    }
+  }, [customOpen, value.start, value.end])
 
   const handlePresetClick = (preset: (typeof PRESETS)[number]) => {
     const { start, end } = preset.getValue()
@@ -81,10 +99,35 @@ export function TimeWindowPicker({ value, onChange, className }: TimeWindowPicke
     setCustomOpen(false)
   }
 
+  const handleReset = () => {
+    const preset = PRESETS.find((p) => p.label === DEFAULT_PRESET)
+    if (preset) {
+      const { start, end } = preset.getValue()
+      onChange({ start, end, label: DEFAULT_PRESET })
+    }
+    setCustomOpen(false)
+  }
+
+  const handleClearCustom = () => {
+    setCustomStart(today)
+    setCustomEnd(today)
+    setValidationError(null)
+  }
+
   const isCustom = value.label === 'Custom'
+  const summaryLabel =
+    value.label === 'Custom'
+      ? `${format(value.start, 'MMM d, yyyy')} – ${format(value.end, 'MMM d, yyyy')}`
+      : value.label
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      <span
+        className="text-sm text-muted-foreground shrink-0"
+        aria-live="polite"
+      >
+        {summaryLabel}
+      </span>
       <div className="flex items-center gap-1 rounded-md border border-border p-1">
         {PRESETS.map((preset) => (
           <Button
@@ -93,6 +136,8 @@ export function TimeWindowPicker({ value, onChange, className }: TimeWindowPicke
             size="sm"
             onClick={() => handlePresetClick(preset)}
             className="h-8 px-3 text-xs"
+            aria-pressed={value.label === preset.label}
+            aria-label={`Time window: ${preset.label}`}
           >
             {preset.label}
           </Button>
@@ -116,29 +161,52 @@ export function TimeWindowPicker({ value, onChange, className }: TimeWindowPicke
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="start-date">Start date</Label>
+              <Label htmlFor="time-window-start-date">Start date</Label>
               <Input
-                id="start-date"
+                id="time-window-start-date"
                 type="date"
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
                 max={today}
+                aria-label="Start date for time window"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="end-date">End date</Label>
+              <Label htmlFor="time-window-end-date">End date</Label>
               <Input
-                id="end-date"
+                id="time-window-end-date"
                 type="date"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
                 max={today}
+                aria-label="End date for time window"
               />
             </div>
             {validationError && (
-              <p className="text-sm text-destructive">{validationError}</p>
+              <p className="text-sm text-destructive" role="alert">
+                {validationError}
+              </p>
             )}
-            <Button onClick={handleCustomApply}>Apply</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleCustomApply}>Apply</Button>
+              <Button
+                variant="outline"
+                onClick={handleClearCustom}
+                aria-label="Clear custom date range"
+              >
+                Clear
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="gap-1.5"
+                aria-label="Reset to default time window"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

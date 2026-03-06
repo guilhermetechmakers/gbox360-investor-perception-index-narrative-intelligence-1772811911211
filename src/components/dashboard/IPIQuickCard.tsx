@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Sparkline } from './Sparkline'
-import { TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ArrowRight, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { IPISnapshot } from '@/types/narrative'
 
@@ -75,19 +75,36 @@ export const IPIQuickCard = memo(function IPIQuickCard({
             ))}
           </div>
         )}
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="w-full mt-2 transition-transform duration-200 group-hover:scale-[1.02]"
-        >
-          <Link
-            to={`/dashboard/company/${snapshot.company_id}?start=${windowStart}&end=${windowEnd}`}
+        <div className="flex flex-col gap-2 mt-2">
+          {topNarratives[0] && (
+            <Button
+              asChild
+              variant="default"
+              size="sm"
+              className="w-full transition-transform duration-200 group-hover:scale-[1.02]"
+            >
+              <Link
+                to={`/dashboard/drilldown/${topNarratives[0].id}?company=${snapshot.company_id}&start=${windowStart}&end=${windowEnd}`}
+              >
+                Why did this move?
+                <HelpCircle className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-full transition-transform duration-200 group-hover:scale-[1.02]"
           >
-            View details
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+            <Link
+              to={`/dashboard/company/${snapshot.company_id}?start=${windowStart}&end=${windowEnd}`}
+            >
+              View details
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

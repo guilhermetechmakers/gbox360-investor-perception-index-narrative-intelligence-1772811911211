@@ -5,7 +5,10 @@ import { toast } from 'sonner'
 export const companyKeys = {
   all: ['companies'] as const,
   search: (q: string) => [...companyKeys.all, 'search', q] as const,
+  suggest: (q: string, page: number, limit: number) =>
+    [...companyKeys.all, 'suggest', q, page, limit] as const,
   saved: () => [...companyKeys.all, 'saved'] as const,
+  recent: () => [...companyKeys.all, 'recent'] as const,
   detail: (id: string) => [...companyKeys.all, 'detail', id] as const,
 }
 
@@ -15,6 +18,27 @@ export function useCompanySearch(query: string) {
     queryFn: () => companiesApi.search(query),
     enabled: query.length >= 2,
     staleTime: 1000 * 60,
+  })
+}
+
+export function useCompanySuggest(
+  query: string,
+  page = 1,
+  limit = 10
+) {
+  return useQuery({
+    queryKey: companyKeys.suggest(query, page, limit),
+    queryFn: () => companiesApi.suggest(query, page, limit),
+    enabled: query.length >= 2,
+    staleTime: 1000 * 60,
+  })
+}
+
+export function useRecentCompanies() {
+  return useQuery({
+    queryKey: companyKeys.recent(),
+    queryFn: companiesApi.getRecent,
+    staleTime: 1000 * 60 * 2,
   })
 }
 
