@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -75,7 +75,9 @@ export function TimelineView({
     return (
       <Card className="card-surface transition-all duration-200">
         <CardHeader>
-          <CardTitle className="text-xl text-foreground">Timeline</CardTitle>
+          <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
+            Timeline
+          </h1>
           <p className="text-sm text-muted-foreground">Key events in this window</p>
         </CardHeader>
         <CardContent className="animate-fade-in">
@@ -113,7 +115,9 @@ export function TimelineView({
     return (
       <Card className="card-surface transition-all duration-200 border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-xl text-foreground">Timeline</CardTitle>
+          <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
+            Timeline
+          </h1>
           <p className="text-sm text-muted-foreground">Key events in this window</p>
         </CardHeader>
         <CardContent>
@@ -132,7 +136,7 @@ export function TimelineView({
                 variant="outline"
                 size="sm"
                 onClick={onRetry}
-                className="w-fit gap-2 border-destructive/50 text-destructive hover:bg-destructive/20 hover:text-destructive"
+                className="w-fit gap-2 border-destructive/50 text-destructive hover:bg-destructive/20 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 aria-label="Retry loading timeline events"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden />
@@ -146,10 +150,19 @@ export function TimelineView({
   }
 
   if (safeEvents.length === 0) {
+    const handleEmptyAction = onEmptyAction ?? (() => {
+      document.getElementById('company-selector-time-window')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+
     return (
       <Card className="card-surface transition-all duration-200">
         <CardHeader>
-          <CardTitle className="text-xl text-foreground">Timeline</CardTitle>
+          <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
+            Timeline
+          </h1>
           <p className="text-sm text-muted-foreground">Key events in this window</p>
         </CardHeader>
         <CardContent>
@@ -166,18 +179,16 @@ export function TimelineView({
             <p className="text-sm text-muted-foreground mb-6 max-w-sm">
               Try a different time range or recalculate IPI to see narrative events here.
             </p>
-            {onEmptyAction && (
-              <Button
-                variant="default"
-                size="lg"
-                onClick={onEmptyAction}
-                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                aria-label={emptyStateActionLabel}
-              >
-                <CalendarRange className="h-4 w-4" aria-hidden />
-                {emptyStateActionLabel}
-              </Button>
-            )}
+            <Button
+              variant="default"
+              size="lg"
+              onClick={handleEmptyAction}
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={emptyStateActionLabel}
+            >
+              <CalendarRange className="h-4 w-4" aria-hidden />
+              {emptyStateActionLabel}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -187,7 +198,9 @@ export function TimelineView({
   return (
     <Card className="card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
       <CardHeader>
-        <CardTitle className="text-xl text-foreground">Timeline</CardTitle>
+        <h1 className="text-xl font-semibold leading-none tracking-tight text-foreground">
+          Timeline
+        </h1>
         <p className="text-sm text-muted-foreground">
           {safeEvents.length} event{safeEvents.length !== 1 ? 's' : ''} in this window
         </p>
@@ -240,7 +253,7 @@ export function TimelineView({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 transition-transform duration-200 hover:scale-105 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          className="h-8 w-8 transition-transform duration-200 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           onClick={() => onViewPayload?.(ev.raw_payload_id)}
                           aria-label={`View raw payload for event: ${(ev.raw_text ?? '').slice(0, 40)}`}
                         >
@@ -250,7 +263,7 @@ export function TimelineView({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 transition-transform duration-200 hover:scale-105 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            className="h-8 w-8 transition-transform duration-200 hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             onClick={() => onReplay(ev.event_id)}
                             aria-label={`Replay event: ${(ev.raw_text ?? '').slice(0, 40)}`}
                           >
@@ -281,7 +294,7 @@ export function TimelineView({
                 disabled={page === 0}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 aria-label="Go to previous page"
-                className="transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="transition-all duration-200 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Previous
               </Button>
@@ -291,7 +304,7 @@ export function TimelineView({
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 aria-label="Go to next page"
-                className="transition-all duration-200 hover:scale-[1.02] focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="transition-all duration-200 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Next
               </Button>
