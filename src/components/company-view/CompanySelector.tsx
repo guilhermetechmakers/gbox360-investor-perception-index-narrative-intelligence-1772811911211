@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useCompanySuggest, useSavedCompanies, useSaveCompany, useRemoveSavedCompany } from '@/hooks/useCompanies'
 import { useDebounce } from '@/hooks/useDebounce'
-import { Search, Calendar, Star, StarOff, Loader2 } from 'lucide-react'
+import { Search, Calendar, Star, StarOff, Loader2, SearchX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { CompanySearchResult } from '@/types/company'
 import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
@@ -62,7 +63,7 @@ function HighlightMatch({
   return (
     <span className={className}>
       {text.slice(0, idx)}
-      <mark className="bg-accent/20 text-foreground rounded px-0.5 font-medium">
+      <mark className="rounded px-0.5 font-medium bg-accent/20 text-foreground">
         {text.slice(idx, idx + q.length)}
       </mark>
       {text.slice(idx + q.length)}
@@ -231,7 +232,10 @@ export function CompanySelector({
   const hasRecentOrSaved = safeRecent.length > 0 || safeSaved.length > 0
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <section className={cn('space-y-4', className)} aria-labelledby="company-selector-heading">
+      <h2 id="company-selector-heading" className="sr-only">
+        Company and time range selection
+      </h2>
       <div ref={containerRef} className="relative" role="combobox" aria-expanded={showDropdown} aria-haspopup="listbox">
         <div className="relative">
           <Search
@@ -265,15 +269,32 @@ export function CompanySelector({
             id="company-suggestions"
             role="listbox"
             aria-label="Company suggestions"
-            className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-card py-1 shadow-lg animate-fade-in-down"
+            className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-[10px] border border-border bg-card py-1 shadow-card animate-fade-in-down"
           >
             {isLoading ? (
-              <li className="px-4 py-3 text-sm text-muted-foreground" role="status">
-                Searching...
-              </li>
+              <>
+                <li className="px-4 py-3 flex items-center gap-3" role="status" aria-busy="true" aria-live="polite">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+                  <span className="text-sm text-muted-foreground">Searching...</span>
+                </li>
+                {[1, 2, 3].map((i) => (
+                  <li key={i} className="px-4 py-2 flex items-center gap-2">
+                    <Skeleton className="h-4 w-8 rounded bg-muted" aria-hidden />
+                    <Skeleton className="h-4 flex-1 max-w-[80%] rounded bg-muted" aria-hidden />
+                  </li>
+                ))}
+              </>
             ) : safeSuggestions.length === 0 ? (
-              <li className="px-4 py-3 text-sm text-muted-foreground">
-                No companies found. Try a different search.
+              <li
+                className="flex flex-col items-center justify-center py-8 px-4 text-center"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <SearchX className="h-5 w-5" aria-hidden />
+                </div>
+                <p className="text-sm font-medium text-foreground">No companies found</p>
+                <p className="mt-1 text-xs text-muted-foreground">Try a different search term or check spelling.</p>
               </li>
             ) : (
               safeSuggestions.map((company, i) => (
@@ -414,8 +435,14 @@ export function CompanySelector({
                   id="start-date"
                   type="date"
                   value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
+                  onChange={(e) => {
+                    setCustomStart(e.target.value)
+                    setValidationError(null)
+                  }}
                   max={format(new Date(), 'yyyy-MM-dd')}
+                  aria-describedby={validationError ? 'custom-date-error' : undefined}
+                  aria-invalid={!!validationError}
+                  className={cn(validationError && 'border-destructive focus-visible:ring-destructive')}
                 />
               </div>
               <div className="grid gap-2">
@@ -424,12 +451,20 @@ export function CompanySelector({
                   id="end-date"
                   type="date"
                   value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
+                  onChange={(e) => {
+                    setCustomEnd(e.target.value)
+                    setValidationError(null)
+                  }}
                   max={format(new Date(), 'yyyy-MM-dd')}
+                  aria-describedby={validationError ? 'custom-date-error' : undefined}
+                  aria-invalid={!!validationError}
+                  className={cn(validationError && 'border-destructive focus-visible:ring-destructive')}
                 />
               </div>
               {validationError && (
-                <p className="text-sm text-destructive" role="alert">{validationError}</p>
+                <p id="custom-date-error" className="text-sm text-destructive" role="alert">
+                  {validationError}
+                </p>
               )}
               <Button onClick={handleCustomApply} aria-label="Apply custom date range">
                 Apply
@@ -438,6 +473,6 @@ export function CompanySelector({
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </section>
   )
 }
