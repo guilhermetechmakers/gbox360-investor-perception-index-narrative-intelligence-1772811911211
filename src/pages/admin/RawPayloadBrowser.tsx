@@ -23,6 +23,7 @@ import {
   useUserSummary,
 } from '@/hooks/useAdminDashboard'
 import { Button } from '@/components/ui/button'
+import { ErrorBanner } from '@/components/shared/ErrorBanner'
 import { ArrowLeft } from 'lucide-react'
 import type { PayloadSearchFilters as PayloadSearchFiltersType } from '@/types/admin'
 import type { RawPayload } from '@/types/admin'
@@ -34,8 +35,9 @@ export function RawPayloadBrowser() {
   })
   const [selectedPayload, setSelectedPayload] = useState<RawPayload | null>(null)
   const [selectedPayloadIds, setSelectedPayloadIds] = useState<string[]>([])
+  const [dismissedError, setDismissedError] = useState(false)
 
-  const { data: payloadsData } = usePayloads(filters)
+  const { data: payloadsData, isPending: payloadsLoading, isError: payloadsError, error: payloadsErrorDetail, refetch: refetchPayloads } = usePayloads(filters)
   const { data: systemHealth } = useSystemHealth()
   const userSummary = useUserSummary()
 
@@ -60,6 +62,7 @@ export function RawPayloadBrowser() {
 
   const handleFiltersChange = useCallback((newFilters: PayloadSearchFiltersType) => {
     setFilters(newFilters)
+    setDismissedError(false)
   }, [])
 
   const handlePageChange = useCallback(
@@ -118,20 +121,35 @@ export function RawPayloadBrowser() {
   )
 
   const queues = systemHealth?.queues ?? []
+  const errorMessage = payloadsError && !dismissedError
+    ? (payloadsErrorDetail instanceof Error ? payloadsErrorDetail.message : 'Failed to load payloads')
+    : null
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up" role="main" aria-label="Raw Payload Browser and Audit Export">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
+            <Link
+              to="/admin"
+              className="gap-2"
+              aria-label="Back to admin overview"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
               Back to overview
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold">Raw Payload Browser & Audit Export</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Raw Payload Browser &amp; Audit Export</h1>
         </div>
       </div>
+
+      {errorMessage && (
+        <ErrorBanner
+          message={errorMessage}
+          onDismiss={() => setDismissedError(true)}
+          role="alert"
+        />
+      )}
 
       <PayloadSearchFilters
         onChangeFilters={handleFiltersChange}
@@ -150,6 +168,9 @@ export function RawPayloadBrowser() {
             onSelectPayloads={handleSelectPayloads}
             selectedIds={selectedPayloadIds}
             onRowClick={handleRowClick}
+            isLoading={payloadsLoading}
+            isError={payloadsError && !dismissedError}
+            onRetry={refetchPayloads}
           />
         </div>
 

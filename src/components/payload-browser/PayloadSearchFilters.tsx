@@ -100,10 +100,10 @@ export function PayloadSearchFilters({
   }, []) // eslint-disable-line react-hooks/exhaustive-deps -- apply on mount with defaults
 
   return (
-    <Card className="card-surface transition-all duration-200">
+    <Card className="card-surface transition-all duration-200" aria-label="Search filters for payloads">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
+          <Filter className="h-4 w-4 text-muted-foreground" aria-hidden />
           Filters
         </CardTitle>
       </CardHeader>
@@ -203,6 +203,7 @@ export function PayloadSearchFilters({
                 size="sm"
                 onClick={() => applyPreset(p.days)}
                 className="h-10"
+                aria-label={`Set date range to ${p.label}`}
               >
                 {p.label}
               </Button>
@@ -210,11 +211,22 @@ export function PayloadSearchFilters({
           </div>
         </div>
         <div className="flex gap-2 pt-2">
-          <Button onClick={applyFilters} size="sm" className="h-10">
+          <Button
+            onClick={applyFilters}
+            size="sm"
+            className="h-10"
+            aria-label="Apply filters"
+          >
             Apply filters
           </Button>
-          <Button variant="outline" size="sm" onClick={resetFilters} className="h-10">
-            <RotateCcw className="mr-2 h-4 w-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetFilters}
+            className="h-10"
+            aria-label="Reset filters"
+          >
+            <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
             Reset
           </Button>
         </div>

@@ -10,9 +10,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { DataTablePagination } from '@/components/ui/data-table-pagination'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FileJson } from 'lucide-react'
+import { FileJson, AlertCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { RawPayload } from '@/types/admin'
 
@@ -65,6 +66,8 @@ interface PayloadListProps {
   selectedIds: string[]
   onRowClick?: (payload: RawPayload) => void
   isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
 }
 
 export function PayloadList({
@@ -78,6 +81,8 @@ export function PayloadList({
   selectedIds = [],
   onRowClick,
   isLoading = false,
+  isError = false,
+  onRetry,
 }: PayloadListProps) {
   const items = Array.isArray(payloads) ? payloads : []
   const selectedSet = useMemo(
@@ -104,25 +109,57 @@ export function PayloadList({
   const allSelected = items.length > 0 && items.every((p) => selectedSet.has(p.id))
 
   return (
-    <Card className="card-surface transition-all duration-200">
+    <Card className="card-surface transition-all duration-200" aria-label="Payloads list">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">Payloads</CardTitle>
-        <span className="text-sm text-muted-foreground">
+        <CardTitle className="text-lg font-semibold text-foreground">Payloads</CardTitle>
+        <span className="text-sm text-muted-foreground" aria-live="polite">
           {total} total
         </span>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
+        {isError ? (
+          <div
+            className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-lg border border-destructive/50 bg-destructive/5"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle className="h-12 w-12 text-destructive mb-4 shrink-0" aria-hidden />
+            <p className="text-sm text-foreground mb-1 font-medium">Failed to load payloads</p>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md">
+              Check your connection and try again.
+            </p>
+            {onRetry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRetry}
+                className="gap-2"
+                aria-label="Retry loading payloads"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden />
+                Retry
+              </Button>
+            )}
+          </div>
+        ) : isLoading ? (
+          <div className="space-y-3" aria-busy="true" aria-label="Loading payloads">
             {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <FileJson className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">
-              No payloads found. Adjust filters or wait for ingestion.
+          <div
+            className="flex flex-col items-center justify-center py-16 px-4 text-center"
+            role="status"
+            aria-label="No payloads"
+          >
+            <FileJson className="h-14 w-14 text-muted-foreground mb-4 shrink-0" aria-hidden />
+            <p className="text-base font-medium text-foreground mb-1">No payloads found</p>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Adjust filters above or wait for new ingestion to see payloads here.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Try broadening date range or clearing source/status filters.
             </p>
           </div>
         ) : (
@@ -159,6 +196,7 @@ export function PayloadList({
                           selectedSet.has(p.id) && 'bg-muted/50'
                         )}
                         onClick={() => onRowClick?.(p)}
+                        aria-label={`View payload details for ${p.id}`}
                       >
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox
@@ -209,7 +247,13 @@ export function PayloadList({
                     role="button"
                     tabIndex={0}
                     onClick={() => onRowClick?.(p)}
-                    onKeyDown={(e) => e.key === 'Enter' && onRowClick?.(p)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onRowClick?.(p)
+                      }
+                    }}
+                    aria-label={`View payload details for ${p.id}, ${p.source ?? 'unknown'} ${p.ticker ?? '—'}`}
                     className={cn(
                       'rounded-lg border border-border p-4 transition-colors',
                       'hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
