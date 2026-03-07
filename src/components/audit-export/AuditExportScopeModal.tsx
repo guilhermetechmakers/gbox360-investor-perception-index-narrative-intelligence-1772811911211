@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { FileJson, FileText, Loader2 } from 'lucide-react'
+import { FileJson, FileText, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type ExportFormat = 'json' | 'pdf' | 'both'
@@ -26,6 +26,8 @@ interface AuditExportScopeModalProps {
   companyName?: string
   windowStart: string
   windowEnd: string
+  /** Optional error message to display (e.g. export failure) */
+  error?: string | null
 }
 
 function deriveFormat(wantJson: boolean, wantPdf: boolean): ExportFormat {
@@ -42,6 +44,7 @@ export function AuditExportScopeModal({
   companyName,
   windowStart,
   windowEnd,
+  error = null,
 }: AuditExportScopeModalProps) {
   const [wantJson, setWantJson] = useState(true)
   const [wantPdf, setWantPdf] = useState(true)
@@ -70,39 +73,56 @@ export function AuditExportScopeModal({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <p className="text-sm font-medium">Select format(s)</p>
-          <div className="flex flex-col gap-3">
-            <label
-              className={cn(
-                'flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer transition-all duration-200',
-                'hover:bg-muted/50 hover:border-primary/20',
-                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-                wantJson && 'border-primary/40 bg-primary/5'
-              )}
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-foreground">Select format(s)</legend>
+            <div className="flex flex-col gap-3">
+              <label
+                htmlFor="export-format-json"
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer transition-[box-shadow,border-color,background-color] duration-200',
+                  'hover:bg-muted/50 hover:border-primary/20',
+                  'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:outline-none',
+                  wantJson && 'border-primary/40 bg-primary/5'
+                )}
+              >
+                <Checkbox
+                  id="export-format-json"
+                  checked={wantJson}
+                  onCheckedChange={(c) => setWantJson(c ? true : wantPdf ? false : true)}
+                  aria-label="Include JSON format (machine-consumable)"
+                />
+                <FileJson className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
+                <span className="text-sm text-foreground">JSON (machine-consumable)</span>
+              </label>
+              <label
+                htmlFor="export-format-pdf"
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer transition-[box-shadow,border-color,background-color] duration-200',
+                  'hover:bg-muted/50 hover:border-primary/20',
+                  'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:outline-none',
+                  wantPdf && 'border-primary/40 bg-primary/5'
+                )}
+              >
+                <Checkbox
+                  id="export-format-pdf"
+                  checked={wantPdf}
+                  onCheckedChange={(c) => setWantPdf(c ? true : wantJson ? false : true)}
+                  aria-label="Include PDF format (human-readable)"
+                />
+                <FileText className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden />
+                <span className="text-sm text-foreground">PDF (human-readable)</span>
+              </label>
+            </div>
+          </fieldset>
+          {error ? (
+            <div
+              className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+              role="alert"
             >
-              <Checkbox
-                checked={wantJson}
-                onCheckedChange={(c) => setWantJson(c ? true : wantPdf ? false : true)}
-              />
-              <FileJson className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm">JSON (machine-consumable)</span>
-            </label>
-            <label
-              className={cn(
-                'flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer transition-all duration-200',
-                'hover:bg-muted/50 hover:border-primary/20',
-                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-                wantPdf && 'border-primary/40 bg-primary/5'
-              )}
-            >
-              <Checkbox
-                checked={wantPdf}
-                onCheckedChange={(c) => setWantPdf(c ? true : wantJson ? false : true)}
-              />
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm">PDF (human-readable)</span>
-            </label>
-          </div>
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+              <span>{error}</span>
+            </div>
+          ) : null}
           <p className="text-xs text-muted-foreground">
             Artifacts include calculation inputs, narrative breakdown, event timeline, and integrity hashes.
           </p>
@@ -112,13 +132,13 @@ export function AuditExportScopeModal({
             Cancel
           </Button>
           <Button
+            variant="default"
             onClick={handleConfirm}
             disabled={isExporting}
-            className="bg-[rgb(var(--primary))] text-white hover:bg-[rgb(var(--primary))]/90"
           >
             {isExporting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden />
                 Exporting…
               </>
             ) : (
