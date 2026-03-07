@@ -51,6 +51,10 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
         'fade-in-up': 'fadeInUp 0.4s ease-out',
+        'fade-in-up-delay-1': 'fadeInUp 0.4s ease-out 0.1s both',
+        'fade-in-up-delay-2': 'fadeInUp 0.4s ease-out 0.15s both',
+        'fade-in-up-delay-3': 'fadeInUp 0.4s ease-out 0.2s both',
+        'fade-in-up-delay-4': 'fadeInUp 0.4s ease-out 0.25s both',
         'fade-in-down': 'fadeInDown 0.4s ease-out',
         'slide-in-left': 'slideInLeft 0.3s ease-out',
         'slide-in-right': 'slideInRight 0.3s ease-out',
