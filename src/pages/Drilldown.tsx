@@ -265,7 +265,7 @@ export function Drilldown() {
         ]}
       />
       {apiError && (
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3" role="alert" aria-live="assertive">
+        <div className="rounded-[10px] border border-border bg-card p-4 space-y-3" role="alert" aria-live="assertive">
           <ErrorBanner
             message={apiError.message ?? 'Unable to load drilldown data. Check your connection and try again.'}
             role="alert"
@@ -275,7 +275,7 @@ export function Drilldown() {
             size="sm"
             onClick={handleRetryAll}
             aria-label="Retry loading drilldown data"
-            className="gap-2"
+            className="gap-2 focus-visible:ring-ring"
           >
             <RefreshCw className="h-4 w-4" aria-hidden />
             Retry
@@ -286,7 +286,7 @@ export function Drilldown() {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link to={backUrl} aria-label="Back to Company View">
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden />
             </Link>
           </Button>
           <div>
@@ -329,6 +329,7 @@ export function Drilldown() {
               <NarrativeEventsTable
                 events={filteredByCredibility}
                 isLoading={eventsLoading}
+                errorMessage={eventsError && eventsErr ? eventsErr.message : undefined}
                 page={page}
                 totalPages={Math.max(1, Math.ceil(total / pageSize))}
                 total={total}
@@ -342,6 +343,7 @@ export function Drilldown() {
                 sortBy={sortBy}
                 sortOrder={sortOrder}
                 onSortChange={handleSortChange}
+                onEmptyAction={() => document.getElementById('filters-panel')?.scrollIntoView({ behavior: 'smooth' })}
               />
             </CardContent>
           </Card>
@@ -370,7 +372,7 @@ export function Drilldown() {
             onSpeedChange={setReplaySpeed}
           />
           {sidebarLoading && (
-            <div className="space-y-2" role="status" aria-label="Loading">
+            <div className="space-y-2" role="status" aria-live="polite" aria-label="Loading sidebar data">
               <Skeleton className="h-20 w-full rounded-lg" />
               <Skeleton className="h-16 w-full rounded-lg" />
             </div>
@@ -396,6 +398,7 @@ export function Drilldown() {
             onClick={handleRecompute}
             disabled={recomputeMutation.isPending || !companyId}
             aria-label={recomputeMutation.isPending ? 'Re-scoring signals…' : 'Re-score narrative signals for the selected time window'}
+            className="focus-visible:ring-ring"
           >
             {recomputeMutation.isPending ? 'Re-scoring…' : 'Re-score signals'}
           </Button>

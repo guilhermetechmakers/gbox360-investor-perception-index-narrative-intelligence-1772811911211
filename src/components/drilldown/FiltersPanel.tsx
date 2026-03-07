@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Filter, RotateCcw } from 'lucide-react'
+import { Filter, RotateCcw, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { DrilldownFilters } from '@/types/drilldown'
 
 interface FiltersPanelProps {
@@ -92,6 +93,13 @@ export function FiltersPanel({
     )
   }
 
+  const dateError = useMemo(() => {
+    const s = dateStart.trim()
+    const e = dateEnd.trim()
+    if (!s || !e) return null
+    return s > e ? 'Start date must be before end date' : null
+  }, [dateStart, dateEnd])
+
   return (
     <Card className="card-surface transition-all duration-200">
       <CardHeader>
@@ -161,25 +169,48 @@ export function FiltersPanel({
         </div>
 
         <div className="space-y-2">
-          <Label>Date range</Label>
+          <Label htmlFor="date-range-start">Date range</Label>
           <div className="grid grid-cols-2 gap-2">
             <Input
+              id="date-range-start"
               type="date"
               value={dateStart}
               onChange={(e) => setDateStart(e.target.value)}
               placeholder="Start"
+              aria-invalid={Boolean(dateError)}
+              aria-describedby={dateError ? 'date-range-error' : undefined}
+              className={cn(dateError && 'border-destructive focus-visible:ring-destructive')}
             />
             <Input
+              id="date-range-end"
               type="date"
               value={dateEnd}
               onChange={(e) => setDateEnd(e.target.value)}
               placeholder="End"
+              aria-invalid={Boolean(dateError)}
+              aria-describedby={dateError ? 'date-range-error' : undefined}
+              className={cn(dateError && 'border-destructive focus-visible:ring-destructive')}
             />
           </div>
+          {dateError && (
+            <p
+              id="date-range-error"
+              role="alert"
+              className="flex items-center gap-1.5 text-sm text-destructive"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
+              {dateError}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2 pt-2">
-          <Button onClick={handleApply} size="sm" className="flex-1">
+          <Button
+            onClick={handleApply}
+            size="sm"
+            className="flex-1"
+            aria-label="Apply filters"
+          >
             Apply
           </Button>
           <Button
@@ -187,8 +218,9 @@ export function FiltersPanel({
             size="sm"
             onClick={handleReset}
             className="gap-1"
+            aria-label="Reset filters"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-4 w-4" aria-hidden />
             Reset
           </Button>
         </div>

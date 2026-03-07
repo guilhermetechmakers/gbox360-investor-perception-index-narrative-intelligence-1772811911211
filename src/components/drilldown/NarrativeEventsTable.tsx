@@ -13,7 +13,8 @@ import { DataTablePagination } from '@/components/ui/data-table-pagination'
 import { ScorePill } from '@/components/signals/ScorePill'
 import { SignalBadge } from '@/components/signals/SignalBadge'
 import { format } from 'date-fns'
-import { FileJson, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { FileJson, ArrowUpDown, ArrowUp, ArrowDown, CalendarX2, Filter } from 'lucide-react'
+import { ErrorBanner } from '@/components/shared/ErrorBanner'
 import { cn } from '@/lib/utils'
 import { ensureArray } from '@/lib/runtime-safe'
 import type { NarrativeEvent } from '@/types/narrative'
@@ -22,6 +23,8 @@ import type { SortByField, SortOrder } from '@/types/drilldown'
 interface NarrativeEventsTableProps {
   events: NarrativeEvent[]
   isLoading?: boolean
+  /** Inline error message for API or load errors */
+  errorMessage?: string | null
   page: number
   totalPages?: number
   total: number
@@ -34,6 +37,8 @@ interface NarrativeEventsTableProps {
   sortBy?: SortByField
   sortOrder?: SortOrder
   onSortChange?: (sortBy: SortByField, sortOrder: SortOrder) => void
+  /** Called when user taps empty-state CTA (e.g. scroll to filters) */
+  onEmptyAction?: () => void
 }
 
 const SNIPPET_LENGTH = 80
@@ -89,6 +94,7 @@ function SortHeader({
 export function NarrativeEventsTable({
   events,
   isLoading,
+  errorMessage,
   page,
   totalPages: totalPagesProp,
   total,
@@ -101,6 +107,7 @@ export function NarrativeEventsTable({
   sortBy,
   sortOrder,
   onSortChange,
+  onEmptyAction,
 }: NarrativeEventsTableProps) {
   const safeEvents = ensureArray(events)
   const totalPages = totalPagesProp ?? Math.max(1, Math.ceil(total / pageSize))
@@ -109,6 +116,8 @@ export function NarrativeEventsTable({
     (typeof currentReplayIndex === 'number' && safeEvents[currentReplayIndex]
       ? safeEvents[currentReplayIndex].event_id
       : null)
+  const hasError = Boolean(errorMessage?.trim())
+  const isEmpty = safeEvents.length === 0 && !isLoading
 
   const getSourceBadgeVariant = (source: string) => {
     const s = (source ?? '').toLowerCase()
@@ -128,29 +137,67 @@ export function NarrativeEventsTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" role="status" aria-label="Loading events">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <Skeleton key={i} className="h-14 w-full" />
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
       </div>
     )
   }
 
-  if (safeEvents.length === 0) {
+  if (isEmpty) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
-        <p>No events for this narrative in the selected window.</p>
-        {total > 0 && (
-          <p className="text-xs mt-1">
-            Try adjusting filters or viewing another page.
-          </p>
+      <div className="space-y-4">
+        {hasError && (
+          <ErrorBanner
+            message={errorMessage ?? 'Failed to load events'}
+            role="alert"
+            className="rounded-lg"
+          />
         )}
+        <div
+          role="region"
+          aria-label="No events"
+          className="flex flex-col items-center justify-center rounded-[10px] border border-border bg-muted/20 py-12 px-6 text-center shadow-sm transition-shadow duration-200"
+        >
+          <CalendarX2
+            className="h-12 w-12 text-muted-foreground mb-4"
+            aria-hidden
+          />
+          <h3 className="text-base font-semibold text-foreground mb-1">
+            No events in this window
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            {total > 0
+              ? 'No events match the current filters. Try adjusting filters or another page.'
+              : 'No narrative events for this narrative in the selected time window.'}
+          </p>
+          {onEmptyAction && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEmptyAction}
+              className="mt-4 gap-2 focus-visible:ring-ring"
+              aria-label="Adjust filters to see more events"
+            >
+              <Filter className="h-4 w-4" aria-hidden />
+              Adjust filters
+            </Button>
+          )}
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
+      {hasError && (
+        <ErrorBanner
+          message={errorMessage ?? 'Failed to load events'}
+          role="alert"
+          className="rounded-lg"
+        />
+      )}
       <div className="overflow-x-auto rounded-lg border border-border">
         <Table>
           <TableHeader>
