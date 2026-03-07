@@ -1,5 +1,4 @@
 import { motion } from 'motion/react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Database, GitMerge, BarChart3 } from 'lucide-react'
 import { ScrollReveal } from './ScrollReveal'
@@ -10,31 +9,6 @@ export interface StepCardProps {
   description: string
   microCopy?: string
   className?: string
-}
-
-function StepCard({ icon: Icon, title, description, microCopy, className }: StepCardProps) {
-  return (
-    <Card
-      className={cn(
-        'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1',
-        className
-      )}
-    >
-      <CardHeader>
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="h-6 w-6" aria-hidden />
-        </div>
-        <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
-        <p className="text-muted-foreground" style={{ lineHeight: 1.6 }}>
-          {description}
-        </p>
-        {microCopy && (
-          <p className="text-xs text-muted-foreground/80 mt-1">{microCopy}</p>
-        )}
-      </CardHeader>
-      <CardContent className="pt-0" />
-    </Card>
-  )
 }
 
 const STEPS: StepCardProps[] = [
@@ -71,63 +45,63 @@ export function HowItWorks({ steps = STEPS, className }: HowItWorksProps) {
 
   return (
     <section
-      className={cn('border-t border-border bg-muted/30 py-16 md:py-20', className)}
+      className={cn('py-20 md:py-28 bg-background relative', className)}
       aria-labelledby="how-it-works-title"
     >
-      <div className="container px-4">
+      <div className="absolute inset-0 dot-pattern opacity-40 pointer-events-none" aria-hidden />
+
+      <div className="container px-4 relative">
         <ScrollReveal>
-          <h2
-            id="how-it-works-title"
-            className="text-center text-2xl font-semibold md:text-3xl mb-12 md:mb-16"
-          >
-            How it works
-          </h2>
+          <div className="text-center mb-16 md:mb-20">
+            <p className="text-sm font-semibold text-accent uppercase tracking-widest mb-3">How it works</p>
+            <h2
+              id="how-it-works-title"
+              className="text-3xl font-bold md:text-4xl lg:text-5xl tracking-tight"
+            >
+              Three steps to clarity
+            </h2>
+            <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto">
+              From raw data to board-ready insights — fully auditable at every step.
+            </p>
+          </div>
         </ScrollReveal>
-        {/* Bento-style asymmetric grid */}
-        <div className="grid gap-6 md:grid-cols-3 md:grid-rows-2 md:grid-rows-[auto_auto] md:gap-6">
-          <motion.div
-            className="md:col-span-2 md:row-span-1"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <StepCard
-              icon={items[0]?.icon ?? Database}
-              title={items[0]?.title ?? 'Ingest'}
-              description={items[0]?.description ?? ''}
-              microCopy={items[0]?.microCopy}
-            />
-          </motion.div>
-          <motion.div
-            className="md:row-span-2"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <StepCard
-              icon={items[1]?.icon ?? GitMerge}
-              title={items[1]?.title ?? 'Canonicalize'}
-              description={items[1]?.description ?? ''}
-              microCopy={items[1]?.microCopy}
-              className="h-full"
-            />
-          </motion.div>
-          <motion.div
-            className="md:col-span-1"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <StepCard
-              icon={items[2]?.icon ?? BarChart3}
-              title={items[2]?.title ?? 'Explain IPI'}
-              description={items[2]?.description ?? ''}
-              microCopy={items[2]?.microCopy}
-            />
-          </motion.div>
+
+        <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
+          {(items ?? []).map((step, i) => {
+            const Icon = step.icon
+            return (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="relative group">
+                  <div className="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white text-sm font-bold shadow-lg z-10">
+                    {i + 1}
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 h-full">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5 text-primary mb-5 group-hover:bg-primary/10 transition-colors">
+                      <Icon className="h-6 w-6" aria-hidden />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight mb-3">{step.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                    {step.microCopy && (
+                      <p className="text-xs text-muted-foreground/70 mt-4 pt-4 border-t border-border">
+                        {step.microCopy}
+                      </p>
+                    )}
+                  </div>
+
+                  {i < (items?.length ?? 0) - 1 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-border" aria-hidden />
+                  )}
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>

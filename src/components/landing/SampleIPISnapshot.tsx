@@ -1,7 +1,8 @@
 import { motion } from 'motion/react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 import { ScrollReveal } from './ScrollReveal'
 
 export interface NarrativeItem {
@@ -22,16 +23,15 @@ export interface SampleIPISnapshotProps {
 }
 
 const DEFAULT_NARRATIVES: NarrativeItem[] = [
-  { id: '1', text: 'Earnings guidance', weight: 0.85 },
-  { id: '2', text: 'ESG coverage', weight: 0.72 },
-  { id: '3', text: 'Analyst upgrades', weight: 0.68 },
+  { id: '1', text: 'Earnings guidance revised upward', weight: 0.85 },
+  { id: '2', text: 'ESG coverage momentum increasing', weight: 0.72 },
+  { id: '3', text: 'Analyst consensus upgrades', weight: 0.68 },
 ]
 
-/** Mini sparkline SVG placeholder - static data */
-function MiniChartPlaceholder() {
-  const points = [40, 55, 48, 65, 58, 72, 68]
-  const width = 120
-  const height = 36
+function MiniSparkline() {
+  const points = [40, 55, 48, 65, 58, 72, 68, 74]
+  const width = 160
+  const height = 48
   const max = Math.max(...points)
   const min = Math.min(...points)
   const range = max - min || 1
@@ -44,6 +44,8 @@ function MiniChartPlaceholder() {
     })
     .join(' ')
 
+  const areaD = pathD + ` L ${width - padding} ${height} L ${padding} ${height} Z`
+
   return (
     <svg
       width={width}
@@ -52,11 +54,18 @@ function MiniChartPlaceholder() {
       className="text-accent"
       aria-hidden
     >
+      <defs>
+        <linearGradient id="sparkline-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill="url(#sparkline-fill)" />
       <path
         d={pathD}
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -82,75 +91,107 @@ export function SampleIPISnapshot({
   return (
     <section
       id="sample-ipi"
-      className={cn('container px-4 py-16 md:py-20', className)}
+      className={cn('py-20 md:py-28 bg-muted/30 relative', className)}
       aria-labelledby="sample-ipi-title"
     >
-      <div className="mx-auto max-w-2xl text-center">
-        <ScrollReveal>
-          <h2
-            id="sample-ipi-title"
-            className="text-2xl font-semibold md:text-3xl"
-          >
-            Sample IPI snapshot
-          </h2>
-          <p className="mt-2 text-muted-foreground text-sm md:text-base">{tagline}</p>
-        </ScrollReveal>
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-        <Card className="text-left">
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg font-semibold">
-                {companyName} ({ticker})
-              </CardTitle>
-              <CardDescription>{period}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <MiniChartPlaceholder />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold md:text-4xl" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.25rem)' }}>
-                {score}
-              </span>
-              <span className={cn('flex items-center gap-1 text-sm font-medium', directionColor)}>
-                {direction !== 'neutral' && (
-                  <TrendingUp
-                    className={cn('h-4 w-4', direction === 'down' && 'rotate-180')}
-                    aria-hidden
-                  />
-                )}
-                {directionLabel} vs prior period
-              </span>
-            </div>
-            <div className="mt-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Top narratives
-              </p>
-              <ul className="space-y-2">
-                {(narratives ?? []).slice(0, 3).map((n) => (
-                  <li
-                    key={n.id}
-                    className="flex items-center gap-2 text-sm text-foreground"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" aria-hidden />
-                    {n.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Full traceability and raw payloads available in the app.
-            </p>
-          </CardContent>
-        </Card>
-        </motion.div>
+      <div className="container px-4">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            {/* Left: Copy */}
+            <ScrollReveal>
+              <div>
+                <p className="text-sm font-semibold text-accent uppercase tracking-widest mb-3">Live preview</p>
+                <h2
+                  id="sample-ipi-title"
+                  className="text-3xl font-bold md:text-4xl tracking-tight"
+                >
+                  See the IPI in action
+                </h2>
+                <p className="mt-4 text-muted-foreground text-lg leading-relaxed">{tagline}</p>
+                <div className="mt-8">
+                  <Button asChild className="group">
+                    <Link to="/signup">
+                      Start tracking
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Right: IPI Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 32 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold">
+                      {companyName} <span className="text-muted-foreground font-medium">({ticker})</span>
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">{period}</p>
+                  </div>
+                  <MiniSparkline />
+                </div>
+
+                {/* Score */}
+                <div className="flex items-baseline gap-3 mb-6">
+                  <span className="text-5xl font-extrabold tracking-tight">{score}</span>
+                  <span className={cn('flex items-center gap-1 text-sm font-semibold', directionColor)}>
+                    {direction !== 'neutral' && (
+                      <TrendingUp
+                        className={cn('h-4 w-4', direction === 'down' && 'rotate-180')}
+                        aria-hidden
+                      />
+                    )}
+                    {directionLabel} vs prior period
+                  </span>
+                </div>
+
+                {/* Narratives */}
+                <div className="border-t border-border pt-5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    Top narratives
+                  </p>
+                  <ul className="space-y-3">
+                    {(narratives ?? []).slice(0, 3).map((n) => (
+                      <li
+                        key={n.id}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-2.5 text-sm text-foreground">
+                          <span className="h-2 w-2 rounded-full bg-accent shrink-0" aria-hidden />
+                          {n.text}
+                        </div>
+                        {n.weight != null && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-accent/70"
+                                style={{ width: `${(n.weight ?? 0) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground font-medium w-8 text-right">
+                              {Math.round((n.weight ?? 0) * 100)}%
+                            </span>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="mt-5 pt-5 border-t border-border text-xs text-muted-foreground">
+                  Full traceability and raw payloads available in the app.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   )

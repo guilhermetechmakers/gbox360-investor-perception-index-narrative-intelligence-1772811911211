@@ -5,7 +5,6 @@ import {
   LayoutWrapper,
   SignUpLink,
 } from '@/components/login'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSignIn, useDemoSignIn } from '@/hooks/useAuth'
 import { features } from '@/config/features'
 import { Building2 } from 'lucide-react'
@@ -57,72 +56,74 @@ export function Login() {
   return (
     <LayoutWrapper>
       <div className="w-full animate-fade-in-up">
-        <div className="flex justify-center mb-6">
+        {/* Mobile logo (hidden on lg where branded panel shows) */}
+        <div className="flex justify-center mb-8 lg:hidden">
           <Link
             to="/"
-            className="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2.5 font-bold text-lg text-foreground hover:text-primary transition-colors"
             aria-label="Home"
           >
-            <Building2 className="h-8 w-8 text-primary" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Building2 className="h-5 w-5" />
+            </div>
             Gbox360
           </Link>
         </div>
 
-        <Card className="card-surface">
-          <CardHeader>
-            <CardTitle className="text-2xl sm:text-[1.75rem] font-bold">
-              Sign in to Gbox360
-            </CardTitle>
-            <CardDescription>
-              Enter your credentials to access the dashboard.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LoginFormComponent
-              onSubmit={handleSubmit}
-              loading={signIn.isPending}
-              demoLoading={demoSignIn.isPending}
-              error={apiError}
-              onDemo={features.demoMode ? handleDemo : undefined}
-              showOAuth={features.oauthGoogle}
-              showDemoPanel={features.demoMode}
-            />
-          </CardContent>
-        </Card>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account? <SignUpLink />
-        </p>
-
-        {features.demoMode && (
-          <p className="mt-3 text-center text-sm text-muted-foreground">
-            <button
-              type="button"
-              onClick={handleDemo}
-              disabled={demoSignIn.isPending}
-              className={cn(
-                'text-primary font-medium hover:underline',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-              aria-label="Request demo - explore with limited access"
-            >
-              Request demo
-            </button>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Sign in to access your dashboard and narrative insights.
           </p>
-        )}
+        </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          By signing in, you agree to our{' '}
-          <Link to="/terms" className="text-primary hover:underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link to="/privacy" className="text-primary hover:underline">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+        <LoginFormComponent
+          onSubmit={handleSubmit}
+          loading={signIn.isPending}
+          demoLoading={demoSignIn.isPending}
+          error={apiError}
+          onDemo={features.demoMode ? handleDemo : undefined}
+          showOAuth={features.oauthGoogle}
+          showDemoPanel={features.demoMode}
+        />
+
+        <div className="mt-8 space-y-3">
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account? <SignUpLink />
+          </p>
+
+          {features.demoMode && (
+            <p className="text-center text-sm text-muted-foreground">
+              <button
+                type="button"
+                onClick={handleDemo}
+                disabled={demoSignIn.isPending}
+                className={cn(
+                  'text-accent font-semibold hover:underline',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+                aria-label="Request demo - explore with limited access"
+              >
+                Request demo
+              </button>
+            </p>
+          )}
+
+          <p className="text-center text-xs text-muted-foreground/70 pt-4">
+            By signing in, you agree to our{' '}
+            <Link to="/terms" className="text-primary hover:underline font-medium">
+              Terms
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-primary hover:underline font-medium">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     </LayoutWrapper>
   )

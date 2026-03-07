@@ -12,7 +12,7 @@ export function Landing() {
       <Navbar variant="public" />
       <main>
         <LandingHero
-          ctaPrimary={{ label: 'Sign up', href: '/signup' }}
+          ctaPrimary={{ label: 'Get started free', href: '/signup' }}
           ctaSecondary={{ label: 'Request demo', href: '/login' }}
           ctaTertiary={{ label: 'Explore sample IPI', href: '#sample-ipi' }}
         />
@@ -20,8 +20,8 @@ export function Landing() {
         <SampleIPISnapshot />
         <FeatureHighlights />
         <TrustCompliance />
-        <FooterLinks />
       </main>
+      <FooterLinks />
     </div>
   )
 }

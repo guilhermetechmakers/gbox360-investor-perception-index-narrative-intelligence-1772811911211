@@ -6,7 +6,6 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   HelperTextBlock,
   PasswordField,
@@ -21,6 +20,7 @@ import {
   usePasswordResetTokenStatus,
 } from '@/hooks/useAuth'
 import { isPasswordStrongEnough } from '@/lib/auth-validation'
+import { LayoutWrapper } from '@/components/login/LayoutWrapper'
 import { Building2, KeyRound } from 'lucide-react'
 
 const requestSchema = z.object({
@@ -159,212 +159,191 @@ export function PasswordReset() {
 
   if (token) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md animate-fade-in-up">
-          <div className="flex justify-center mb-6">
-            <Link
-              to="/"
-              className="flex items-center gap-2 font-semibold"
-              aria-label="Home"
-            >
-              <Building2 className="h-8 w-8 text-primary" />
+      <LayoutWrapper>
+        <div className="w-full animate-fade-in-up">
+          {/* Mobile logo */}
+          <div className="flex justify-center mb-8 lg:hidden">
+            <Link to="/" className="flex items-center gap-2.5 font-bold text-lg" aria-label="Home">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Building2 className="h-5 w-5" />
+              </div>
               Gbox360
             </Link>
           </div>
-          <Card className="card-surface">
-            <CardHeader>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <KeyRound className="h-6 w-6 text-primary" aria-hidden />
-              </div>
-              <CardTitle>Set new password</CardTitle>
-              <CardDescription>
-                Enter your new password. Reset links expire after 1 hour for security.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <TokenStatusBanner
-                status={tokenStatus}
-                reason={tokenStatusData?.reason}
-                onRequestNewReset={handleRequestNewReset}
-              />
-              {tokenStatus === 'valid' && <TokenStatusValidBanner />}
-              {tokenStatus !== 'expired' && tokenStatus !== 'invalid' && (
-                <form
-                  onSubmit={resetForm.handleSubmit(onReset)}
-                  className="space-y-4"
-                  noValidate
-                >
-                  <Controller
-                    control={resetForm.control}
-                    name="password"
-                    render={({ field, fieldState }) => (
-                      <PasswordField
-                        id="password"
-                        label="New password"
-                        placeholder="Min 8 chars, uppercase, lowercase, number, symbol"
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                        showStrengthMeter
-                        autoComplete="new-password"
-                        disabled={reset.isPending}
-                        aria-describedby="password-strength-hint"
-                      />
-                    )}
-                  />
-                  <div className="space-y-1.5">
-                    <Label htmlFor="confirm">Confirm password</Label>
-                    <Input
-                      id="confirm"
-                      type="password"
-                      placeholder="Confirm password"
+
+          <div className="flex justify-center lg:justify-start mb-6">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+              <KeyRound className="h-7 w-7 text-accent" aria-hidden />
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Set new password
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Enter your new password. Reset links expire after 1 hour for security.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <TokenStatusBanner
+              status={tokenStatus}
+              reason={tokenStatusData?.reason}
+              onRequestNewReset={handleRequestNewReset}
+            />
+            {tokenStatus === 'valid' && <TokenStatusValidBanner />}
+            {tokenStatus !== 'expired' && tokenStatus !== 'invalid' && (
+              <form
+                onSubmit={resetForm.handleSubmit(onReset)}
+                className="space-y-4"
+                noValidate
+              >
+                <Controller
+                  control={resetForm.control}
+                  name="password"
+                  render={({ field, fieldState }) => (
+                    <PasswordField
+                      id="password"
+                      label="New password"
+                      placeholder="Min 8 chars, uppercase, lowercase, number, symbol"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                      showStrengthMeter
                       autoComplete="new-password"
                       disabled={reset.isPending}
-                      aria-invalid={!!resetForm.formState.errors.confirm}
-                      aria-describedby={
-                        resetForm.formState.errors.confirm
-                          ? 'confirm-error'
-                          : undefined
-                      }
-                      {...resetForm.register('confirm')}
+                      aria-describedby="password-strength-hint"
                     />
-                    {resetForm.formState.errors.confirm && (
-                      <p
-                        id="confirm-error"
-                        className="text-sm text-destructive"
-                        role="alert"
-                      >
-                        {resetForm.formState.errors.confirm.message}
-                      </p>
-                    )}
-                  </div>
-                  <HelperTextBlock variant="security" />
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={!canSubmitReset || reset.isPending}
-                  >
-                    {reset.isPending ? 'Updating...' : 'Reset password'}
-                  </Button>
-                </form>
-              )}
-              <p className="text-center text-sm text-muted-foreground">
-                <Link
-                  to="/login"
-                  className="text-primary hover:underline font-medium"
+                  )}
+                />
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm" className="text-sm font-medium">Confirm password</Label>
+                  <Input
+                    id="confirm"
+                    type="password"
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
+                    disabled={reset.isPending}
+                    aria-invalid={!!resetForm.formState.errors.confirm}
+                    {...resetForm.register('confirm')}
+                  />
+                  {resetForm.formState.errors.confirm && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {resetForm.formState.errors.confirm.message}
+                    </p>
+                  )}
+                </div>
+                <HelperTextBlock variant="security" />
+                <Button
+                  type="submit"
+                  className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+                  disabled={!canSubmitReset || reset.isPending}
                 >
-                  Back to sign in
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+                  {reset.isPending ? 'Updating...' : 'Reset password'}
+                </Button>
+              </form>
+            )}
+            <p className="text-center text-sm text-muted-foreground pt-4">
+              <Link to="/login" className="text-accent hover:underline font-semibold">
+                Back to sign in
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
+      </LayoutWrapper>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in-up">
-        <div className="flex justify-center mb-6">
-          <Link
-            to="/"
-            className="flex items-center gap-2 font-semibold"
-            aria-label="Home"
-          >
-            <Building2 className="h-8 w-8 text-primary" />
+    <LayoutWrapper>
+      <div className="w-full animate-fade-in-up">
+        {/* Mobile logo */}
+        <div className="flex justify-center mb-8 lg:hidden">
+          <Link to="/" className="flex items-center gap-2.5 font-bold text-lg" aria-label="Home">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Building2 className="h-5 w-5" />
+            </div>
             Gbox360
           </Link>
         </div>
-        <Card className="card-surface">
-          <CardHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <KeyRound className="h-6 w-6 text-primary" aria-hidden />
+
+        <div className="flex justify-center lg:justify-start mb-6">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+            <KeyRound className="h-7 w-7 text-accent" aria-hidden />
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Reset password
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Enter your email and we&apos;ll send a reset link.
+          </p>
+        </div>
+
+        {requested ? (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-success/5 border border-success/20 p-4">
+              <p className="text-sm text-foreground" role="status" aria-live="polite">
+                If this email is registered, you&apos;ll receive a password reset
+                link shortly.
+              </p>
             </div>
-            <CardTitle>Reset password</CardTitle>
-            <CardDescription>
-              Enter your email and we will send a reset link.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {requested ? (
-              <div className="space-y-4">
-                <p
-                  className="text-center text-sm text-muted-foreground"
-                  role="status"
-                  aria-live="polite"
-                >
-                  If this email is registered, you&apos;ll receive a password reset
-                  link shortly.
-                </p>
-                <HelperTextBlock variant="token-expiry" />
-                <HelperTextBlock variant="rate-limit" />
-                <p className="text-sm text-muted-foreground">
-                  Having trouble? <PasswordResetSupportLink className="font-medium" />
-                </p>
-                <p className="text-center text-sm text-muted-foreground">
-                  <Link
-                    to="/login"
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Back to sign in
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <form
-                onSubmit={requestForm.handleSubmit(onRequest)}
-                className="space-y-4"
-                noValidate
-              >
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@company.com"
-                    autoComplete="off"
-                    disabled={request.isPending}
-                    aria-invalid={!!requestForm.formState.errors.email}
-                    aria-describedby={
-                      requestForm.formState.errors.email
-                        ? 'email-error'
-                        : undefined
-                    }
-                    {...requestForm.register('email')}
-                  />
-                  {requestForm.formState.errors.email && (
-                    <p
-                      id="email-error"
-                      className="text-sm text-destructive"
-                      role="alert"
-                    >
-                      {requestForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-                <HelperTextBlock variant="rate-limit" />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={request.isPending}
-                >
-                  {request.isPending ? 'Sending...' : 'Send reset link'}
-                </Button>
-              </form>
-            )}
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              <Link
-                to="/login"
-                className="text-primary hover:underline font-medium"
-              >
+            <HelperTextBlock variant="token-expiry" />
+            <HelperTextBlock variant="rate-limit" />
+            <p className="text-sm text-muted-foreground">
+              Having trouble? <PasswordResetSupportLink className="font-semibold text-accent" />
+            </p>
+            <p className="text-center text-sm text-muted-foreground pt-4">
+              <Link to="/login" className="text-accent hover:underline font-semibold">
                 Back to sign in
               </Link>
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        ) : (
+          <form
+            onSubmit={requestForm.handleSubmit(onRequest)}
+            className="space-y-4"
+            noValidate
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@company.com"
+                autoComplete="off"
+                disabled={request.isPending}
+                aria-invalid={!!requestForm.formState.errors.email}
+                {...requestForm.register('email')}
+              />
+              {requestForm.formState.errors.email && (
+                <p className="text-sm text-destructive" role="alert">
+                  {requestForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+            <HelperTextBlock variant="rate-limit" />
+            <Button
+              type="submit"
+              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+              disabled={request.isPending}
+            >
+              {request.isPending ? 'Sending...' : 'Send reset link'}
+            </Button>
+          </form>
+        )}
+        {!requested && (
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            <Link to="/login" className="text-accent hover:underline font-semibold">
+              Back to sign in
+            </Link>
+          </p>
+        )}
       </div>
-    </div>
+    </LayoutWrapper>
   )
 }

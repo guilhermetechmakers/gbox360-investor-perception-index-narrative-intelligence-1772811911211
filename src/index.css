@@ -57,6 +57,80 @@
     box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
     transform: translateY(-4px);
   }
+
+  /* Premium glassmorphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Premium gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(255, 107, 74) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Gradient text variant for dark backgrounds */
+  .gradient-text-light {
+    background: linear-gradient(135deg, #ffffff 0%, rgba(255, 107, 74, 0.9) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Auth page branded panel */
+  .auth-branded-panel {
+    background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 50%, rgb(15, 23, 42) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-branded-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(255, 107, 74, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(147, 197, 253, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Premium section divider */
+  .section-divider {
+    position: relative;
+    border: none;
+  }
+  .section-divider::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, rgb(255, 107, 74), rgb(147, 197, 253));
+    border-radius: 9999px;
+  }
+
+  /* Floating metric card for hero */
+  .metric-float-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+  }
+
+  /* Grid dot pattern */
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -85,4 +159,14 @@
 @keyframes accordion-up {
   from { height: var(--radix-accordion-content-height); }
   to { height: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
 }

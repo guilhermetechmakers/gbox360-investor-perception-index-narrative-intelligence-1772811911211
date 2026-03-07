@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import {
 import { PasswordStrengthBar } from '@/components/signup/PasswordStrengthBar'
 import { TermsAndPrivacyConsent } from '@/components/signup/TermsAndPrivacyConsent'
 import { OAuthSignupButtons } from '@/components/signup/OAuthSignupButtons'
+import { LayoutWrapper } from '@/components/login/LayoutWrapper'
 import { useSignUp } from '@/hooks/useAuth'
 import { isSignupPasswordValid, isInviteCodeFormatValid } from '@/lib/auth-validation'
 import { Building2 } from 'lucide-react'
@@ -108,204 +108,220 @@ export function Signup() {
   const isSubmitting = signUp.isPending
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in-up">
-        <div className="flex justify-center mb-6">
+    <LayoutWrapper>
+      <div className="w-full animate-fade-in-up">
+        {/* Mobile logo */}
+        <div className="flex justify-center mb-8 lg:hidden">
           <Link
             to="/"
-            className="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2.5 font-bold text-lg text-foreground hover:text-primary transition-colors"
             aria-label="Home"
           >
-            <Building2 className="h-8 w-8 text-primary" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Building2 className="h-5 w-5" />
+            </div>
             Gbox360
           </Link>
         </div>
-        <Card className="card-surface">
-          <CardHeader>
-            <CardTitle className="text-xl">Create an account</CardTitle>
-            <CardDescription>
-              Enter your details to get started with Gbox360.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4"
-              noValidate
-            >
-              <fieldset className="space-y-4" disabled={isSubmitting}>
-                <div>
-                  <Label htmlFor="name">
-                    Full name <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Jane Doe"
-                    className="mt-1"
-                    autoComplete="name"
-                    aria-invalid={!!errors.name}
-                    aria-required
-                    {...register('name')}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="email">
-                    Email <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@company.com"
-                    className="mt-1"
-                    autoComplete="email"
-                    aria-invalid={!!errors.email}
-                    aria-required
-                    {...register('email')}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="password">
-                    Password <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Min 8 characters, upper, lower, number, symbol"
-                    className="mt-1"
-                    autoComplete="new-password"
-                    aria-invalid={!!errors.password}
-                    aria-required
-                    {...register('password')}
-                  />
-                  <PasswordStrengthBar
-                    password={password ?? ''}
-                    className="mt-2"
-                    showRules
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
-                      {errors.password.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="confirmPassword">
-                    Confirm password <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                    className="mt-1"
-                    autoComplete="new-password"
-                    aria-invalid={!!errors.confirmPassword}
-                    aria-required
-                    {...register('confirmPassword')}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="organization">Organization (optional)</Label>
-                  <Input
-                    id="organization"
-                    type="text"
-                    placeholder="Acme Inc"
-                    className="mt-1"
-                    autoComplete="organization"
-                    {...register('organization')}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Controller
-                    name="role"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="role" className="mt-1">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(ROLE_OPTIONS ?? []).map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {r}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="inviteCode">Invite code (optional)</Label>
-                  <Input
-                    id="inviteCode"
-                    type="text"
-                    placeholder="Enterprise trial code"
-                    className="mt-1"
-                    aria-invalid={!!errors.inviteCode}
-                    {...register('inviteCode')}
-                  />
-                  {errors.inviteCode && (
-                    <p className="text-sm text-destructive mt-1" role="alert">
-                      {errors.inviteCode.message}
-                    </p>
-                  )}
-                </div>
+
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Create your account
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Get started with Gbox360 — narrative intelligence at your fingertips.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
+          <fieldset className="space-y-4" disabled={isSubmitting}>
+            {/* Name and Email row */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Full name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Jane Doe"
+                  className="mt-1.5"
+                  autoComplete="name"
+                  aria-invalid={!!errors.name}
+                  aria-required
+                  {...register('name')}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1" role="alert">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@company.com"
+                  className="mt-1.5"
+                  autoComplete="email"
+                  aria-invalid={!!errors.email}
+                  aria-required
+                  {...register('email')}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive mt-1" role="alert">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Min 8 chars, upper, lower, number, symbol"
+                className="mt-1.5"
+                autoComplete="new-password"
+                aria-invalid={!!errors.password}
+                aria-required
+                {...register('password')}
+              />
+              <PasswordStrengthBar
+                password={password ?? ''}
+                className="mt-2"
+                showRules
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive mt-1" role="alert">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm password */}
+            <div>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                className="mt-1.5"
+                autoComplete="new-password"
+                aria-invalid={!!errors.confirmPassword}
+                aria-required
+                {...register('confirmPassword')}
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive mt-1" role="alert">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            {/* Organization and Role row */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="organization" className="text-sm font-medium">Organization</Label>
+                <Input
+                  id="organization"
+                  type="text"
+                  placeholder="Acme Inc"
+                  className="mt-1.5"
+                  autoComplete="organization"
+                  {...register('organization')}
+                />
+              </div>
+              <div>
+                <Label htmlFor="role" className="text-sm font-medium">Role</Label>
                 <Controller
-                  name="terms"
+                  name="role"
                   control={control}
-                  render={({ field, fieldState }) => (
-                    <TermsAndPrivacyConsent
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      error={fieldState.error?.message}
-                      disabled={isSubmitting}
-                      id="terms"
-                    />
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="role" className="mt-1.5">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(ROLE_OPTIONS ?? []).map((r) => (
+                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={!isFormValid || isSubmitting}
-                  aria-busy={isSubmitting}
-                >
-                  {isSubmitting ? 'Creating account...' : 'Create account'}
-                </Button>
-              </fieldset>
-              <OAuthSignupButtons disabled={isSubmitting} />
-            </form>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-primary font-medium hover:underline"
-              >
-                Log in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+              </div>
+            </div>
+
+            {/* Invite code */}
+            <div>
+              <Label htmlFor="inviteCode" className="text-sm font-medium">Invite code <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                id="inviteCode"
+                type="text"
+                placeholder="Enterprise trial code"
+                className="mt-1.5"
+                aria-invalid={!!errors.inviteCode}
+                {...register('inviteCode')}
+              />
+              {errors.inviteCode && (
+                <p className="text-sm text-destructive mt-1" role="alert">
+                  {errors.inviteCode.message}
+                </p>
+              )}
+            </div>
+
+            {/* Terms */}
+            <Controller
+              name="terms"
+              control={control}
+              render={({ field, fieldState }) => (
+                <TermsAndPrivacyConsent
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  error={fieldState.error?.message}
+                  disabled={isSubmitting}
+                  id="terms"
+                />
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+              disabled={!isFormValid || isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? 'Creating account...' : 'Create account'}
+            </Button>
+          </fieldset>
+
+          <OAuthSignupButtons disabled={isSubmitting} />
+        </form>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            className="text-accent font-semibold hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
-    </div>
+    </LayoutWrapper>
   )
 }
