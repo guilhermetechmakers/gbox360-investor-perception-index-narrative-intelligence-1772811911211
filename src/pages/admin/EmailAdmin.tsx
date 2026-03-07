@@ -38,6 +38,7 @@ import { JsonHighlight } from '@/components/drilldown/JsonHighlight'
 import { cn } from '@/lib/utils'
 import type { EmailLogItem, EmailQueueItem, EmailTemplate } from '@/types/email'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 function RawPayloadModal({
   open,
@@ -211,13 +212,16 @@ export function EmailAdmin() {
   } | null>(null)
   const [logsPage, setLogsPage] = useState(1)
 
-  const { data: templatesResponse, isLoading: templatesLoading } = useEmailTemplates()
+  const { data: templatesResponse, isLoading: templatesLoading, refetch: refetchTemplates, isFetching: templatesFetching } = useEmailTemplates()
   const { data: metricsResponse, isLoading: metricsLoading } = useEmailMetrics()
   const { data: queueResponse, isLoading: queueLoading } = useEmailQueue()
   const { data: logsData, isLoading: logsLoading } = useEmailLogs({
     page: logsPage,
     limit: 10,
   })
+
+  const isPageLoading = templatesLoading && metricsLoading
+  const hasInitialData = templatesResponse != null || metricsResponse != null
 
   const metrics = (metricsResponse?.metrics ?? metricsResponse ?? {}) as Record<string, number | undefined>
   const templatesList: EmailTemplate[] = Array.isArray((templatesResponse as unknown as { templates?: EmailTemplate[] })?.templates)
@@ -230,6 +234,52 @@ export function EmailAdmin() {
     ? ((logsData as unknown as { logs: EmailLogItem[] }).logs ?? [])
     : []
   const logsCount = (logsData as unknown as { count?: number })?.count ?? 0
+
+  const handleRefreshTemplates = () => {
+    refetchTemplates().then((result) => {
+      if (result.isError && result.error) {
+        toast.error((result.error as Error)?.message ?? 'Failed to refresh templates')
+      } else {
+        toast.success('Templates refreshed')
+      }
+    })
+  }
+
+  if (isPageLoading && !hasInitialData) {
+    return (
+      <div
+        className="space-y-8 animate-fade-in-up"
+        aria-busy="true"
+        aria-live="polite"
+        aria-label="Loading email admin data"
+      >
+        <div>
+          <Skeleton className="h-8 w-64 rounded-lg" />
+          <Skeleton className="mt-2 h-4 w-96 max-w-full rounded-lg" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+        <Card className="card-surface">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
+            ))}
+          </CardContent>
+        </Card>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8 animate-fade-in-up">
@@ -297,9 +347,43 @@ export function EmailAdmin() {
               ))}
             </div>
           ) : templatesList.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No templates found. Run migrations to seed default templates.
-            </p>
+            <div
+              className="flex flex-col items-center justify-center rounded-xl border border-[#E5E7EB] bg-muted/20 py-12 px-4 text-center transition-shadow duration-200"
+              role="status"
+              aria-live="polite"
+            >
+              <div
+                className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                aria-hidden
+              >
+                <FileText className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-medium text-foreground">No templates found</h3>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                Run migrations to seed default templates, or refresh to load templates from the server.
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                className="mt-4 bg-[#0F172A] text-primary-foreground hover:bg-[#0F172A]/90 focus-visible:ring-[#93C5FD]"
+                onClick={handleRefreshTemplates}
+                disabled={templatesFetching}
+                aria-busy={templatesFetching}
+                aria-label={templatesFetching ? 'Refreshing templates' : 'Refresh templates'}
+              >
+                {templatesFetching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                    Refreshing…
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" aria-hidden />
+                    Refresh templates
+                  </>
+                )}
+              </Button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
