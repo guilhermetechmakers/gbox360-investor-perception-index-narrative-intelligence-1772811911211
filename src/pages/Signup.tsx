@@ -18,7 +18,7 @@ import { OAuthSignupButtons } from '@/components/signup/OAuthSignupButtons'
 import { LayoutWrapper } from '@/components/login/LayoutWrapper'
 import { useSignUp } from '@/hooks/useAuth'
 import { isSignupPasswordValid, isInviteCodeFormatValid } from '@/lib/auth-validation'
-import { Building2 } from 'lucide-react'
+import { Building2, Loader2 } from 'lucide-react'
 
 const ROLE_OPTIONS = ['Investor', 'Executive', 'Research'] as const
 
@@ -110,28 +110,38 @@ export function Signup() {
   return (
     <LayoutWrapper>
       <div className="w-full animate-fade-in-up">
+        {/* Status for screen readers during async submit */}
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          role="status"
+        >
+          {isSubmitting ? 'Creating account, please wait.' : ''}
+        </div>
+
         {/* Mobile logo */}
         <div className="flex justify-center mb-8 lg:hidden">
           <Link
             to="/"
-            className="flex items-center gap-2.5 font-bold text-lg text-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2.5 font-bold text-lg text-foreground hover:text-primary transition-colors duration-200"
             aria-label="Home"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Building2 className="h-5 w-5" />
+              <Building2 className="h-5 w-5" aria-hidden />
             </div>
             Gbox360
           </Link>
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <header className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
             Create your account
           </h1>
           <p className="mt-2 text-muted-foreground">
             Get started with Gbox360 — narrative intelligence at your fingertips.
           </p>
-        </div>
+        </header>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -301,11 +311,19 @@ export function Signup() {
 
             <Button
               type="submit"
-              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+              variant="accent"
+              className="w-full font-semibold"
               disabled={!isFormValid || isSubmitting}
               aria-busy={isSubmitting}
             >
-              {isSubmitting ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
+                  <span>Creating account…</span>
+                </>
+              ) : (
+                'Create account'
+              )}
             </Button>
           </fieldset>
 
@@ -316,7 +334,7 @@ export function Signup() {
           Already have an account?{' '}
           <Link
             to="/login"
-            className="text-accent font-semibold hover:underline"
+            className="text-accent font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
           >
             Sign in
           </Link>
