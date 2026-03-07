@@ -8,7 +8,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Copy, ExternalLink, FileText } from 'lucide-react'
+import { Copy, ExternalLink, FileText, AlertCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { NarrativeEventWithTopics, TopicLabel } from '@/types/topic-classification'
@@ -32,6 +32,8 @@ interface NarrativeDetailDrawerProps {
   narrativeId: string | null
   narrative: NarrativeEventWithTopics | null | undefined
   isLoading?: boolean
+  error?: Error | null
+  onRetry?: () => void
   onClose: () => void
   onDrilldown?: (narrativeId: string) => void
 }
@@ -40,6 +42,8 @@ export function NarrativeDetailDrawer({
   narrativeId,
   narrative,
   isLoading,
+  error,
+  onRetry,
   onClose,
   onDrilldown,
 }: NarrativeDetailDrawerProps) {
@@ -65,21 +69,76 @@ export function NarrativeDetailDrawer({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
+        className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border-border"
         aria-describedby="narrative-detail-description"
+        aria-labelledby="narrative-detail-title"
       >
         <DialogHeader>
-          <DialogTitle>Narrative Details</DialogTitle>
+          <DialogTitle id="narrative-detail-title">Narrative Details</DialogTitle>
           <DialogDescription id="narrative-detail-description">
             Classification, provenance, and raw payload
           </DialogDescription>
         </DialogHeader>
 
         {isLoading && (
-          <div className="space-y-4 mt-6">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-32 w-full" />
+          <div className="space-y-6 mt-6" role="status" aria-label="Loading narrative details" aria-busy>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24 rounded-md bg-muted" />
+              <Skeleton className="h-8 w-32 rounded-lg bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28 rounded-md bg-muted" />
+              <div className="flex flex-wrap gap-1.5">
+                <Skeleton className="h-6 w-20 rounded-full bg-muted" />
+                <Skeleton className="h-6 w-24 rounded-full bg-muted" />
+                <Skeleton className="h-6 w-16 rounded-full bg-muted" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-40 rounded-md bg-muted" />
+              <Skeleton className="h-16 w-full rounded-lg bg-muted" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20 rounded-md bg-muted" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-full max-w-[200px] rounded bg-muted" />
+                <Skeleton className="h-4 w-full max-w-[180px] rounded bg-muted" />
+                <Skeleton className="h-4 w-full max-w-[160px] rounded bg-muted" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24 rounded-md bg-muted" />
+              <Skeleton className="h-24 w-full rounded-lg bg-muted" />
+            </div>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Skeleton className="h-9 w-28 rounded-md bg-muted" />
+              <Skeleton className="h-9 w-24 rounded-md bg-muted" />
+            </div>
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div
+            className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-border bg-muted/30"
+            role="alert"
+            aria-live="assertive"
+            aria-label="Error loading narrative"
+          >
+            <AlertCircle className="h-12 w-12 text-destructive mb-4 shrink-0" aria-hidden />
+            <p className="text-sm font-medium text-foreground mb-1">Could not load narrative</p>
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm">{error?.message ?? 'An error occurred.'}</p>
+            {onRetry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRetry}
+                className="gap-2 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                aria-label="Retry loading narrative"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden />
+                Try again
+              </Button>
+            )}
           </div>
         )}
 
@@ -169,10 +228,14 @@ export function NarrativeDetailDrawer({
           </div>
         )}
 
-        {!isLoading && !narrative && open && (
-          <div className="mt-6 flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Narrative not found</p>
+        {!isLoading && !narrative && !error && open && (
+          <div
+            className="mt-6 flex flex-col items-center justify-center py-12 text-center rounded-xl border border-border bg-muted/30"
+            role="status"
+            aria-label="Narrative not found"
+          >
+            <FileText className="h-12 w-12 text-muted-foreground mb-4 shrink-0" aria-hidden />
+            <p className="text-muted-foreground text-sm">Narrative not found</p>
           </div>
         )}
       </DialogContent>

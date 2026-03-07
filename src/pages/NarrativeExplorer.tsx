@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkipLinks } from '@/components/shared/SkipLinks'
+import { ErrorBanner } from '@/components/shared/ErrorBanner'
 import { EmptyState } from '@/components/profile/EmptyState'
 import {
   NarrativeCard,
@@ -18,7 +19,7 @@ import type { TimeWindow } from '@/components/dashboard/TimeWindowPicker'
 import { useNarratives, useNarrative } from '@/hooks/useNarratives'
 import { useTopicsAggregate } from '@/hooks/useTopicsAggregate'
 import { useSavedCompanies, useRecentCompanies } from '@/hooks/useCompanies'
-import { FileText, Loader2 } from 'lucide-react'
+import { FileText, Loader2, RefreshCw } from 'lucide-react'
 import { ensureArray } from '@/lib/runtime-safe'
 
 const DEFAULT_WINDOW: TimeWindow = {
@@ -69,9 +70,9 @@ export function NarrativeExplorer() {
     [selectedCompanyId, windowStart, windowEnd]
   )
 
-  const { data: narrativesData, isLoading: narrativesLoading, refetch: refetchNarratives, isRefetching: narrativesRefetching } = useNarratives(narrativeParams)
+  const { data: narrativesData, isLoading: narrativesLoading, isError: narrativesError, error: narrativesErrorObj, refetch: refetchNarratives, isRefetching: narrativesRefetching } = useNarratives(narrativeParams)
   const { data: topicsData, isLoading: topicsLoading } = useTopicsAggregate(topicsParams)
-  const { data: selectedNarrative, isLoading: narrativeDetailLoading } = useNarrative(
+  const { data: selectedNarrative, isLoading: narrativeDetailLoading, isError: narrativeDetailError, error: narrativeDetailErrorObj, refetch: refetchNarrativeDetail } = useNarrative(
     selectedNarrativeId ?? ''
   )
 
@@ -133,16 +134,46 @@ export function NarrativeExplorer() {
         savedCompanies={savedList}
       />
 
+      {narrativesError && (
+        <section
+          className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all duration-300"
+          role="alert"
+          aria-live="assertive"
+          aria-label="Narratives load error"
+        >
+          <ErrorBanner
+            message={narrativesErrorObj?.message ?? 'Failed to load narratives. Check your connection and try again.'}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchNarratives()}
+              disabled={narrativesRefetching}
+              className="gap-2 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              aria-label={narrativesRefetching ? 'Retrying narratives' : 'Retry loading narratives'}
+            >
+              {narrativesRefetching ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <RefreshCw className="h-4 w-4" aria-hidden />
+              )}
+              {narrativesRefetching ? 'Retrying…' : 'Retry'}
+            </Button>
+          </div>
+        </section>
+      )}
+
       <div id="topic-legend" className="flex flex-wrap items-center gap-2" tabIndex={-1} role="region" aria-label="Topic legend">
         <span className="text-sm font-medium text-muted-foreground">Topics:</span>
         <TopicLegend topics={topics.map((t) => t.topic_label)} />
       </div>
 
-      <div id="narrative-main" className="grid gap-8 lg:grid-cols-3" tabIndex={-1}>
+      <div id="narrative-main" className="grid gap-8 lg:grid-cols-3" tabIndex={-1} aria-label="Narrative explorer main content">
         <div className="lg:col-span-2 space-y-6" role="region" aria-label="Top narratives list">
-          <Card className="card-surface">
+          <Card className="card-surface" aria-labelledby="top-narratives-title">
             <CardHeader>
-              <CardTitle className="text-xl">Top Narratives</CardTitle>
+              <CardTitle id="top-narratives-title" className="text-xl">Top Narratives</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Narratives with topic labels and persistence
               </p>
@@ -207,7 +238,7 @@ export function NarrativeExplorer() {
                   role="list"
                   aria-label="Narrative cards"
                 >
-                  {narratives.map((n) => (
+                  {(narratives ?? []).map((n) => (
                     <NarrativeCard
                       key={n.id ?? n.event_id ?? ''}
                       narrative={n}
@@ -221,7 +252,13 @@ export function NarrativeExplorer() {
         </div>
 
         <div className="space-y-6" role="region" aria-label="Topic persistence chart">
-          {topicsLoading && <Skeleton className="h-64 rounded-lg" />}
+          {topicsLoading && (
+            <Skeleton
+              className="h-64 rounded-xl border border-border"
+              aria-label="Loading persistence chart"
+              aria-busy
+            />
+          )}
           {!topicsLoading && (
             <PersistenceChart data={topics} height={280} />
           )}
@@ -232,6 +269,8 @@ export function NarrativeExplorer() {
         narrativeId={selectedNarrativeId}
         narrative={selectedNarrative as import('@/types/topic-classification').NarrativeEventWithTopics | null | undefined}
         isLoading={narrativeDetailLoading}
+        error={narrativeDetailError ? (narrativeDetailErrorObj ?? new Error('Failed to load narrative')) : null}
+        onRetry={refetchNarrativeDetail}
         onClose={() => setSelectedNarrativeId(null)}
         onDrilldown={handleDrilldown}
       />
