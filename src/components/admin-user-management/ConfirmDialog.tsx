@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -54,13 +55,30 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogCancel
+            disabled={busy}
+            aria-label={cancelLabel}
+          >
+            {cancelLabel}
+          </AlertDialogCancel>
           <Button
             onClick={handleConfirm}
             disabled={busy}
             variant={variant === 'destructive' ? 'destructive' : 'default'}
+            aria-label={confirmLabel}
+            aria-busy={busy}
           >
-            {busy ? 'Processing…' : confirmLabel}
+            {busy ? (
+              <>
+                <Loader2
+                  className="h-4 w-4 animate-spin shrink-0"
+                  aria-hidden
+                />
+                <span>Processing…</span>
+              </>
+            ) : (
+              confirmLabel
+            )}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
