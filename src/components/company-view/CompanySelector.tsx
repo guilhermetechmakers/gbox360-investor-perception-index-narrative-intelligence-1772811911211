@@ -384,6 +384,8 @@ export function CompanySelector({
               size="sm"
               className="h-8 px-3 text-xs"
               onClick={() => handlePresetClick(preset)}
+              aria-label={`Set time window to ${preset.label}`}
+              aria-pressed={timeWindow.label === preset.label}
             >
               {preset.label}
             </Button>
@@ -427,9 +429,11 @@ export function CompanySelector({
                 />
               </div>
               {validationError && (
-                <p className="text-sm text-destructive">{validationError}</p>
+                <p className="text-sm text-destructive" role="alert">{validationError}</p>
               )}
-              <Button onClick={handleCustomApply}>Apply</Button>
+              <Button onClick={handleCustomApply} aria-label="Apply custom date range">
+                Apply
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

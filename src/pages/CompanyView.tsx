@@ -194,14 +194,29 @@ export function CompanyView() {
           <Skeleton className="h-64 rounded-lg" />
           <Skeleton className="h-64 rounded-lg" />
         </div>
+        <div className="flex flex-wrap gap-4">
+          <Skeleton className="h-10 w-40 rounded-lg" />
+          <Skeleton className="h-10 w-44 rounded-lg" />
+        </div>
+        <Skeleton className="h-[200px] rounded-lg" />
         <Skeleton className="h-48 rounded-lg" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-32 rounded-lg" />
+            <Skeleton className="h-64 rounded-lg" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-24 rounded-lg" />
+            <Skeleton className="h-40 rounded-lg" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!id) {
     return (
-      <div className="py-12 text-center text-muted-foreground" role="status">
+      <div className="py-12 text-center text-muted-foreground" role="region" aria-label="No company selected">
         <p>No company selected. Select a company from the dashboard.</p>
       </div>
     )
@@ -213,6 +228,13 @@ export function CompanyView() {
       : snapshotError
         ? 'Failed to load snapshot data.'
         : null
+
+  const timelineErrorMessage =
+    timelineError
+      ? timelineErr != null && typeof timelineErr === 'object' && 'message' in timelineErr
+        ? String((timelineErr as Error).message)
+        : String(timelineErr ?? 'Failed to load timeline events.')
+      : null
 
   if (snapshotError && !snapshot) {
     return (
@@ -385,7 +407,7 @@ export function CompanyView() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4" role="group" aria-label="IPI actions">
             <Button
               variant="outline"
               size="lg"
@@ -411,6 +433,7 @@ export function CompanyView() {
               windowStart={windowStart}
               windowEnd={windowEnd}
               provenanceId={lastProvenanceId ?? snapshot?.provenance_id}
+              ariaLabel="Go to drilldown to see why the IPI moved"
             />
           </div>
 
@@ -420,20 +443,20 @@ export function CompanyView() {
             height={200}
           />
 
-          <TimelineView
-            events={timelineEvents}
-            isLoading={timelineLoading}
-            error={timelineError ? (timelineErr ?? 'Failed to load timeline events') : null}
-            onRetry={() => refetchTimeline()}
-            onViewPayload={(rawPayloadId) => setPayloadModalId(rawPayloadId)}
-            onEmptyAction={() => document.getElementById('company-selector-time-window')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            emptyStateActionLabel="Change time window"
-          />
+            <TimelineView
+              events={timelineEvents}
+              isLoading={timelineLoading}
+              error={timelineErrorMessage}
+              onRetry={() => refetchTimeline()}
+              onViewPayload={(rawPayloadId) => setPayloadModalId(rawPayloadId)}
+              onEmptyAction={() => document.getElementById('company-selector-time-window')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              emptyStateActionLabel="Change time window"
+            />
           </div>
 
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6" role="region" aria-label="Audit export and peer comparison">
           <IngestionLog
             lastIngestionAt={snapshot?.timestamp ?? snapshot?.window_end}
             status="success"
@@ -447,7 +470,7 @@ export function CompanyView() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6" role="region" aria-label="Methodology note">
         <p className="text-sm text-muted-foreground">
           <strong>Provisional weights:</strong> Narrative 40%, Credibility 40%, Risk
           20%. Full methodology and provenance in About & Help.

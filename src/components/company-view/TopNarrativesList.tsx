@@ -42,7 +42,7 @@ export function TopNarrativesList({
           <p className="text-sm text-muted-foreground">Contributions to IPI</p>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <div className="flex flex-col items-center justify-center py-8 px-4 text-center" role="status" aria-label="No narrative data for this window">
             <div
               className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
               aria-hidden
@@ -58,6 +58,7 @@ export function TopNarrativesList({
               size="sm"
               className="mt-4 min-h-[44px] min-w-[120px]"
               asChild
+              aria-label="Explore all narratives in dashboard"
             >
               <Link to="/dashboard/narratives" className="inline-flex items-center gap-2">
                 Explore narratives
@@ -115,12 +116,13 @@ export function TopNarrativesList({
                 className="w-fit -ml-2"
                 asChild
                 onClick={() => onDrilldown?.(n.narrativeId)}
+                aria-label={`View events for narrative: ${n.name}`}
               >
                 <Link
                   to={`/dashboard/drilldown/${n.narrativeId}?company=${companyId}&start=${windowStart}&end=${windowEnd}${provenanceId ? `&provenance=${encodeURIComponent(provenanceId)}` : ''}`}
                 >
                   View events
-                  <ArrowRight className="ml-1 h-4 w-4" />
+                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
                 </Link>
               </Button>
             </li>

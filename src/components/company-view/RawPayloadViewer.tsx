@@ -42,11 +42,14 @@ export function RawPayloadViewer({ rawPayloadId, onClose }: RawPayloadViewerProp
   }
 
   return (
-    <Dialog open={!!rawPayloadId} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!rawPayloadId} onOpenChange={(open) => !open && onClose()} aria-labelledby="raw-payload-dialog-title" aria-describedby="raw-payload-dialog-desc">
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Raw Payload</DialogTitle>
+          <DialogTitle id="raw-payload-dialog-title">Raw Payload</DialogTitle>
         </DialogHeader>
+        <p id="raw-payload-dialog-desc" className="sr-only">
+          View and copy raw event payload JSON for auditability.
+        </p>
         <div className="flex gap-2 mb-2">
           <Button
             variant="outline"
@@ -54,8 +57,9 @@ export function RawPayloadViewer({ rawPayloadId, onClose }: RawPayloadViewerProp
             onClick={handleCopy}
             disabled={!payload}
             className="gap-2"
+            aria-label="Copy payload to clipboard"
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="h-4 w-4" aria-hidden />
             Copy
           </Button>
           <Button
@@ -64,20 +68,21 @@ export function RawPayloadViewer({ rawPayloadId, onClose }: RawPayloadViewerProp
             onClick={handleDownload}
             disabled={!payload}
             className="gap-2"
+            aria-label="Download payload as JSON file"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4" aria-hidden />
             Download
           </Button>
         </div>
-        <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/30 p-4 font-mono text-xs min-h-[200px]">
-          {isLoading && <Skeleton className="h-32 w-full" />}
+        <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/30 p-4 font-mono text-xs min-h-[200px]" role="region" aria-label="Payload content">
+          {isLoading && <Skeleton className="h-32 w-full" aria-hidden />}
           {!isLoading && payload != null && (
             <pre className="whitespace-pre-wrap break-words">
               {JSON.stringify(payload, null, 2)}
             </pre>
           )}
           {!isLoading && payload == null && rawPayloadId && (
-            <p className="text-muted-foreground">Payload not found</p>
+            <p className="text-muted-foreground" role="status">Payload not found</p>
           )}
         </div>
       </DialogContent>

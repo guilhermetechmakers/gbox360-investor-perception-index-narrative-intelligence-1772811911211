@@ -28,7 +28,7 @@ export function AuditExportPanel({
           viewContext={viewContext}
           variant="default"
           size="lg"
-          className="w-full gap-2 bg-[#0F172A] hover:bg-[#0F172A]/90 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-[#93C5FD]"
+          className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           onSuccess={() => onExport?.()}
         />
         {status === 'ready' && (

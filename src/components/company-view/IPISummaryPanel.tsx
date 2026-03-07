@@ -50,13 +50,13 @@ export function IPISummaryPanel({
 
   if (!hasData) {
     return (
-      <Card className="card-surface">
+      <Card className="card-surface" aria-label="IPI Summary - no data">
         <CardHeader>
           <CardTitle className="text-xl">IPI Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
+          <div className="flex flex-col items-center justify-center py-12 text-center" role="status" aria-label="No IPI data for selected window">
+            <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" aria-hidden />
             <p className="text-muted-foreground">No data for the selected window</p>
             <p className="text-sm text-muted-foreground mt-1">
               Try a different time range or company

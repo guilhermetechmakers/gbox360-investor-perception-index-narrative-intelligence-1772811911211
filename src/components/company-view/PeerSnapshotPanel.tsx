@@ -49,6 +49,7 @@ export function PeerSnapshotPanel({
                     'flex items-center justify-between rounded-md px-3 py-2 text-sm',
                     'transition-colors hover:bg-muted'
                   )}
+                  aria-label={`View ${p.name} IPI snapshot`}
                 >
                   <span className="font-medium truncate">{p.ticker ?? p.name}</span>
                   <div className="flex items-center gap-2 shrink-0">
