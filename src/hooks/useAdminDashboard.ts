@@ -188,7 +188,7 @@ export function useSignEvents() {
 }
 
 export function useUserSummary() {
-  const { data } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'users', 'summary'],
     queryFn: async () => {
       const res = await adminApi.getUsers({ limit: 1000 })
@@ -203,7 +203,12 @@ export function useUserSummary() {
       }
     },
   })
-  return data ?? { total: 0, active: 0, disabled: 0, recentVerifications: 0 }
+  const fallback = { total: 0, active: 0, disabled: 0, recentVerifications: 0 }
+  return {
+    ...(data ?? fallback),
+    isLoading: isLoading ?? false,
+    isError: isError ?? false,
+  }
 }
 
 /** Alias exports for Admin Dashboard components */
