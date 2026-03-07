@@ -58,10 +58,18 @@ export function AdminUserDetailPanel({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg" showClose>
+        <DialogContent
+          className="max-w-lg shadow-card"
+          showClose
+          aria-labelledby="user-details-title"
+          aria-describedby="user-details-description"
+        >
           <DialogHeader>
-            <DialogTitle>User details</DialogTitle>
+            <DialogTitle id="user-details-title">User details</DialogTitle>
           </DialogHeader>
+          <div id="user-details-description" className="sr-only">
+            View and manage user profile, roles, recent activity, and account actions.
+          </div>
           <div className="space-y-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -119,7 +127,7 @@ export function AdminUserDetailPanel({
             <div>
               <h4 id="activity-log-heading" className="text-sm font-medium mb-2">Recent activity</h4>
               <ActivityLogList
-                logs={activity}
+                logs={activity ?? []}
                 isLoading={activityLoading}
                 ariaLabel="Recent activity log"
                 labelledById="activity-log-heading"
@@ -128,15 +136,17 @@ export function AdminUserDetailPanel({
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-2" role="group" aria-label="User account actions">
               {!user.isVerified && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onResendVerification(user.id)}
                   disabled={resendPending || user.status === 'disabled'}
+                  aria-label="Resend verification email to this user"
+                  aria-busy={resendPending}
                 >
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail className="mr-2 h-4 w-4" aria-hidden />
                   Resend verification
                 </Button>
               )}
@@ -145,8 +155,9 @@ export function AdminUserDetailPanel({
                 size="sm"
                 onClick={() => onResetPassword(user.id)}
                 disabled={user.status === 'disabled'}
+                aria-label="Send password reset email to this user"
               >
-                <Key className="mr-2 h-4 w-4" />
+                <Key className="mr-2 h-4 w-4" aria-hidden />
                 Reset password
               </Button>
               {user.status !== 'disabled' && (
@@ -155,8 +166,10 @@ export function AdminUserDetailPanel({
                   size="sm"
                   onClick={() => setShowDisableConfirm(true)}
                   disabled={disablePending}
+                  aria-label="Disable this user account"
+                  aria-busy={disablePending}
                 >
-                  <Ban className="mr-2 h-4 w-4" />
+                  <Ban className="mr-2 h-4 w-4" aria-hidden />
                   Disable account
                 </Button>
               )}

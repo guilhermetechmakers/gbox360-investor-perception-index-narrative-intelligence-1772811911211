@@ -43,7 +43,7 @@ export function ActivityLogList({
         aria-label="Loading activity log"
       >
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          <Skeleton key={i} className="h-12 w-full rounded-[10px]" />
         ))}
       </div>
     )
@@ -53,15 +53,15 @@ export function ActivityLogList({
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center rounded-lg border border-border bg-muted/20 py-10 px-4 text-center',
-          'transition-shadow duration-200',
+          'flex min-h-[200px] flex-col items-center justify-center rounded-[10px] border border-border bg-muted/20 py-10 px-4 text-center shadow-card transition-shadow duration-200',
           className
         )}
         role="status"
         aria-live="polite"
+        aria-label="No recent activity recorded"
       >
         <div
-          className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+          className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground"
           aria-hidden
         >
           <Activity className="h-6 w-6" />
@@ -74,7 +74,7 @@ export function ActivityLogList({
           <Button
             variant="outline"
             size="sm"
-            className="mt-4"
+            className="mt-4 transition-shadow duration-200 hover:shadow-md focus:ring-2 focus:ring-ring focus:ring-offset-2"
             onClick={onRefresh}
             disabled={isRefreshing}
             aria-busy={isRefreshing}
@@ -113,7 +113,7 @@ export function ActivityLogList({
             key={log.id}
             role="listitem"
             className={cn(
-              'flex flex-col gap-0.5 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm',
+              'flex flex-col gap-0.5 rounded-[10px] border border-border bg-muted/30 px-3 py-2 text-sm',
               'transition-colors duration-150 hover:bg-muted/50 hover:shadow-sm'
             )}
           >

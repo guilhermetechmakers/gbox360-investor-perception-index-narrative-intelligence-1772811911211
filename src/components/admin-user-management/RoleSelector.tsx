@@ -44,7 +44,7 @@ export function RoleSelector({
         onValueChange={handleChange}
         disabled={disabled}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" aria-label="Select user role">
           <SelectValue placeholder="Select role" />
         </SelectTrigger>
         <SelectContent>
