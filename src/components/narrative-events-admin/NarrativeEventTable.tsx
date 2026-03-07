@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataTablePagination } from '@/components/ui/data-table-pagination'
-import { ChevronRight, FileJson } from 'lucide-react'
+import { ChevronRight, FileJson, CalendarX2, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { ensureArray } from '@/lib/runtime-safe'
@@ -20,6 +21,8 @@ import type { CanonicalNarrativeEvent } from '@/types/narrative-event-canonical'
 interface NarrativeEventTableProps {
   events: CanonicalNarrativeEvent[]
   isLoading?: boolean
+  isError?: boolean
+  errorMessage?: string
   page: number
   total: number
   pageSize?: number
@@ -41,6 +44,8 @@ function provenanceSnippet(provenance: unknown): string {
 export function NarrativeEventTable({
   events,
   isLoading,
+  isError,
+  errorMessage,
   page,
   total,
   pageSize = 20,
@@ -57,40 +62,97 @@ export function NarrativeEventTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <Skeleton key={i} className="h-14 w-full" />
-        ))}
-      </div>
+      <Card
+        className="rounded-xl border border-border shadow-card transition-shadow duration-200"
+        aria-busy="true"
+        aria-label="Loading narrative events"
+      >
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-2" role="status" aria-live="polite">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-lg bg-muted" />
+            ))}
+          </div>
+          <p className="sr-only">Loading narrative events…</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isError) {
+    return (
+      <Card
+        className="rounded-xl border border-border border-destructive/30 bg-card shadow-card"
+        role="alert"
+        aria-live="assertive"
+        aria-label="Error loading narrative events"
+      >
+        <CardContent className="flex flex-col items-center justify-center gap-4 py-12 px-4 sm:py-16">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertCircle className="h-6 w-6" aria-hidden />
+          </div>
+          <div className="text-center space-y-1">
+            <h3 className="text-base font-semibold text-foreground">
+              Could not load narrative events
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              {errorMessage ?? 'Something went wrong. Please try again.'}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Check your connection and refresh the page, or adjust filters and try again.
+          </p>
+        </CardContent>
+      </Card>
     )
   }
 
   if (safeEvents.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
-        <p>No narrative events in the selected window.</p>
-        <p className="text-xs mt-1">Try adjusting filters or time range.</p>
-      </div>
+      <Card
+        className="rounded-xl border border-border bg-card shadow-card transition-shadow duration-200"
+        aria-label="No narrative events"
+      >
+        <CardContent
+          className="flex flex-col items-center justify-center gap-4 py-12 px-4 sm:py-16"
+          role="status"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <CalendarX2 className="h-6 w-6" aria-hidden />
+          </div>
+          <div className="text-center space-y-1">
+            <h3 className="text-base font-semibold text-foreground">
+              No narrative events in the selected window
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Try adjusting filters, time range, or source to see results.
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            You can also trigger a read-index replay to rebuild aggregates.
+          </p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="space-y-4" role="region" aria-label="Narrative events table">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-card transition-shadow duration-200">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm w-8" />
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Event ID</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Source</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Platform</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Speaker / Role</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Audience</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Original time</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Ingestion time</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm">Provenance</TableHead>
-              <TableHead className="sticky top-0 bg-muted/50 backdrop-blur-sm w-12">
-                <span className="sr-only">View</span>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm w-8" aria-label="Expand row" />
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Event ID</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Source</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Platform</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Speaker / Role</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Audience</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Original time</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Ingestion time</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm">Provenance</TableHead>
+              <TableHead scope="col" className="sticky top-0 bg-muted/50 backdrop-blur-sm w-12">
+                <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -108,11 +170,15 @@ export function NarrativeEventTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={cn('h-7 w-7 transition-transform', isExpanded && 'rotate-90')}
+                        className={cn(
+                          'h-7 w-7 transition-transform duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2',
+                          isExpanded && 'rotate-90'
+                        )}
                         onClick={() => toggleExpand(ev.event_id)}
-                        aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                        aria-label={isExpanded ? `Collapse row for event ${ev.event_id ?? 'unknown'}` : `Expand row for event ${ev.event_id ?? 'unknown'}`}
+                        aria-expanded={isExpanded}
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4" aria-hidden />
                       </Button>
                     </TableCell>
                       <TableCell className="font-mono text-xs max-w-[120px] truncate" title={ev.event_id}>
@@ -149,11 +215,11 @@ export function NarrativeEventTable({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 transition-transform duration-200 hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
                           onClick={() => onViewDetail?.(ev)}
-                          aria-label="View raw payload"
+                          aria-label={`View details and raw payload for event ${ev.event_id ?? 'unknown'}`}
                         >
-                          <FileJson className="h-4 w-4" />
+                          <FileJson className="h-4 w-4" aria-hidden />
                         </Button>
                       </TableCell>
                     </TableRow>

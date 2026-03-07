@@ -36,13 +36,19 @@ export function NarrativeEventsAdmin() {
     offset: page * (filters.limit ?? DEFAULT_PAGE_SIZE),
   }
 
-  const { data: listData, isLoading: listLoading } = useNarrativeEventsList(listParams)
+  const { data: listData, isLoading: listLoading, isError: listError, error: listErrorPayload } = useNarrativeEventsList(listParams)
   const { data: replayStatus } = useNarrativeEventReplayStatus()
   const replayMutation = useNarrativeEventReplay()
 
   const items = ensureArray(listData?.items)
   const total = listData?.total ?? 0
   const pageSize = filters.limit ?? DEFAULT_PAGE_SIZE
+  const listErrorMessage =
+    listError && listErrorPayload instanceof Error
+      ? listErrorPayload.message
+      : listError
+        ? 'Failed to load narrative events'
+        : undefined
 
   const handleFiltersChange = useCallback((next: NarrativeEventListParams) => {
     setFilters(next)
@@ -95,6 +101,8 @@ export function NarrativeEventsAdmin() {
           <NarrativeEventTable
             events={items}
             isLoading={listLoading}
+            isError={listError}
+            errorMessage={listErrorMessage}
             page={page}
             total={total}
             pageSize={pageSize}
