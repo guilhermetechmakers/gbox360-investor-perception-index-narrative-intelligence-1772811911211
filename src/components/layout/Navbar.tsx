@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCurrentUser, useSignOut } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import { Building2, HelpCircle, LogOut, Search, Settings, User } from 'lucide-react'
+import { Building2, HelpCircle, LogOut, Search, Settings, User, ArrowRight } from 'lucide-react'
 
 interface NavbarProps {
   variant?: 'public' | 'dashboard' | 'admin'
@@ -32,13 +32,21 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 w-full border-b border-border bg-card',
+        'sticky top-0 z-40 w-full border-b',
+        variant === 'public'
+          ? 'border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60'
+          : 'border-border bg-card',
         className
       )}
     >
-      <div className="container flex h-14 items-center justify-between gap-4 px-4">
-        <Link to={variant === 'admin' ? '/admin' : '/'} className="flex items-center gap-2 font-semibold">
-          <Building2 className="h-6 w-6 text-primary" />
+      <div className="container flex h-16 items-center justify-between gap-4 px-4">
+        <Link
+          to={variant === 'admin' ? '/admin' : '/'}
+          className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+            <Building2 className="h-5 w-5" />
+          </div>
           <span className="hidden sm:inline-block">Gbox360</span>
         </Link>
 
@@ -61,14 +69,17 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
           </div>
         )}
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-3">
           {variant === 'public' && (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="text-sm font-medium">
                 <Link to="/login">Log in</Link>
               </Button>
-              <Button asChild>
-                <Link to="/signup">Sign up</Link>
+              <Button asChild className="group">
+                <Link to="/signup">
+                  Get started
+                  <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
               </Button>
             </>
           )}
