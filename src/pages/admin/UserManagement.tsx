@@ -44,7 +44,7 @@ export function UserManagement() {
 
   const debouncedSearch = useDebounce(search, 300)
 
-  const { data, isLoading } = useAdminUsers({
+  const { data, isLoading, error: usersError } = useAdminUsers({
     search: debouncedSearch || undefined,
     role: roleFilter || undefined,
     status: statusFilter || undefined,
@@ -115,6 +115,10 @@ export function UserManagement() {
     }
   }, [])
 
+  const handleCreateUser = useCallback(() => {
+    toast.info('Use "Import CSV" in the panel to add users, or set up an invite link for new signups.')
+  }, [])
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -134,6 +138,7 @@ export function UserManagement() {
               <AdminUserTable
                 users={users}
                 isLoading={isLoading}
+                error={usersError ?? null}
                 search={search}
                 onSearchChange={setSearch}
                 roleFilter={roleFilter}
@@ -151,6 +156,7 @@ export function UserManagement() {
                 onResetPassword={(id) => resetPassword.mutate(id)}
                 onEditRoles={(u) => setDetailUserId(u.id)}
                 onRowClick={(u) => setDetailUserId(u.id)}
+                onCreateUser={handleCreateUser}
                 isResending={resendVerification.isPending}
                 isDisabling={disableUser.isPending}
               />

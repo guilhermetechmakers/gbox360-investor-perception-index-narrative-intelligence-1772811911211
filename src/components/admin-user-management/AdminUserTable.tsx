@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Mail, Ban, User, Key, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { MoreHorizontal, Mail, Ban, User, Key, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import type { AdminUser } from '@/types/admin'
 import { cn } from '@/lib/utils'
@@ -36,6 +36,7 @@ export type SortDir = 'asc' | 'desc'
 export interface AdminUserTableProps {
   users: AdminUser[]
   isLoading?: boolean
+  error?: Error | null
   search?: string
   onSearchChange?: (v: string) => void
   roleFilter?: string
@@ -54,6 +55,8 @@ export interface AdminUserTableProps {
   onDisable?: (id: string) => void
   onResetPassword?: (id: string) => void
   onEditRoles?: (user: AdminUser) => void
+  /** Optional: when provided, empty state shows a CTA to create/invite a user */
+  onCreateUser?: () => void
   isResending?: boolean
   isDisabling?: boolean
 }
@@ -61,6 +64,7 @@ export interface AdminUserTableProps {
 export function AdminUserTable({
   users,
   isLoading = false,
+  error = null,
   search = '',
   onSearchChange,
   roleFilter = '',
@@ -79,6 +83,7 @@ export function AdminUserTable({
   onDisable,
   onResetPassword,
   onEditRoles,
+  onCreateUser,
   isResending = false,
   isDisabling = false,
 }: AdminUserTableProps) {
@@ -139,7 +144,7 @@ export function AdminUserTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-card p-3 shadow-sm">
         {onSearchChange && (
           <Input
             placeholder="Search users..."
@@ -148,13 +153,13 @@ export function AdminUserTable({
               setLocalSearch(e.target.value)
               onSearchChange(e.target.value)
             }}
-            className="w-48 md:w-64"
-            aria-label="Search users"
+            className="w-full min-w-0 sm:w-48 md:w-64 rounded-md border-border bg-background"
+            aria-label="Search users by email or username"
           />
         )}
         {onRoleFilterChange && (
           <Select value={roleFilter || 'all'} onValueChange={(v) => onRoleFilterChange(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-full sm:w-36 rounded-md border-border" aria-label="Filter by role">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
             <SelectContent>
@@ -168,7 +173,7 @@ export function AdminUserTable({
         )}
         {onStatusFilterChange && (
           <Select value={statusFilter || 'all'} onValueChange={(v) => onStatusFilterChange(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40 rounded-md border-border" aria-label="Filter by status">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -181,17 +186,44 @@ export function AdminUserTable({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-[10px] border border-border bg-card shadow-card">
-        {isLoading ? (
+      <div className="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card">
+        {error ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-16 px-4 text-center animate-fade-in">
+            <div className="rounded-full border border-destructive/30 bg-destructive/10 p-3">
+              <AlertCircle className="h-10 w-10 text-destructive" aria-hidden />
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Unable to load users</p>
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+            </div>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-2 p-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded bg-muted" />
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <User className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">No users found.</p>
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-in">
+            <div className="rounded-full border border-border bg-muted/50 p-4">
+              <User className="mb-0 h-12 w-12 text-muted-foreground" aria-hidden />
+            </div>
+            <p className="mt-4 font-medium text-foreground">No users found</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              {list.length === 0
+                ? 'Get started by adding or inviting a user.'
+                : 'Try adjusting your search or filters.'}
+            </p>
+            {onCreateUser && (
+              <Button
+                onClick={onCreateUser}
+                className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring rounded-lg shadow-sm transition-[transform,box-shadow] duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                aria-label="Add or invite a new user"
+              >
+                <UserPlus className="mr-2 h-4 w-4" aria-hidden />
+                Add user
+              </Button>
+            )}
           </div>
         ) : (
           <Table>
@@ -209,8 +241,9 @@ export function AdminUserTable({
                 <TableHead>
                   <button
                     type="button"
-                    className="flex items-center font-medium hover:text-foreground"
+                    className="flex items-center font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                     onClick={() => handleSort('username')}
+                    aria-label={effectiveSortField === 'username' ? `Sort by username ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort by username'}
                   >
                     Username
                     <SortIcon f="username" />
@@ -219,8 +252,9 @@ export function AdminUserTable({
                 <TableHead>
                   <button
                     type="button"
-                    className="flex items-center font-medium hover:text-foreground"
+                    className="flex items-center font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                     onClick={() => handleSort('email')}
+                    aria-label={effectiveSortField === 'email' ? `Sort by email ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort by email'}
                   >
                     Email
                     <SortIcon f="email" />
@@ -229,8 +263,9 @@ export function AdminUserTable({
                 <TableHead>
                   <button
                     type="button"
-                    className="flex items-center font-medium hover:text-foreground"
+                    className="flex items-center font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                     onClick={() => handleSort('role')}
+                    aria-label={effectiveSortField === 'role' ? `Sort by role ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort by role'}
                   >
                     Role
                     <SortIcon f="role" />
@@ -239,8 +274,9 @@ export function AdminUserTable({
                 <TableHead>
                   <button
                     type="button"
-                    className="flex items-center font-medium hover:text-foreground"
+                    className="flex items-center font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                     onClick={() => handleSort('status')}
+                    aria-label={effectiveSortField === 'status' ? `Sort by status ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort by status'}
                   >
                     Status
                     <SortIcon f="status" />
@@ -249,8 +285,9 @@ export function AdminUserTable({
                 <TableHead>
                   <button
                     type="button"
-                    className="flex items-center font-medium hover:text-foreground"
+                    className="flex items-center font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                     onClick={() => handleSort('lastLogin')}
+                    aria-label={effectiveSortField === 'lastLogin' ? `Sort by last login ${sortDir === 'asc' ? 'ascending' : 'descending'}` : 'Sort by last login'}
                   >
                     Last login
                     <SortIcon f="lastLogin" />
@@ -309,29 +346,41 @@ export function AdminUserTable({
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Actions">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-md focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-label={`Open actions for ${u.email}`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" aria-hidden />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="rounded-lg border-border">
                         {!u.isVerified && onResendVerification && (
                           <DropdownMenuItem
                             onClick={() => onResendVerification(u.id)}
                             disabled={isResending}
+                            aria-label={`Resend verification email to ${u.email}`}
                           >
-                            <Mail className="mr-2 h-4 w-4" />
+                            <Mail className="mr-2 h-4 w-4" aria-hidden />
                             Resend verification
                           </DropdownMenuItem>
                         )}
                         {onEditRoles && (
-                          <DropdownMenuItem onClick={() => onEditRoles(u)}>
-                            <User className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => onEditRoles(u)}
+                            aria-label={`Edit roles for ${u.email}`}
+                          >
+                            <User className="mr-2 h-4 w-4" aria-hidden />
                             Edit roles
                           </DropdownMenuItem>
                         )}
                         {onResetPassword && (
-                          <DropdownMenuItem onClick={() => onResetPassword(u.id)}>
-                            <Key className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => onResetPassword(u.id)}
+                            aria-label={`Reset password for ${u.email}`}
+                          >
+                            <Key className="mr-2 h-4 w-4" aria-hidden />
                             Reset password
                           </DropdownMenuItem>
                         )}
@@ -340,8 +389,9 @@ export function AdminUserTable({
                             onClick={() => onDisable(u.id)}
                             disabled={isDisabling}
                             className="text-destructive"
+                            aria-label={`Disable account for ${u.email}`}
                           >
-                            <Ban className="mr-2 h-4 w-4" />
+                            <Ban className="mr-2 h-4 w-4" aria-hidden />
                             Disable account
                           </DropdownMenuItem>
                         )}
