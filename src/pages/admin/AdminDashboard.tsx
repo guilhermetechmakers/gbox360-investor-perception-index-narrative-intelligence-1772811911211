@@ -281,6 +281,8 @@ export function AdminDashboard() {
                 onSourceFilterChange={setSourceFilter}
                 timeWindow={timeWindow}
                 onTimeWindowChange={setTimeWindow}
+                onEmptyStateCta={refetchAll}
+                emptyStateCtaLabel="Refresh"
               />
             </div>
             <div className="space-y-6">

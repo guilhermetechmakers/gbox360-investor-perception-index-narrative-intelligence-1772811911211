@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Rss, Twitter, FileText, AlertTriangle } from 'lucide-react'
+import { EmptyState } from '@/components/profile/EmptyState'
+import { Rss, Twitter, FileText, AlertTriangle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { IngestionSource } from '@/types/admin'
 
@@ -33,6 +35,10 @@ interface IngestionOverviewPanelProps {
   onSourceFilterChange?: (v: string) => void
   timeWindow?: string
   onTimeWindowChange?: (v: string) => void
+  /** Callback for empty state CTA (e.g. refresh ingestion sources) */
+  onEmptyStateCta?: () => void
+  /** Label for empty state CTA button */
+  emptyStateCtaLabel?: string
 }
 
 export function IngestionOverviewPanel({
@@ -42,6 +48,8 @@ export function IngestionOverviewPanel({
   onSourceFilterChange,
   timeWindow = '24h',
   onTimeWindowChange,
+  onEmptyStateCta,
+  emptyStateCtaLabel = 'Refresh',
 }: IngestionOverviewPanelProps) {
   const allItems = Array.isArray(sources) ? sources : []
   const items =
@@ -87,7 +95,25 @@ export function IngestionOverviewPanel({
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No ingestion sources configured.</p>
+          <EmptyState
+            icon={<Rss className="h-6 w-6 text-muted-foreground" aria-hidden />}
+            title="No ingestion sources configured"
+            description="Ingestion source status and metrics will appear here once sources are set up. Refresh to load the latest or contact your admin to configure sources."
+            action={
+              onEmptyStateCta ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={onEmptyStateCta}
+                  className="bg-primary text-primary-foreground transition-all duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={emptyStateCtaLabel}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden />
+                  {emptyStateCtaLabel}
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((s) => {
