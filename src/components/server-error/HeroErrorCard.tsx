@@ -58,7 +58,7 @@ export function HeroErrorCard({
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-[3.25rem]">
             {title}
           </h1>
-          <p className="text-base text-muted-foreground leading-relaxed" style={{ lineHeight: 1.5 }}>
+          <p className="text-base text-muted-foreground leading-[1.5]">
             {subtitle}
           </p>
         </CardHeader>

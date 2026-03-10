@@ -60,7 +60,7 @@ export function ServerError() {
         message="500 Server Error. Something went wrong on our end. You can retry, contact support, or use the diagnostic information below."
         politeness="assertive"
       />
-      <div className="w-full max-w-2xl mx-auto text-left animate-fade-in-up motion-reduce:animate-none space-y-8">
+      <div className="w-full max-w-2xl mx-auto text-left animate-fade-in-up motion-reduce:animate-none space-y-8 text-foreground">
         <HeroErrorCard
           title="500 Server Error"
           subtitle="Something went wrong on our end. We're sorry for the inconvenience. Please try again, or contact support with the diagnostic information below."
@@ -68,7 +68,18 @@ export function ServerError() {
           timestamp={timestamp}
           onRetry={handleRetry}
         />
-        <TipsPanel className="pt-6 border-t border-border" />
+        <section
+          aria-labelledby="server-error-tips-heading"
+          className="pt-6 border-t border-border"
+        >
+          <h2
+            id="server-error-tips-heading"
+            className="text-sm font-semibold text-foreground mb-3"
+          >
+            What you can do
+          </h2>
+          <TipsPanel />
+        </section>
       </div>
     </ErrorLayoutContainer>
   )
