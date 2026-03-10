@@ -60,7 +60,7 @@ export function IngestMonitorDashboard() {
   const { data: metricsData, isLoading: metricsLoading, refetch: refetchMetrics, isFetching: metricsFetching } = useIngestMetrics(15000)
   const { data: errorsData, isLoading: errorsLoading, refetch: refetchErrors, isFetching: errorsFetching } = useIngestErrors({ page: 1, limit: 20 })
   const { data: healthData, isLoading: healthLoading, refetch: refetchHealth, isFetching: healthFetching } = useIngestHealth(15000)
-  const { data: dlqData, isLoading: dlqLoading } = useDLQ()
+  const { data: dlqData, isLoading: dlqLoading, refetch: refetchDLQ, isFetching: dlqFetching } = useDLQ()
 
   const replayMutation = useIngestReplay()
   const dlqRetryMutation = useDLQRetry()
@@ -182,6 +182,8 @@ export function IngestMonitorDashboard() {
             isHealthLoading={healthLoading}
             onHealthRefresh={() => refetchHealth()}
             isHealthRefreshing={healthFetching}
+            onDLQRefresh={() => refetchDLQ()}
+            isDLQRefreshing={dlqFetching}
           />
         </TabsContent>
       </Tabs>

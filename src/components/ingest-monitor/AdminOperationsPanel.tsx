@@ -20,6 +20,10 @@ interface AdminOperationsPanelProps {
   onHealthRefresh?: () => void
   /** When true, health refresh button shows loading */
   isHealthRefreshing?: boolean
+  /** Callback for DLQ empty state CTA (e.g. refetch DLQ) */
+  onDLQRefresh?: () => void
+  /** When true, DLQ refresh button shows loading */
+  isDLQRefreshing?: boolean
 }
 
 export function AdminOperationsPanel({
@@ -34,6 +38,8 @@ export function AdminOperationsPanel({
   isHealthLoading = false,
   onHealthRefresh,
   isHealthRefreshing = false,
+  onDLQRefresh,
+  isDLQRefreshing = false,
 }: AdminOperationsPanelProps) {
   const safeSources = Array.isArray(sources) ? sources : []
   const safeDLQ = Array.isArray(dlqEntries) ? dlqEntries : []
@@ -117,6 +123,9 @@ export function AdminOperationsPanel({
           onRetry={onDLQRetry}
           onPurge={onDLQPurge}
           isLoading={isDLQLoading}
+          onEmptyStateCta={onDLQRefresh}
+          emptyStateCtaLabel="Refresh"
+          isRefreshing={isDLQRefreshing}
         />
       </section>
       <section

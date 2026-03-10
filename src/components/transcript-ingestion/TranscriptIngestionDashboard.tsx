@@ -20,7 +20,7 @@ export function TranscriptIngestionDashboard() {
   const submitMutation = useTranscriptBatchSubmit()
   const { data: batchStatus, isLoading: statusLoading } = useTranscriptBatchStatus(pollBatchId)
   const refetchStatus = useTranscriptBatchStatusRefetch(pollBatchId)
-  const { data: dlqData } = useDLQ()
+  const { data: dlqData, isLoading: dlqLoading, refetch: refetchDLQ, isFetching: dlqFetching } = useDLQ()
   const dlqRetryMutation = useDLQRetry()
   const dlqPurgeMutation = useDLQPurge()
 
@@ -132,7 +132,10 @@ export function TranscriptIngestionDashboard() {
             entries={dlqEntries}
             onRetry={handleDLQRetry}
             onPurge={handleDLQPurge}
-            isLoading={false}
+            isLoading={dlqLoading}
+            onEmptyStateCta={() => refetchDLQ()}
+            emptyStateCtaLabel="Refresh"
+            isRefreshing={dlqFetching}
           />
         </TabsContent>
       </Tabs>

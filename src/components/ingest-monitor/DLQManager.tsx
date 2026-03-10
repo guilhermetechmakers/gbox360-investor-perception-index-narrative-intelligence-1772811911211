@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Inbox, RotateCcw, Trash2 } from 'lucide-react'
+import { EmptyState } from '@/components/profile/EmptyState'
+import { Inbox, RotateCcw, Trash2, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { DLQEntry } from '@/types/ingest'
 
@@ -31,6 +33,12 @@ interface DLQManagerProps {
   onRetry: (id: string, idempotencyKey: string) => Promise<unknown>
   onPurge: (id: string, idempotencyKey: string) => Promise<unknown>
   isLoading?: boolean
+  /** Callback for empty state CTA (e.g. refetch DLQ) */
+  onEmptyStateCta?: () => void
+  /** Label for empty state CTA button */
+  emptyStateCtaLabel?: string
+  /** When true, empty state CTA shows loading */
+  isRefreshing?: boolean
 }
 
 export function DLQManager({
@@ -38,6 +46,9 @@ export function DLQManager({
   onRetry,
   onPurge,
   isLoading = false,
+  onEmptyStateCta,
+  emptyStateCtaLabel = 'Refresh',
+  isRefreshing = false,
 }: DLQManagerProps) {
   const [actionEntry, setActionEntry] = useState<{ id: string; action: 'retry' | 'purge' } | null>(null)
   const [processing, setProcessing] = useState(false)
@@ -50,10 +61,15 @@ export function DLQManager({
       const key = `dlq-${actionEntry.action}-${actionEntry.id}-${Date.now()}`
       if (actionEntry.action === 'retry') {
         await onRetry(actionEntry.id, key)
+        toast.success('Retry initiated. The payload will be reprocessed.')
       } else {
         await onPurge(actionEntry.id, key)
+        toast.success('DLQ entry removed.')
       }
       setActionEntry(null)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : actionEntry.action === 'retry' ? 'Retry failed' : 'Purge failed'
+      toast.error(message)
     } finally {
       setProcessing(false)
     }
@@ -63,13 +79,22 @@ export function DLQManager({
     return (
       <Card className="card-surface">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Inbox className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground" id="dlq-heading">
+            <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden />
             Dead letter queue
-          </CardTitle>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Retry or purge failed payloads
+          </p>
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-32 w-full rounded-lg" />
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-busy="true" aria-live="polite">
+            <Skeleton className="h-4 w-4 rounded animate-pulse" />
+            <span>Loading failed payloads…</span>
+          </div>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg bg-muted" />
+          ))}
         </CardContent>
       </Card>
     )
@@ -77,20 +102,44 @@ export function DLQManager({
 
   return (
     <>
-      <Card className="card-surface">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Inbox className="h-5 w-5 text-muted-foreground" />
-            Dead letter queue
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Retry or purge failed payloads
-          </p>
-        </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No DLQ entries.</p>
-          ) : (
+      <section aria-labelledby="dlq-heading">
+        <Card className="card-surface">
+          <CardHeader>
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground" id="dlq-heading">
+              <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden />
+              Dead letter queue
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Retry or purge failed payloads
+            </p>
+          </CardHeader>
+          <CardContent>
+            {items.length === 0 ? (
+              <EmptyState
+                icon={<Inbox className="h-6 w-6 text-muted-foreground" aria-hidden />}
+                title="No failed payloads"
+                description="When ingest jobs fail, they appear here. Retry or purge entries from this list."
+                action={
+                  onEmptyStateCta ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={onEmptyStateCta}
+                      disabled={isRefreshing}
+                      className="min-h-[44px] px-6 bg-primary text-primary-foreground transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      aria-label={emptyStateCtaLabel}
+                    >
+                      {isRefreshing ? (
+                        <RefreshCw className="h-4 w-4 animate-spin mr-2" aria-hidden />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" aria-hidden />
+                      )}
+                      {emptyStateCtaLabel}
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
             <ScrollArea className="h-[240px] pr-4">
               <div className="space-y-2">
                 {items.map((entry) => (
@@ -138,9 +187,10 @@ export function DLQManager({
                 ))}
               </div>
             </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       <AlertDialog
         open={!!actionEntry}
