@@ -16,6 +16,10 @@ interface AdminOperationsPanelProps {
   isReplayLoading?: boolean
   isDLQLoading?: boolean
   isHealthLoading?: boolean
+  /** Callback for system health empty state CTA (e.g. refresh health) */
+  onHealthRefresh?: () => void
+  /** When true, health refresh button shows loading */
+  isHealthRefreshing?: boolean
 }
 
 export function AdminOperationsPanel({
@@ -28,6 +32,8 @@ export function AdminOperationsPanel({
   isReplayLoading = false,
   isDLQLoading = false,
   isHealthLoading = false,
+  onHealthRefresh,
+  isHealthRefreshing = false,
 }: AdminOperationsPanelProps) {
   const safeSources = Array.isArray(sources) ? sources : []
   const safeDLQ = Array.isArray(dlqEntries) ? dlqEntries : []
@@ -120,6 +126,8 @@ export function AdminOperationsPanel({
         <IngestSystemHealthPanel
           components={safeHealth}
           isLoading={isHealthLoading}
+          onRefresh={onHealthRefresh}
+          isRefreshing={isHealthRefreshing}
         />
         <UserSupportActions />
       </section>
