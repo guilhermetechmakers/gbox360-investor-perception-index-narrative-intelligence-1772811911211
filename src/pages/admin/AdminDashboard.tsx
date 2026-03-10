@@ -259,6 +259,8 @@ export function AdminDashboard() {
         notifications={notifications ?? []}
         onDismiss={dismiss}
         onAcknowledge={acknowledge}
+        onEmptyStateCtaClick={refetchAll}
+        emptyStateCtaLabel="Refresh"
       />
 
       {isInitialLoading ? (
