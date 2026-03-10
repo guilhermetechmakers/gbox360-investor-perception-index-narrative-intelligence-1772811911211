@@ -129,10 +129,10 @@ export function RawPayloadBrowser() {
     <div className="space-y-6 animate-fade-in-up" role="main" aria-label="Raw Payload Browser and Audit Export">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring">
             <Link
               to="/admin"
-              className="gap-2"
+              className="gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
               aria-label="Back to admin overview"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -156,8 +156,8 @@ export function RawPayloadBrowser() {
         initialFilters={filters}
       />
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8 space-y-4">
           <PayloadList
             payloads={payloads}
             total={total}
@@ -174,7 +174,7 @@ export function RawPayloadBrowser() {
           />
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-4">
           <SystemHealthPanel
             queues={queues}
             healthScore={systemHealth?.healthScore}
@@ -196,8 +196,8 @@ export function RawPayloadBrowser() {
       </div>
 
       {selectedPayload && (
-        <div className="grid gap-6 lg:grid-cols-12 mt-6 border-t border-border pt-6">
-          <div className="lg:col-span-6 space-y-6">
+        <div className="grid gap-4 lg:grid-cols-12 mt-6 border-t border-border pt-6">
+          <div className="lg:col-span-6 space-y-4">
             <PayloadViewerPanel
               payload={selectedPayload}
               onClose={() => setSelectedPayload(null)}
@@ -206,7 +206,7 @@ export function RawPayloadBrowser() {
             />
             <ProvenancePanel provenanceData={provenance} />
           </div>
-          <div className="lg:col-span-6 space-y-6">
+          <div className="lg:col-span-6 space-y-4">
             <ExportArtifactBuilder
               selectedNarrativeEvents={narrativeEvents as { id: string }[]}
               onGenerateExport={handleGenerateExport}
