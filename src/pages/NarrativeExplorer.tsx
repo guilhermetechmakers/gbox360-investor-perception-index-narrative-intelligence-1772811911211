@@ -119,7 +119,7 @@ export function NarrativeExplorer() {
 
       <div>
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Narrative Explorer</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-foreground/80 mt-1">
           Topic classification and persistence across narratives
         </p>
       </div>
@@ -136,7 +136,7 @@ export function NarrativeExplorer() {
 
       {narrativesError && (
         <section
-          className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all duration-300"
+          className="rounded-xl border border-border bg-card shadow-md p-4 space-y-3 transition-all duration-300"
           role="alert"
           aria-live="assertive"
           aria-label="Narratives load error"
@@ -150,7 +150,7 @@ export function NarrativeExplorer() {
               size="sm"
               onClick={() => refetchNarratives()}
               disabled={narrativesRefetching}
-              className="gap-2 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="gap-2 p-4 focus:ring-2 focus:ring-ring focus:ring-offset-2"
               aria-label={narrativesRefetching ? 'Retrying narratives' : 'Retry loading narratives'}
             >
               {narrativesRefetching ? (
@@ -165,16 +165,16 @@ export function NarrativeExplorer() {
       )}
 
       <div id="topic-legend" className="flex flex-wrap items-center gap-2" tabIndex={-1} role="region" aria-label="Topic legend">
-        <span className="text-sm font-medium text-muted-foreground">Topics:</span>
+        <span className="text-sm font-medium text-foreground/80">Topics:</span>
         <TopicLegend topics={topics.map((t) => t.topic_label)} />
       </div>
 
       <div id="narrative-main" className="grid gap-8 lg:grid-cols-3" tabIndex={-1} aria-label="Narrative explorer main content">
         <div className="lg:col-span-2 space-y-6" role="region" aria-label="Top narratives list">
-          <Card className="card-surface" aria-labelledby="top-narratives-title">
+          <Card className="rounded-xl border border-border bg-card shadow-md" aria-labelledby="top-narratives-title">
             <CardHeader>
               <CardTitle id="top-narratives-title" className="text-xl">Top Narratives</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-foreground/80">
                 Narratives with topic labels and persistence
               </p>
             </CardHeader>
@@ -182,14 +182,14 @@ export function NarrativeExplorer() {
               {narrativesLoading && (
                 <div className="grid gap-4 md:grid-cols-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-40 rounded-lg" />
+                    <Skeleton key={i} className="h-40 rounded-xl" />
                   ))}
                 </div>
               )}
 
               {!narrativesLoading && narratives.length === 0 && (
                 <EmptyState
-                  icon={<FileText className="h-6 w-6 text-muted-foreground" aria-hidden />}
+                  icon={<FileText className="h-6 w-6 text-foreground/80" aria-hidden />}
                   title="No narratives for this window"
                   description="Select a different time range or company. Ensure Supabase Edge Functions are deployed for topic classification."
                   action={
@@ -198,7 +198,7 @@ export function NarrativeExplorer() {
                         variant="default"
                         size="sm"
                         onClick={() => setSelectedCompanyId(null)}
-                        className="min-h-[44px] min-w-[120px]"
+                        className="p-4 w-32 focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         aria-label="Clear company filter to show all narratives"
                       >
                         Clear filters
@@ -208,7 +208,7 @@ export function NarrativeExplorer() {
                         size="sm"
                         onClick={() => refetchNarratives()}
                         disabled={narrativesRefetching}
-                        className="min-h-[44px] min-w-[120px] gap-2"
+                        className="p-4 w-32 gap-2 focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         aria-label={narrativesRefetching ? 'Refreshing narratives' : 'Refresh narratives'}
                       >
                         {narrativesRefetching ? (
@@ -219,7 +219,7 @@ export function NarrativeExplorer() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="min-h-[44px] gap-2"
+                        className="p-4 gap-2 focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         asChild
                         aria-label="Go to dashboard overview"
                       >
