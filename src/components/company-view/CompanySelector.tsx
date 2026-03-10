@@ -239,7 +239,7 @@ export function CompanySelector({
       <div ref={containerRef} className="relative" role="combobox" aria-expanded={showDropdown} aria-haspopup="listbox">
         <div className="relative">
           <Search
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/80"
             aria-hidden
           />
           <Input
@@ -252,7 +252,7 @@ export function CompanySelector({
             onFocus={() => query.length >= 2 && setIsOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="Search company..."
-            className="pl-9 pr-4 transition-colors duration-150"
+            className="pl-8 pr-4 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Search for a company"
             aria-autocomplete="list"
             aria-expanded={showDropdown}
@@ -269,13 +269,13 @@ export function CompanySelector({
             id="company-suggestions"
             role="listbox"
             aria-label="Company suggestions"
-            className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-[10px] border border-border bg-card py-1 shadow-card animate-fade-in-down"
+            className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-card py-1 shadow-md animate-fade-in-down"
           >
             {isLoading ? (
               <>
-                <li className="px-4 py-3 flex items-center gap-3" role="status" aria-busy="true" aria-live="polite">
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />
-                  <span className="text-sm text-muted-foreground">Searching...</span>
+                <li className="px-4 py-4 flex items-center gap-3" role="status" aria-busy="true" aria-live="polite">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-foreground/80" aria-hidden />
+                  <span className="text-sm text-foreground/80">Searching...</span>
                 </li>
                 {[1, 2, 3].map((i) => (
                   <li key={i} className="px-4 py-2 flex items-center gap-2">
@@ -286,15 +286,15 @@ export function CompanySelector({
               </>
             ) : safeSuggestions.length === 0 ? (
               <li
-                className="flex flex-col items-center justify-center py-8 px-4 text-center"
+                className="flex flex-col items-center justify-center p-8 text-center"
                 role="status"
                 aria-live="polite"
               >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground/80">
                   <SearchX className="h-5 w-5" aria-hidden />
                 </div>
                 <p className="text-sm font-medium text-foreground">No companies found</p>
-                <p className="mt-1 text-xs text-muted-foreground">Try a different search term or check spelling.</p>
+                <p className="mt-2 text-xs text-foreground/80">Try a different search term or check spelling.</p>
               </li>
             ) : (
               safeSuggestions.map((company, i) => (
@@ -313,14 +313,14 @@ export function CompanySelector({
                   <span>
                     <HighlightMatch text={company.name} query={debouncedQuery} className="font-medium" />
                     {company.ticker && (
-                      <span className="ml-2 text-muted-foreground">({company.ticker})</span>
+                      <span className="ml-2 text-foreground/80">({company.ticker})</span>
                     )}
                   </span>
                   {showSaveToggle && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 shrink-0 min-w-[44px] min-h-[44px]"
+                      className="h-7 w-7 shrink-0 min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       onClick={(e) => handleSaveToggle(e, company.id)}
                       disabled={saveCompany.isPending || removeSaved.isPending}
                       aria-label={savedIds.has(company.id) ? `Remove ${company.name} from saved` : `Save ${company.name}`}
@@ -331,7 +331,7 @@ export function CompanySelector({
                       ) : savedIds.has(company.id) ? (
                         <StarOff className="h-3.5 w-3.5 text-accent" aria-hidden />
                       ) : (
-                        <Star className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                        <Star className="h-3.5 w-3.5 text-foreground/80" aria-hidden />
                       )}
                     </Button>
                   )}
@@ -346,13 +346,13 @@ export function CompanySelector({
         <div className="space-y-2">
           {safeRecent.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground shrink-0">Recent:</span>
+              <span className="text-xs text-foreground/80 shrink-0">Recent:</span>
               {safeRecent.slice(0, 6).map((c) => (
                 <Button
                   key={c.id}
                   variant={value?.id === c.id ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs rounded-full min-w-[44px]"
+                  className="h-8 text-xs rounded-full min-w-[44px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   onClick={() =>
                     onChange({
                       id: c.id,
@@ -370,13 +370,13 @@ export function CompanySelector({
           )}
           {safeSaved.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground shrink-0">Saved:</span>
+              <span className="text-xs text-foreground/80 shrink-0">Saved:</span>
               {safeSaved.slice(0, 6).map((c) => (
                 <Button
                   key={c.id}
                   variant={value?.id === c.id ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs rounded-full min-w-[44px]"
+                  className="h-8 text-xs rounded-full min-w-[44px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   onClick={() =>
                     onChange({
                       id: c.id,
@@ -396,14 +396,14 @@ export function CompanySelector({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">Time window:</span>
-        <div className="flex flex-wrap items-center gap-1 rounded-md border border-border p-1">
+        <span className="text-sm text-foreground/80">Time window:</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2">
           {PRESETS.map((preset) => (
             <Button
               key={preset.label}
               variant={timeWindow.label === preset.label ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 px-3 text-xs"
+              className="h-8 px-4 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={() => handlePresetClick(preset)}
               aria-label={`Set time window to ${preset.label}`}
               aria-pressed={timeWindow.label === preset.label}
@@ -417,7 +417,7 @@ export function CompanySelector({
             <Button
               variant={isCustom ? 'default' : 'outline'}
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Select custom date range"
             >
               <Calendar className="h-3.5 w-3.5" />
@@ -428,7 +428,7 @@ export function CompanySelector({
             <DialogHeader>
               <DialogTitle>Custom date range</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-6">
               <div className="grid gap-2">
                 <Label htmlFor="start-date">Start date</Label>
                 <Input
@@ -442,7 +442,7 @@ export function CompanySelector({
                   max={format(new Date(), 'yyyy-MM-dd')}
                   aria-describedby={validationError ? 'custom-date-error' : undefined}
                   aria-invalid={!!validationError}
-                  className={cn(validationError && 'border-destructive focus-visible:ring-destructive')}
+                  className={cn(validationError && 'border-destructive focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2')}
                 />
               </div>
               <div className="grid gap-2">
@@ -458,7 +458,7 @@ export function CompanySelector({
                   max={format(new Date(), 'yyyy-MM-dd')}
                   aria-describedby={validationError ? 'custom-date-error' : undefined}
                   aria-invalid={!!validationError}
-                  className={cn(validationError && 'border-destructive focus-visible:ring-destructive')}
+                  className={cn(validationError && 'border-destructive focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2')}
                 />
               </div>
               {validationError && (
@@ -466,7 +466,7 @@ export function CompanySelector({
                   {validationError}
                 </p>
               )}
-              <Button onClick={handleCustomApply} aria-label="Apply custom date range">
+              <Button onClick={handleCustomApply} aria-label="Apply custom date range" className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 Apply
               </Button>
             </div>
