@@ -50,13 +50,13 @@ export function RawPayloadViewer({ rawPayloadId, onClose }: RawPayloadViewerProp
         <p id="raw-payload-dialog-desc" className="sr-only">
           View and copy raw event payload JSON for auditability.
         </p>
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2 mb-4">
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopy}
             disabled={!payload}
-            className="gap-2"
+            className="gap-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Copy payload to clipboard"
           >
             <Copy className="h-4 w-4" aria-hidden />
@@ -67,22 +67,22 @@ export function RawPayloadViewer({ rawPayloadId, onClose }: RawPayloadViewerProp
             size="sm"
             onClick={handleDownload}
             disabled={!payload}
-            className="gap-2"
+            className="gap-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Download payload as JSON file"
           >
             <Download className="h-4 w-4" aria-hidden />
             Download
           </Button>
         </div>
-        <div className="flex-1 overflow-auto rounded-md border border-border bg-muted/30 p-4 font-mono text-xs min-h-[200px]" role="region" aria-label="Payload content">
+        <div className="flex-1 overflow-auto rounded-lg border border-border bg-muted/30 p-6 font-mono text-xs min-h-[200px] shadow-md" role="region" aria-label="Payload content">
           {isLoading && <Skeleton className="h-32 w-full" aria-hidden />}
           {!isLoading && payload != null && (
-            <pre className="whitespace-pre-wrap break-words">
+            <pre className="whitespace-pre-wrap break-words text-foreground">
               {JSON.stringify(payload, null, 2)}
             </pre>
           )}
           {!isLoading && payload == null && rawPayloadId && (
-            <p className="text-muted-foreground" role="status">Payload not found</p>
+            <p className="text-foreground/80" role="status">Payload not found</p>
           )}
         </div>
       </DialogContent>
