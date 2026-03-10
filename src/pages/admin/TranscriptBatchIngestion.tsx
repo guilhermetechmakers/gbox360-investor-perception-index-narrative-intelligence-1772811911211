@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/profile/EmptyState'
 import {
   useTranscriptBatchSubmit,
   useBatchStatus,
@@ -25,8 +26,11 @@ import {
   AlertCircle,
   Loader2,
   Inbox,
+  FileSearch,
+  CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 const INITIAL_FORM: TranscriptBatchRequest = {
   batch_id: '',
@@ -41,9 +45,10 @@ export function TranscriptBatchIngestion() {
   const [form, setForm] = useState<TranscriptBatchRequest>(INITIAL_FORM)
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [statusBatchId, setStatusBatchId] = useState<string | null>(null)
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
 
   const submitBatch = useTranscriptBatchSubmit()
-  const { data: batchStatus, isLoading: statusLoading } = useBatchStatus(statusBatchId, 5000)
+  const { data: batchStatus, isLoading: statusLoading, isError: statusError } = useBatchStatus(statusBatchId, 5000)
   const replayPayload = useIngestReplayPayload()
 
   const clearFieldError = useCallback((field: keyof FormErrors) => {
@@ -79,6 +84,11 @@ export function TranscriptBatchIngestion() {
             const id = data?.batch_id ?? batchId
             setStatusBatchId(id)
             setFormErrors({})
+            setShowSubmitSuccess(true)
+            toast.success(
+              id ? `Batch ${id} submitted successfully. View status in the panel on the right.` : 'Batch submitted successfully. View status in the panel on the right.'
+            )
+            setTimeout(() => setShowSubmitSuccess(false), 5000)
           },
         }
       )
@@ -132,6 +142,31 @@ export function TranscriptBatchIngestion() {
           </Button>
         </div>
       </div>
+
+      {showSubmitSuccess && (
+        <div
+          className={cn(
+            'flex items-center gap-3 rounded-[10px] border border-border bg-card px-4 py-3 shadow-card transition-all duration-300',
+            'animate-fade-in-up'
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />
+          <p className="text-sm font-medium text-foreground">
+            Batch submitted successfully. View status in the panel on the right.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowSubmitSuccess(false)}
+            aria-label="Dismiss success message"
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">
@@ -269,19 +304,51 @@ export function TranscriptBatchIngestion() {
               {statusBatchId ? (
                 <>
                   {statusLoading && !batchStatus ? (
-                    <div className="space-y-3" aria-live="polite" aria-busy="true">
-                      <Skeleton className="h-8 w-48" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[66%]" />
-                      <p className="text-xs text-muted-foreground">Loading batch status…</p>
+                    <div
+                      className="min-h-[200px] space-y-4 rounded-[10px] border border-border bg-muted/20 p-4 transition-opacity duration-300"
+                      aria-live="polite"
+                      aria-busy="true"
+                    >
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
+                        <span>Loading batch status…</span>
+                      </div>
+                      <div className="space-y-3">
+                        <Skeleton className="h-8 w-48 rounded-lg" />
+                        <Skeleton className="h-4 w-full rounded-lg" />
+                        <Skeleton className="h-4 w-[75%] rounded-lg" />
+                        <Skeleton className="h-4 w-[60%] rounded-lg" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        {[1, 2, 3, 4].map((i) => (
+                          <Skeleton key={i} className="h-14 rounded-lg" />
+                        ))}
+                      </div>
                     </div>
+                  ) : statusError || (!statusLoading && !batchStatus) ? (
+                    <EmptyState
+                      icon={<FileSearch className="h-6 w-6 text-muted-foreground" />}
+                      title="No status data available"
+                      description="Status for this batch could not be loaded. The batch may not exist yet or the request failed. Try again or check Ingest monitor for details."
+                      action={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setStatusBatchId(null)}
+                          className="transition-all duration-200 hover:scale-[1.02] focus-visible:ring-ring"
+                        >
+                          Clear selection
+                        </Button>
+                      }
+                      className="rounded-[10px] border border-dashed border-border bg-muted/30 py-12"
+                    />
                   ) : statusLoading && batchStatus ? (
                     <div className="relative">
                       <div
-                        className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/60 transition-opacity duration-200"
+                        className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-[10px] bg-background/60 transition-opacity duration-300"
                         aria-live="polite"
                       >
-                        <span className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                        <span className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-card">
                           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                           Updating…
                         </span>
@@ -292,6 +359,23 @@ export function TranscriptBatchIngestion() {
                         isReplaying={replayPayload.isPending}
                       />
                     </div>
+                  ) : batchStatus && (batchStatus.total_items ?? 0) === 0 && batchStatus.status === 'pending' ? (
+                    <EmptyState
+                      icon={<Inbox className="h-6 w-6 text-muted-foreground" />}
+                      title="Batch queued"
+                      description="This batch has no items yet or processing has not started. Status will update when the batch is picked up."
+                      action={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setStatusBatchId(null)}
+                          className="transition-all duration-200 hover:scale-[1.02] focus-visible:ring-ring"
+                        >
+                          Clear selection
+                        </Button>
+                      }
+                      className="rounded-[10px] border border-dashed border-border bg-muted/30 py-12"
+                    />
                   ) : batchStatus ? (
                     <BatchStatusView
                       status={batchStatus}
@@ -299,15 +383,19 @@ export function TranscriptBatchIngestion() {
                       isReplaying={replayPayload.isPending}
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground" role="status">
-                      No status data yet. Refreshing…
-                    </p>
+                    <EmptyState
+                      icon={<FileSearch className="h-6 w-6 text-muted-foreground" />}
+                      title="No status data yet"
+                      description="Refreshing… If this persists, the batch may not exist or the request failed."
+                      className="rounded-[10px] border border-dashed border-border bg-muted/30 py-12"
+                    />
                   )}
                   <div className="mt-4 flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setStatusBatchId(null)}
+                      className="transition-all duration-200 hover:scale-[1.02] focus-visible:ring-ring"
                       aria-label="Clear batch selection and hide status"
                     >
                       Clear selection
@@ -316,14 +404,13 @@ export function TranscriptBatchIngestion() {
                 </>
               ) : (
                 <div
-                  className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-12 text-center"
+                  className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-muted/30 px-4 py-12 text-center transition-shadow duration-200 sm:px-6"
                   role="status"
                   aria-live="polite"
                 >
-                  <Inbox
-                    className="h-12 w-12 text-muted-foreground"
-                    aria-hidden
-                  />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <Inbox className="h-6 w-6 text-muted-foreground" aria-hidden />
+                  </div>
                   <h3 className="mt-4 text-base font-medium text-foreground">
                     No batch selected
                   </h3>
@@ -424,25 +511,25 @@ function BatchStatusView({ status }: BatchStatusViewProps) {
         <span className="text-sm text-muted-foreground">Batch: {status.batch_id}</span>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div>
+        <div className="rounded-[10px] border border-border bg-muted/20 px-3 py-2 transition-shadow duration-200">
           <p className="text-xs text-muted-foreground">Total</p>
-          <p className="text-lg font-semibold">{status.total_items ?? 0}</p>
+          <p className="text-lg font-semibold text-foreground">{status.total_items ?? 0}</p>
         </div>
-        <div>
+        <div className="rounded-[10px] border border-border bg-muted/20 px-3 py-2 transition-shadow duration-200">
           <p className="text-xs text-muted-foreground">Processed</p>
           <p className="text-lg font-semibold text-success">
             {status.processed ?? 0}
           </p>
         </div>
-        <div>
+        <div className="rounded-[10px] border border-border bg-muted/20 px-3 py-2 transition-shadow duration-200">
           <p className="text-xs text-muted-foreground">Failed</p>
           <p className="text-lg font-semibold text-destructive">
             {status.failed ?? 0}
           </p>
         </div>
-        <div>
+        <div className="rounded-[10px] border border-border bg-muted/20 px-3 py-2 transition-shadow duration-200">
           <p className="text-xs text-muted-foreground">Skipped</p>
-          <p className="text-lg font-semibold">{status.skipped ?? 0}</p>
+          <p className="text-lg font-semibold text-foreground">{status.skipped ?? 0}</p>
         </div>
       </div>
       {(status.started_at ?? status.completed_at) && (

@@ -145,7 +145,7 @@ export function useTranscriptBatchSubmit() {
         queryClient.invalidateQueries({ queryKey: BATCH_STATUS_KEY })
         queryClient.invalidateQueries({ queryKey: METRICS_KEY })
       }
-      toast.success(data?.batch_id ? `Batch ${data.batch_id} submitted` : 'Batch submitted')
+      // Success toast is shown by the consuming page (e.g. TranscriptBatchIngestion) for consistent UX.
     },
     onError: (e) => {
       toast.error(e instanceof Error ? e.message : 'Batch submit failed')
