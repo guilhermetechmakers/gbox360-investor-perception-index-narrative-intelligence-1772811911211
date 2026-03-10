@@ -10,7 +10,7 @@ import { PDFPreviewOrDownloadRow } from '@/components/shared/PDFPreviewOrDownloa
 import { EmptyState } from '@/components/profile/EmptyState'
 import { useSignEvents } from '@/hooks/useAdminDashboard'
 import { toast } from 'sonner'
-import { FileDown, ArrowLeft } from 'lucide-react'
+import { FileDown, ArrowLeft, Download } from 'lucide-react'
 import type { NarrativeEvent } from '@/types/admin'
 import type { ExportIPIArtifactResponse } from '@/types/export'
 import type { IPIViewContext } from '@/types/company-view'
@@ -47,6 +47,10 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+/** Design system: consistent card shadow and border (10–12px radius, design tokens) */
+const CARD_CLASS =
+  'rounded-[10px] border border-border bg-card text-card-foreground shadow-card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5'
+
 export function AuditExports() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [companyId, setCompanyId] = useState('')
@@ -81,6 +85,7 @@ export function AuditExports() {
   )
 
   const handleSignAndDownload = async (ids: string[]) => {
+    const toastId = toast.loading('Signing and preparing download…')
     try {
       const res = await signEvents.mutateAsync({
         narrativeEventIds: ids,
@@ -90,6 +95,7 @@ export function AuditExports() {
             ? { from: timeFrom, to: timeTo }
             : undefined,
       })
+      toast.dismiss(toastId)
       const artifacts = res?.artifacts ?? []
       if (artifacts.length > 0 && artifacts[0]?.artifactUrl) {
         const a = await fetch(artifacts[0].artifactUrl!)
@@ -103,12 +109,14 @@ export function AuditExports() {
       }
       setSelectedIds(new Set())
     } catch (err) {
+      toast.dismiss(toastId)
       toast.error(err instanceof Error ? err.message : 'Failed to sign events')
     }
   }
 
   const handleExportSuccess = (result: ExportIPIArtifactResponse) => {
     setRecentExports((prev) => [result, ...prev.slice(0, 4)])
+    toast.success('Artifact added to signed artifacts below.')
   }
 
   return (
@@ -116,16 +124,20 @@ export function AuditExports() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Audit exports</h1>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/admin" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
+          <Link
+            to="/admin"
+            className="flex items-center gap-2"
+            aria-label="Back to admin overview"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
             Back to overview
           </Link>
         </Button>
       </div>
 
-      <Card className="card-surface">
+      <Card id="audit-export-form" className={CARD_CLASS} aria-labelledby="audit-export-title">
         <CardHeader>
-          <CardTitle className="text-lg">IPI Artifact Export</CardTitle>
+          <CardTitle id="audit-export-title" className="text-lg">IPI Artifact Export</CardTitle>
           <p className="text-sm text-muted-foreground">
             Generate signed JSON and PDF artifacts for a company and time window. Uses server-side
             signing when available.
@@ -203,9 +215,9 @@ export function AuditExports() {
         </CardContent>
       </Card>
 
-      <Card className="card-surface">
+      <Card className={CARD_CLASS} aria-labelledby="audit-filters-title">
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle id="audit-filters-title" className="text-lg">Filters</CardTitle>
           <p className="text-sm text-muted-foreground">
             Optional: narrow by company and time window before loading events for event-based signing.
           </p>
@@ -252,10 +264,10 @@ export function AuditExports() {
         isSigning={signEvents.isPending}
       />
 
-      <Card className="card-surface">
+      <Card className={CARD_CLASS} aria-labelledby="signed-artifacts-title" aria-label="Signed artifacts list">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <FileDown className="h-5 w-5" />
+          <CardTitle id="signed-artifacts-title" className="text-lg flex items-center gap-2">
+            <FileDown className="h-5 w-5" aria-hidden />
             Signed artifacts
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -294,9 +306,22 @@ export function AuditExports() {
               title="No recent exports"
               description="Use &quot;IPI Artifact Export&quot; above to generate signed JSON and PDF artifacts, or select NarrativeEvents and click &quot;Sign & download&quot; to create signed artifacts."
               action={
-                <p className="text-xs text-muted-foreground">
-                  Generated artifacts include raw payload refs, calculation inputs, weights, and integrity hashes.
-                </p>
+                <div className="mt-4 flex flex-col items-center gap-3">
+                  <p className="text-xs text-muted-foreground text-center max-w-sm">
+                    Generated artifacts include raw payload refs, calculation inputs, weights, and integrity hashes.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById('audit-export-form')?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                    className="gap-2 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    aria-label="Go to IPI Artifact Export form to create first export"
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Create first export
+                  </Button>
+                </div>
               }
             />
           )}
