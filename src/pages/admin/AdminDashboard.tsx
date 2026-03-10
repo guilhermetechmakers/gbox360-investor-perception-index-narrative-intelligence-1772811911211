@@ -151,6 +151,7 @@ export function AdminDashboard() {
   const {
     data: ingestMonitorData,
     isLoading: ingestMonitorLoading,
+    isFetching: ingestMonitorFetching,
     isError: ingestMonitorError,
     error: ingestMonitorErr,
     refetch: refetchIngestMonitor,
@@ -330,6 +331,15 @@ export function AdminDashboard() {
               <IngestMonitorPanel
                 sources={ingestSources}
                 isLoading={ingestMonitorLoading}
+                error={
+                  ingestMonitorError && ingestMonitorErr
+                    ? ingestMonitorErr instanceof Error
+                      ? ingestMonitorErr.message
+                      : 'Failed to load ingest metrics'
+                    : null
+                }
+                onRefresh={() => refetchIngestMonitor()}
+                isRefreshing={ingestMonitorFetching}
               />
             </div>
           </section>
