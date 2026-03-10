@@ -24,7 +24,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { MoreHorizontal, Mail, Ban, User, Key, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, AlertCircle } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { MoreHorizontal, Mail, Ban, User, Key, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, AlertCircle, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import type { AdminUser } from '@/types/admin'
 import { cn } from '@/lib/utils'
@@ -57,6 +58,8 @@ export interface AdminUserTableProps {
   onEditRoles?: (user: AdminUser) => void
   /** Optional: when provided, empty state shows a CTA to create/invite a user */
   onCreateUser?: () => void
+  /** Optional: when provided, error state shows a retry button */
+  onRetry?: () => void
   isResending?: boolean
   isDisabling?: boolean
 }
@@ -84,6 +87,7 @@ export function AdminUserTable({
   onResetPassword,
   onEditRoles,
   onCreateUser,
+  onRetry,
   isResending = false,
   isDisabling = false,
 }: AdminUserTableProps) {
@@ -188,31 +192,83 @@ export function AdminUserTable({
 
       <div className="overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-card">
         {error ? (
-          <div className="flex flex-col items-center justify-center gap-4 py-16 px-4 text-center animate-fade-in">
-            <div className="rounded-full border border-destructive/30 bg-destructive/10 p-3">
+          <div
+            className="flex flex-col items-center justify-center gap-4 py-16 px-4 text-center animate-fade-in"
+            role="alert"
+            aria-live="assertive"
+            aria-describedby="admin-users-error-desc"
+          >
+            <div className="rounded-full border border-destructive/30 bg-destructive/10 p-3" aria-hidden>
               <AlertCircle className="h-10 w-10 text-destructive" aria-hidden />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1" id="admin-users-error-desc">
               <p className="font-medium text-foreground">Unable to load users</p>
               <p className="text-sm text-muted-foreground">{error.message}</p>
             </div>
+            {onRetry && (
+              <Button
+                variant="outline"
+                onClick={onRetry}
+                className="mt-2 transition-[transform,box-shadow] duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="Try again to load users"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" aria-hidden />
+                Try again
+              </Button>
+            )}
           </div>
         ) : isLoading ? (
-          <div className="space-y-2 p-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
-            ))}
+          <div className="space-y-0" role="status" aria-busy="true" aria-label="Loading users">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {onSelectAll && (
+                    <TableHead className="w-12">
+                      <Skeleton className="h-4 w-4 rounded" />
+                    </TableHead>
+                  )}
+                  <TableHead>Username</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last login</TableHead>
+                  <TableHead className="w-16" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <TableRow key={i}>
+                    {onSelectAll && (
+                      <TableCell>
+                        <Skeleton className="h-4 w-4 rounded" />
+                      </TableCell>
+                    )}
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-in">
-            <div className="rounded-full border border-border bg-muted/50 p-4">
+          <div
+            className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fade-in"
+            role="status"
+            aria-live="polite"
+            aria-describedby="admin-users-empty-desc"
+          >
+            <div className="rounded-full border border-border bg-muted/50 p-4" aria-hidden>
               <User className="mb-0 h-12 w-12 text-muted-foreground" aria-hidden />
             </div>
             <p className="mt-4 font-medium text-foreground">No users found</p>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            <p id="admin-users-empty-desc" className="mt-1 max-w-sm text-sm text-muted-foreground">
               {list.length === 0
-                ? 'Get started by adding or inviting a user.'
-                : 'Try adjusting your search or filters.'}
+                ? 'Get started by adding or inviting a user. Use Import CSV in the panel or set up an invite link for new signups.'
+                : 'Try adjusting your search or filters to see more results.'}
             </p>
             {onCreateUser && (
               <Button
@@ -226,7 +282,7 @@ export function AdminUserTable({
             )}
           </div>
         ) : (
-          <Table>
+          <Table aria-label="User list">
             <TableHeader>
               <TableRow>
                 {onSelectAll && (

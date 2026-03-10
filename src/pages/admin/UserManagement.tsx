@@ -44,7 +44,7 @@ export function UserManagement() {
 
   const debouncedSearch = useDebounce(search, 300)
 
-  const { data, isLoading, error: usersError } = useAdminUsers({
+  const { data, isLoading, error: usersError, refetch: refetchUsers } = useAdminUsers({
     search: debouncedSearch || undefined,
     role: roleFilter || undefined,
     status: statusFilter || undefined,
@@ -139,6 +139,7 @@ export function UserManagement() {
                 users={users}
                 isLoading={isLoading}
                 error={usersError ?? null}
+                onRetry={() => refetchUsers()}
                 search={search}
                 onSearchChange={setSearch}
                 roleFilter={roleFilter}
