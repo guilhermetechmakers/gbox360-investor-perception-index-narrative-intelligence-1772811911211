@@ -57,7 +57,7 @@ function buildSummaryStats(
 }
 
 export function IngestMonitorDashboard() {
-  const { data: metricsData, isLoading: metricsLoading } = useIngestMetrics(15000)
+  const { data: metricsData, isLoading: metricsLoading, refetch: refetchMetrics, isFetching: metricsFetching } = useIngestMetrics(15000)
   const { data: errorsData, isLoading: errorsLoading } = useIngestErrors({ page: 1, limit: 20 })
   const { data: healthData, isLoading: healthLoading } = useIngestHealth(15000)
   const { data: dlqData, isLoading: dlqLoading } = useDLQ()
@@ -123,7 +123,12 @@ export function IngestMonitorDashboard() {
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-6 space-y-6">
-          <SummaryPanel stats={summaryStats} isLoading={metricsLoading} />
+          <SummaryPanel
+            stats={summaryStats}
+            isLoading={metricsLoading}
+            onRefresh={() => refetchMetrics()}
+            isRefreshing={metricsFetching}
+          />
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {(sources ?? []).map((s) => (
