@@ -327,6 +327,13 @@ export function AdminDashboard() {
                 disabledCount={userSummary.disabled}
                 recentVerifications={userSummary.recentVerifications}
                 isLoading={userSummary.isLoading}
+                isError={userSummary.isError}
+                errorMessage={
+                  userSummary.isError && userSummary.error instanceof Error
+                    ? userSummary.error.message
+                    : undefined
+                }
+                onRetry={() => userSummary.refetch()}
               />
               <IngestMonitorPanel
                 sources={ingestSources}

@@ -188,7 +188,7 @@ export function useSignEvents() {
 }
 
 export function useUserSummary() {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'users', 'summary'],
     queryFn: async () => {
       const res = await adminApi.getUsers({ limit: 1000 })
@@ -208,6 +208,8 @@ export function useUserSummary() {
     ...(data ?? fallback),
     isLoading: isLoading ?? false,
     isError: isError ?? false,
+    error,
+    refetch,
   }
 }
 
