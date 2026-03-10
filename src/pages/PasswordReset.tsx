@@ -21,7 +21,8 @@ import {
 } from '@/hooks/useAuth'
 import { isPasswordStrongEnough } from '@/lib/auth-validation'
 import { LayoutWrapper } from '@/components/login/LayoutWrapper'
-import { Building2, KeyRound } from 'lucide-react'
+import { Building2, KeyRound, Loader2, Mail, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const requestSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -198,6 +199,8 @@ export function PasswordReset() {
                 onSubmit={resetForm.handleSubmit(onReset)}
                 className="space-y-4"
                 noValidate
+                aria-label="Set new password"
+                aria-busy={reset.isPending}
               >
                 <Controller
                   control={resetForm.control}
@@ -219,7 +222,9 @@ export function PasswordReset() {
                   )}
                 />
                 <div className="space-y-1.5">
-                  <Label htmlFor="confirm" className="text-sm font-medium">Confirm password</Label>
+                  <Label htmlFor="confirm" className="text-sm font-medium">
+                    Confirm password
+                  </Label>
                   <Input
                     id="confirm"
                     type="password"
@@ -227,10 +232,12 @@ export function PasswordReset() {
                     autoComplete="new-password"
                     disabled={reset.isPending}
                     aria-invalid={!!resetForm.formState.errors.confirm}
+                    aria-label="Confirm new password"
+                    aria-describedby={resetForm.formState.errors.confirm ? 'confirm-error' : undefined}
                     {...resetForm.register('confirm')}
                   />
                   {resetForm.formState.errors.confirm && (
-                    <p className="text-sm text-destructive" role="alert">
+                    <p id="confirm-error" className="text-sm text-destructive" role="alert">
                       {resetForm.formState.errors.confirm.message}
                     </p>
                   )}
@@ -238,15 +245,29 @@ export function PasswordReset() {
                 <HelperTextBlock variant="security" />
                 <Button
                   type="submit"
-                  className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+                  variant="accent"
+                  className="w-full font-semibold"
                   disabled={!canSubmitReset || reset.isPending}
+                  aria-label={reset.isPending ? 'Updating password…' : 'Set new password'}
+                  aria-busy={reset.isPending}
                 >
-                  {reset.isPending ? 'Updating...' : 'Reset password'}
+                  {reset.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                      Updating...
+                    </>
+                  ) : (
+                    'Reset password'
+                  )}
                 </Button>
               </form>
             )}
             <p className="text-center text-sm text-muted-foreground pt-4">
-              <Link to="/login" className="text-accent hover:underline font-semibold">
+              <Link
+                to="/login"
+                className="text-accent hover:underline font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                aria-label="Back to sign in"
+              >
                 Back to sign in
               </Link>
             </p>
@@ -298,7 +319,11 @@ export function PasswordReset() {
               Having trouble? <PasswordResetSupportLink className="font-semibold text-accent" />
             </p>
             <p className="text-center text-sm text-muted-foreground pt-4">
-              <Link to="/login" className="text-accent hover:underline font-semibold">
+              <Link
+                to="/login"
+                className="text-accent hover:underline font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                aria-label="Back to sign in"
+              >
                 Back to sign in
               </Link>
             </p>
@@ -308,37 +333,87 @@ export function PasswordReset() {
             onSubmit={requestForm.handleSubmit(onRequest)}
             className="space-y-4"
             noValidate
+            aria-label="Request password reset link"
+            aria-busy={request.isPending}
           >
+            {request.isError && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className={cn(
+                  'flex items-start gap-3 rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive',
+                  'animate-fade-in-up'
+                )}
+              >
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" aria-hidden />
+                <p className="flex-1">
+                  {request.error?.message ?? 'Password reset request failed. Please try again.'}
+                </p>
+              </div>
+            )}
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@company.com"
-                autoComplete="off"
+                autoComplete="email"
                 disabled={request.isPending}
                 aria-invalid={!!requestForm.formState.errors.email}
+                aria-describedby={requestForm.formState.errors.email ? 'email-error' : undefined}
                 {...requestForm.register('email')}
               />
               {requestForm.formState.errors.email && (
-                <p className="text-sm text-destructive" role="alert">
+                <p id="email-error" className="text-sm text-destructive" role="alert">
                   {requestForm.formState.errors.email.message}
                 </p>
               )}
             </div>
+            {!requestForm.watch('email')?.trim() && (
+              <div
+                role="status"
+                aria-label="No email entered"
+                className={cn(
+                  'flex items-start gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground',
+                  'transition-opacity duration-200'
+                )}
+              >
+                <Mail className="h-5 w-5 shrink-0 mt-0.5" aria-hidden />
+                <p>
+                  Enter your email address above and click &quot;Send reset link&quot; to receive a
+                  secure password reset link.
+                </p>
+              </div>
+            )}
             <HelperTextBlock variant="rate-limit" />
             <Button
               type="submit"
-              className="w-full bg-accent hover:bg-accent/90 text-white font-semibold"
+              variant="accent"
+              className="w-full font-semibold"
               disabled={request.isPending}
+              aria-label={request.isPending ? 'Sending reset link…' : 'Send password reset link to your email'}
+              aria-busy={request.isPending}
             >
-              {request.isPending ? 'Sending...' : 'Send reset link'}
+              {request.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                  Sending...
+                </>
+              ) : (
+                'Send reset link'
+              )}
             </Button>
           </form>
         )}
         {!requested && (
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            <Link to="/login" className="text-accent hover:underline font-semibold">
+            <Link
+              to="/login"
+              className="text-accent hover:underline font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+              aria-label="Back to sign in"
+            >
               Back to sign in
             </Link>
           </p>
