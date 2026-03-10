@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,6 +31,8 @@ interface AuditArtifactExporterButtonProps {
   className?: string
   children?: React.ReactNode
   onSuccess?: (result: ExportIPIArtifactResponse) => void
+  onError?: (error: Error) => void
+  onExportingChange?: (exporting: boolean) => void
 }
 
 export function AuditArtifactExporterButton({
@@ -41,6 +43,8 @@ export function AuditArtifactExporterButton({
   className,
   children,
   onSuccess,
+  onError,
+  onExportingChange,
 }: AuditArtifactExporterButtonProps) {
   const [open, setOpen] = useState(false)
   const [format, setFormat] = useState<ExportFormat>('both')
@@ -60,7 +64,9 @@ export function AuditArtifactExporterButton({
   const handleExport = useCallback(async () => {
     const { companyId, windowStart, windowEnd } = viewContext
     if (!companyId || !windowStart || !windowEnd) {
-      toast.error('Missing company or time window')
+      const err = new Error('Missing company or time window')
+      toast.error(err.message)
+      onError?.(err)
       return
     }
 
@@ -87,7 +93,9 @@ export function AuditArtifactExporterButton({
       setLastResult(result)
       onSuccess?.(result)
       toast.success('Export ready')
-    } catch {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Export failed')
+      onError?.(error)
       // Fallback to client-side generation when Supabase/API unavailable
       try {
         if (format === 'json' || format === 'both') {
@@ -99,10 +107,12 @@ export function AuditArtifactExporterButton({
         toast.success('Artifacts downloaded (client-generated)')
         setOpen(false)
       } catch (fallbackErr) {
+        const error = fallbackErr instanceof Error ? fallbackErr : new Error('Export failed')
+        onError?.(error)
         toast.error(fallbackErr instanceof Error ? fallbackErr.message : 'Export failed')
       }
     }
-  }, [viewContext, format, exportMutation, selectedNarrativeIds, narrativeIds, narrativeId, onSuccess])
+  }, [viewContext, format, exportMutation, selectedNarrativeIds, narrativeIds, narrativeId, onSuccess, onError])
 
   const toggleNarrative = useCallback((id: string) => {
     setSelectedNarrativeIds((prev) => {
@@ -128,6 +138,10 @@ export function AuditArtifactExporterButton({
 
   const isExporting = exportMutation.isPending
   const isReady = !!lastResult && lastResult.status === 'ready'
+
+  useEffect(() => {
+    onExportingChange?.(isExporting)
+  }, [isExporting, onExportingChange])
 
   return (
     <>
@@ -167,6 +181,8 @@ export function AuditArtifactExporterButton({
                         size="sm"
                         onClick={() => setFormat(f)}
                         className="gap-2"
+                        aria-label={f === 'json' ? 'Export as JSON' : f === 'pdf' ? 'Export as PDF' : 'Export as JSON and PDF'}
+                        aria-pressed={format === f}
                       >
                         {f === 'json' && <FileJson className="h-4 w-4" />}
                         {f === 'pdf' && <FileText className="h-4 w-4" />}
@@ -256,13 +272,15 @@ export function AuditArtifactExporterButton({
           <DialogFooter>
             {!isReady ? (
               <>
-                <Button variant="outline" onClick={handleClose}>
+                <Button variant="outline" onClick={handleClose} aria-label="Cancel export and close dialog">
                   Cancel
                 </Button>
                 <Button
                   onClick={handleExport}
                   disabled={isExporting}
                   className="gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  aria-label={isExporting ? 'Export in progress' : 'Start export'}
+                  aria-busy={isExporting}
                 >
                   {isExporting ? (
                     <>
@@ -278,7 +296,9 @@ export function AuditArtifactExporterButton({
                 </Button>
               </>
             ) : (
-              <Button onClick={handleClose}>Done</Button>
+              <Button onClick={handleClose} aria-label="Close dialog">
+                Done
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
