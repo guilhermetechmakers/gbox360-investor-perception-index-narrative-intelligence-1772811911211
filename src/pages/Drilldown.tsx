@@ -303,6 +303,9 @@ export function Drilldown() {
       <NarrativeHeaderCard
         movement={movement}
         isLoading={headerLoading}
+        isError={movementError}
+        error={movementErr ?? undefined}
+        onRetry={refetchMovement}
         sparklineData={(movement?.events ?? safeEvents)
           .slice(0, 10)
           .map((e) => e.authority_score ?? 0)
