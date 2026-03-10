@@ -185,13 +185,14 @@ export function FeatureHighlights({
                           size="sm"
                           className="h-auto p-0 text-accent font-semibold hover:text-accent/80 transition-colors duration-200"
                           asChild
+                          aria-label={`${feature.ctaLabel} - ${feature.title}`}
                         >
                           <Link
                             to={feature.ctaLink}
                             className="inline-flex items-center gap-1 group/link"
                           >
                             {feature.ctaLabel}
-                            <ChevronRight className={cn(FEATURE_ICON_SIZE, 'transition-transform duration-200 group-hover/link:translate-x-0.5')} />
+                            <ChevronRight className={cn(FEATURE_ICON_SIZE, 'transition-transform duration-200 group-hover/link:translate-x-0.5')} aria-hidden />
                           </Link>
                         </Button>
                       </CardFooter>

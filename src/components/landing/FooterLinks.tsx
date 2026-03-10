@@ -62,21 +62,15 @@ export function FooterLinks() {
           <div>
             <h4 className="text-sm font-bold uppercase tracking-wider text-white/80 mb-4">Company</h4>
             <ul className="space-y-3 text-sm text-white/50">
-              <li>
-                <Link to="/about" className="hover:text-white transition-colors">
-                  About & Help
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
+            <li>
+              <Link to="/about" className="hover:text-white transition-colors" aria-label="About and help">About & Help</Link>
+            </li>
+            <li>
+              <Link to="/privacy" className="hover:text-white transition-colors" aria-label="Privacy policy">Privacy Policy</Link>
+            </li>
+            <li>
+              <Link to="/terms" className="hover:text-white transition-colors" aria-label="Terms of service">Terms of Service</Link>
+            </li>
             </ul>
           </div>
 
@@ -155,6 +149,7 @@ export function FooterLinks() {
                     type="submit"
                     size="sm"
                     className="bg-accent hover:bg-accent/90 text-white"
+                    aria-label="Send contact message"
                   >
                     Send message
                   </Button>
@@ -167,8 +162,8 @@ export function FooterLinks() {
         <div className="mt-16 border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/30">
           <p>&copy; {currentYear} Gbox360. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-white/60 transition-colors" aria-label="Privacy">Privacy</Link>
+            <Link to="/terms" className="hover:text-white/60 transition-colors" aria-label="Terms">Terms</Link>
           </div>
         </div>
       </div>

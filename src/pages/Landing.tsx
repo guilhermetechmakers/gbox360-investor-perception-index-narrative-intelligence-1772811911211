@@ -6,11 +6,18 @@ import { FeatureHighlights } from '@/components/landing/FeatureHighlights'
 import { TrustCompliance } from '@/components/landing/TrustCompliance'
 import { FooterLinks } from '@/components/landing/FooterLinks'
 
-export function Landing() {
+export interface LandingProps {
+  /** When true, shows loading skeletons in the features section. */
+  isLoading?: boolean
+  /** When set, shows error state in the features section. */
+  error?: Error | string | null
+}
+
+export function Landing({ isLoading = false, error = null }: LandingProps) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar variant="public" />
-      <main>
+      <main aria-label="Landing page content" className="min-h-screen">
         <LandingHero
           ctaPrimary={{ label: 'Get started free', href: '/signup' }}
           ctaSecondary={{ label: 'Request demo', href: '/login' }}
@@ -18,7 +25,7 @@ export function Landing() {
         />
         <HowItWorks />
         <SampleIPISnapshot />
-        <FeatureHighlights />
+        <FeatureHighlights isLoading={isLoading} error={error} />
         <TrustCompliance />
       </main>
       <FooterLinks />

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { TrendingUp, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollReveal } from './ScrollReveal'
 
 export interface NarrativeItem {
@@ -19,6 +20,8 @@ export interface SampleIPISnapshotProps {
   period?: string
   topNarratives?: NarrativeItem[]
   tagline?: string
+  /** When true, shows a loading skeleton for the IPI card (e.g. when data is fetched). */
+  isLoading?: boolean
   className?: string
 }
 
@@ -81,6 +84,7 @@ export function SampleIPISnapshot({
   period = 'Last 30 days',
   topNarratives = DEFAULT_NARRATIVES,
   tagline = 'Narrative 40% · Credibility 40% · Risk 20% (provisional weights)',
+  isLoading = false,
   className,
 }: SampleIPISnapshotProps) {
   const narratives = Array.isArray(topNarratives) ? topNarratives : DEFAULT_NARRATIVES
@@ -93,6 +97,7 @@ export function SampleIPISnapshot({
       id="sample-ipi"
       className={cn('py-20 md:py-28 bg-muted/30 relative', className)}
       aria-labelledby="sample-ipi-title"
+      aria-busy={isLoading}
     >
       <div className="container px-4">
         <div className="mx-auto max-w-5xl">
@@ -109,10 +114,10 @@ export function SampleIPISnapshot({
                 </h2>
                 <p className="mt-4 text-muted-foreground text-lg leading-relaxed">{tagline}</p>
                 <div className="mt-8">
-                  <Button asChild className="group">
+                  <Button asChild className="group" aria-label="Start tracking your company IPI">
                     <Link to="/signup">
                       Start tracking
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                     </Link>
                   </Button>
                 </div>
@@ -120,6 +125,27 @@ export function SampleIPISnapshot({
             </ScrollReveal>
 
             {/* Right: IPI Card */}
+            {isLoading ? (
+              <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card animate-fade-in" role="status" aria-label="Loading IPI snapshot">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <Skeleton className="h-12 w-40 rounded-lg" />
+                </div>
+                <div className="flex items-baseline gap-3 mb-6">
+                  <Skeleton className="h-12 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="border-t border-border pt-5 space-y-3">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-4/5" />
+                </div>
+              </div>
+            ) : (
             <motion.div
               initial={{ opacity: 0, x: 32 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -190,6 +216,7 @@ export function SampleIPISnapshot({
                 </p>
               </div>
             </motion.div>
+            )}
           </div>
         </div>
       </div>

@@ -43,8 +43,9 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
         <Link
           to={variant === 'admin' ? '/admin' : '/'}
           className="flex items-center gap-2.5 font-bold text-lg tracking-tight group"
+          aria-label="Gbox360 home"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105" aria-hidden>
             <Building2 className="h-5 w-5" />
           </div>
           <span className="hidden sm:inline-block">Gbox360</span>
@@ -53,11 +54,12 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
         {(variant === 'dashboard' || variant === 'admin') && isAuth && (
           <div className="flex flex-1 items-center justify-center gap-2 max-w-md">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <input
                 type="search"
                 placeholder="Search company..."
                 className="h-9 w-full rounded-full border border-input bg-muted pl-9 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Search company"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const q = (e.target as HTMLInputElement).value
@@ -69,16 +71,16 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
           </div>
         )}
 
-        <nav className="flex items-center gap-3">
+        <nav className="flex items-center gap-3" aria-label="Main navigation">
           {variant === 'public' && (
             <>
               <Button variant="ghost" asChild className="text-sm font-medium">
-                <Link to="/login">Log in</Link>
+                <Link to="/login" aria-label="Log in">Log in</Link>
               </Button>
               <Button asChild className="group">
-                <Link to="/signup">
+                <Link to="/signup" aria-label="Get started with Gbox360">
                   Get started
-                  <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
                 </Link>
               </Button>
             </>
@@ -86,7 +88,7 @@ export function Navbar({ variant = 'public', className }: NavbarProps) {
           {(variant === 'dashboard' || variant === 'admin') && isAuth && user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full" aria-label="Open user menu" aria-haspopup="menu">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user.avatar_url} alt={user.full_name ?? user.email} />
                     <AvatarFallback>

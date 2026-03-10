@@ -78,7 +78,7 @@ export function HowItWorks({ steps = STEPS, className }: HowItWorksProps) {
                 transition={{ duration: 0.5, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="relative group">
-                  <div className="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white text-sm font-bold shadow-lg z-10">
+                  <div className="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-bold shadow-lg z-10" aria-hidden>
                     {i + 1}
                   </div>
 

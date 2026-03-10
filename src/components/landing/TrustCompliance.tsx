@@ -38,16 +38,8 @@ export function TrustCompliance({
       )}
       aria-labelledby="trust-title"
     >
-      {/* Background decoration */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            background:
-              'radial-gradient(ellipse 60% 40% at 70% 30%, rgba(16, 185, 129, 0.15) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 30% 70%, rgba(147, 197, 253, 0.1) 0%, transparent 50%)',
-          }}
-        />
-      </div>
+      {/* Background decoration - design tokens */}
+      <div className="absolute inset-0 pointer-events-none trust-mesh-bg opacity-40" aria-hidden="true" />
 
       <div className="container px-4 relative">
         <ScrollReveal>
@@ -72,9 +64,11 @@ export function TrustCompliance({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
+          role="list"
+          aria-label="Trust and compliance metrics"
         >
           {TRUST_METRICS.map((metric) => (
-            <div key={metric.label} className="text-center">
+            <div key={metric.label} className="text-center" role="listitem" aria-label={`${metric.value} ${metric.label}`}>
               <p className="text-3xl md:text-4xl font-extrabold text-white">{metric.value}</p>
               <p className="text-sm text-white/50 mt-1">{metric.label}</p>
             </div>
@@ -115,17 +109,17 @@ export function TrustCompliance({
             </div>
 
             {/* Compliance badges */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 border-t border-white/10 pt-8">
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60">
-                <Lock className="h-3.5 w-3.5" />
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 border-t border-white/10 pt-8" role="list" aria-label="Compliance and security badges">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60" role="listitem" aria-label="KMS Signed">
+                <Lock className="h-3.5 w-3.5" aria-hidden />
                 <span>KMS Signed</span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60">
-                <CheckCircle2 className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60" role="listitem" aria-label="Append-only storage">
+                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
                 <span>Append-only</span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60">
-                <FileCheck className="h-3.5 w-3.5 text-success" />
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60" role="listitem" aria-label="Board-credible reporting">
+                <FileCheck className="h-3.5 w-3.5 text-success" aria-hidden />
                 <span>Board-credible</span>
               </div>
             </div>
@@ -136,10 +130,11 @@ export function TrustCompliance({
               size="lg"
               asChild
               className="bg-accent hover:bg-accent/90 text-white font-semibold group"
+              aria-label="Get started with Gbox360"
             >
               <Link to="/signup">
                 Get started
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
             </Button>
           </div>

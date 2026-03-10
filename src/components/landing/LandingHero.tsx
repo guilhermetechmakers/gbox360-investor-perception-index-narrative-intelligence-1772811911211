@@ -92,23 +92,9 @@ export function LandingHero({
       )}
       aria-labelledby="hero-title"
     >
-      {/* Animated gradient mesh background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
-        <div
-          className="absolute inset-0 opacity-60"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 50% at 20% 20%, rgba(255, 107, 74, 0.2) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 60%, rgba(147, 197, 253, 0.15) 0%, transparent 50%), radial-gradient(ellipse 50% 30% at 50% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)',
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
-          }}
-        />
-      </div>
+      {/* Animated gradient mesh background - design tokens only */}
+      <div className="absolute inset-0 pointer-events-none hero-mesh-bg opacity-60" aria-hidden="true" />
+      <div className="absolute inset-0 pointer-events-none hero-dot-overlay opacity-[0.03]" aria-hidden="true" />
 
       <motion.div
         className="container px-4 relative"
@@ -156,7 +142,7 @@ export function LandingHero({
             >
               <Link to={ctaPrimary?.href ?? '/signup'}>
                 {ctaPrimary?.label ?? 'Get started free'}
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </Link>
             </Button>
             {ctaSecondary && (
@@ -186,6 +172,7 @@ export function LandingHero({
                 <Link
                   to={ctaTertiary.href}
                   className="text-sm text-white/50 hover:text-white/80 transition-colors underline-offset-4 hover:underline"
+                  aria-label={ctaTertiary.label}
                 >
                   {ctaTertiary.label}
                 </Link>
@@ -196,19 +183,21 @@ export function LandingHero({
           <motion.div
             className="mt-14 flex flex-wrap items-center justify-center gap-8 text-sm text-white/40"
             variants={fadeInUp}
+            role="list"
+            aria-label="Platform trust indicators"
           >
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
+            <div className="flex items-center gap-2" role="listitem">
+              <Shield className="h-4 w-4" aria-hidden />
               <span>SOC 2 Ready</span>
             </div>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
+            <div className="h-4 w-px bg-white/10" aria-hidden />
+            <div className="flex items-center gap-2" role="listitem">
+              <BarChart3 className="h-4 w-4" aria-hidden />
               <span>Institutional Grade</span>
             </div>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+            <div className="h-4 w-px bg-white/10" aria-hidden />
+            <div className="flex items-center gap-2" role="listitem">
+              <TrendingUp className="h-4 w-4" aria-hidden />
               <span>Real-time Signals</span>
             </div>
           </motion.div>
