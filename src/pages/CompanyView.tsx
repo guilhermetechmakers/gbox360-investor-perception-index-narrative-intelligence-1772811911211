@@ -441,6 +441,9 @@ export function CompanyView() {
             data={timelineData}
             currentScore={snapshot?.score}
             height={200}
+            isLoading={snapshotLoading}
+            onEmptyAction={() => document.getElementById('company-selector-time-window')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            emptyStateActionLabel="Change time window"
           />
 
             <TimelineView
