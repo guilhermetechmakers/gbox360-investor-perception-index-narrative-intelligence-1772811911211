@@ -30,7 +30,7 @@ export function AboutHelpLayout() {
       <Navbar variant="public" />
       <main
         id="main-content"
-        className="flex-1 container px-4 py-12 md:py-16 lg:py-20"
+        className="flex-1 container px-4 py-12 md:py-16 lg:py-16"
         role="main"
         aria-labelledby="page-title"
       >
@@ -42,7 +42,7 @@ export function AboutHelpLayout() {
             >
               About & Help
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-lg text-gray-600 leading-relaxed">
               Methodology, FAQ, and support for Gbox360 Investor Perception Index.
               Understand how we compute the IPI, find answers, and get in touch.
             </p>
@@ -51,10 +51,38 @@ export function AboutHelpLayout() {
           <nav aria-label="Page sections" className="sr-only">
             <h2 className="text-base font-semibold text-foreground">On this page</h2>
             <ul className="mt-2 space-y-1 list-none pl-0">
-              <li><a href="#methodology" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">Methodology</a></li>
-              <li><a href="#faq" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">Frequently Asked Questions</a></li>
-              <li><a href="#support" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">Contact Support</a></li>
-              <li><a href="#roadmap" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">Roadmap</a></li>
+              <li>
+                <a
+                  href="#methodology"
+                  className="text-gray-600 hover:text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-md"
+                >
+                  Methodology
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#faq"
+                  className="text-gray-600 hover:text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-md"
+                >
+                  Frequently Asked Questions
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#support"
+                  className="text-gray-600 hover:text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-md"
+                >
+                  Contact Support
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#roadmap"
+                  className="text-gray-600 hover:text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-md"
+                >
+                  Roadmap
+                </a>
+              </li>
             </ul>
           </nav>
 
@@ -73,7 +101,7 @@ export function AboutHelpLayout() {
             </div>
           </div>
 
-          <div className="mt-12 flex justify-center pt-4">
+          <div className="mt-12 flex justify-center pt-6">
             <Button asChild variant="outline">
               <Link to="/">Back to home</Link>
             </Button>
