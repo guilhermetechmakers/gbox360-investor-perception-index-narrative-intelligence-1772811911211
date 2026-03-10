@@ -28,15 +28,15 @@ export function PeerSnapshotPanel({
     <Card className="card-surface transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Building2 className="h-4 w-4 text-foreground/80" aria-hidden />
           Peer Snapshot
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground/85">
           Contextual metrics (MVP placeholder)
         </p>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {safePeers.map((p) => {
             const delta = p.delta ?? 0
             const Icon =
@@ -46,15 +46,16 @@ export function PeerSnapshotPanel({
                 <Link
                   to={`/dashboard/company/${p.id}?start=${windowStart}&end=${windowEnd}`}
                   className={cn(
-                    'flex items-center justify-between rounded-md px-3 py-2 text-sm',
-                    'transition-colors hover:bg-muted'
+                    'flex items-center justify-between rounded-lg p-4 text-sm',
+                    'transition-colors duration-200 hover:bg-muted',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   )}
                   aria-label={`View ${p.name} IPI snapshot`}
                 >
-                  <span className="font-medium truncate">{p.ticker ?? p.name}</span>
+                  <span className="font-medium truncate text-foreground">{p.ticker ?? p.name}</span>
                   <div className="flex items-center gap-2 shrink-0">
                     {p.score != null && (
-                      <span className="text-muted-foreground tabular-nums">
+                      <span className="text-foreground/85 tabular-nums">
                         {p.score.toFixed(1)}
                       </span>
                     )}
