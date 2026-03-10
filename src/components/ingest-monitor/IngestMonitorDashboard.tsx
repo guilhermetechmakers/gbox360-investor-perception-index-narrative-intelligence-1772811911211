@@ -58,7 +58,7 @@ function buildSummaryStats(
 
 export function IngestMonitorDashboard() {
   const { data: metricsData, isLoading: metricsLoading, refetch: refetchMetrics, isFetching: metricsFetching } = useIngestMetrics(15000)
-  const { data: errorsData, isLoading: errorsLoading } = useIngestErrors({ page: 1, limit: 20 })
+  const { data: errorsData, isLoading: errorsLoading, refetch: refetchErrors, isFetching: errorsFetching } = useIngestErrors({ page: 1, limit: 20 })
   const { data: healthData, isLoading: healthLoading, refetch: refetchHealth, isFetching: healthFetching } = useIngestHealth(15000)
   const { data: dlqData, isLoading: dlqLoading } = useDLQ()
 
@@ -158,6 +158,9 @@ export function IngestMonitorDashboard() {
               errors={errors}
               onRetry={handleRetryError}
               isLoading={errorsLoading}
+              onRefresh={() => refetchErrors()}
+              emptyStateCtaLabel="Refresh"
+              isRefreshing={errorsFetching}
             />
             <ManualTriggerCard
               onTriggerBatch={handleTriggerBatch}
