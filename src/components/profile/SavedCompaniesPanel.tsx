@@ -72,8 +72,9 @@ export function SavedCompaniesPanel({
                   size="sm"
                   onClick={() => onRetry()}
                   className="gap-2"
+                  aria-label="Retry loading saved companies"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" aria-hidden />
                   Try again
                 </Button>
               ) : null
@@ -103,7 +104,7 @@ export function SavedCompaniesPanel({
             title="No saved companies"
             description="Search and save companies from the dashboard to see them here."
             action={
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" aria-label="Go to dashboard to search and save companies">
                 <Link to="/dashboard">Go to dashboard</Link>
               </Button>
             }
@@ -179,9 +180,9 @@ export function SavedCompaniesPanel({
           </ScrollArea>
         )}
         {items.length > 0 && (
-          <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+          <Button asChild variant="outline" size="sm" className="mt-4 w-full" aria-label="Add more companies from dashboard">
             <Link to="/dashboard">
-              <Building2 className="mr-2 h-4 w-4" />
+              <Building2 className="mr-2 h-4 w-4" aria-hidden />
               Add more from dashboard
             </Link>
           </Button>

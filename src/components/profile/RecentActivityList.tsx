@@ -93,8 +93,9 @@ export function RecentActivityList({
                   size="sm"
                   onClick={() => onRetry()}
                   className="gap-2"
+                  aria-label="Retry loading activity"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" aria-hidden />
                   Try again
                 </Button>
               ) : null
@@ -124,7 +125,7 @@ export function RecentActivityList({
             title="No recent activity"
             description="Perform company checks, exports, or drilldowns to see your activity here."
             action={
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" aria-label="Go to dashboard">
                 <Link to="/dashboard">Go to dashboard</Link>
               </Button>
             }

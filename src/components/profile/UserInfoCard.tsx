@@ -4,14 +4,17 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Pencil } from 'lucide-react'
+import { Pencil, AlertCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { User } from '@/types/user'
 import { EditProfileModal } from './EditProfileModal'
+import { EmptyState } from './EmptyState'
 
 export interface UserInfoCardProps {
   user: User | null | undefined
   isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
   onProfileUpdated?: () => void
 }
 
@@ -23,7 +26,9 @@ function maskEmail(email: string): string {
   return `${masked}@${domain}`
 }
 
-export function UserInfoCard({ user, isLoading, onProfileUpdated }: UserInfoCardProps) {
+const EMPTY_MIN_HEIGHT = 'min-h-[180px]'
+
+export function UserInfoCard({ user, isLoading, isError, onRetry, onProfileUpdated }: UserInfoCardProps) {
   const [editOpen, setEditOpen] = useState(false)
 
   const name = user?.full_name ?? user?.email ?? 'User'
@@ -34,7 +39,11 @@ export function UserInfoCard({ user, isLoading, onProfileUpdated }: UserInfoCard
 
   if (isLoading) {
     return (
-      <Card className="card-surface transition-all duration-200 hover:shadow-card-hover">
+      <Card
+        className="card-surface transition-all duration-200 hover:shadow-card-hover"
+        aria-busy="true"
+        aria-label="Loading profile"
+      >
         <CardHeader>
           <div className="flex items-center gap-4">
             <Skeleton className="h-16 w-16 rounded-full" />
@@ -48,9 +57,41 @@ export function UserInfoCard({ user, isLoading, onProfileUpdated }: UserInfoCard
     )
   }
 
+  if (isError) {
+    return (
+      <Card className="card-surface transition-all duration-200 hover:shadow-card-hover">
+        <CardHeader>
+          <EmptyState
+            icon={<AlertCircle className="h-6 w-6 text-destructive" />}
+            title="Couldn't load your profile"
+            description="Something went wrong while loading your profile. Check your connection and try again."
+            action={
+              onRetry ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRetry()}
+                  className="gap-2"
+                  aria-label="Retry loading profile"
+                >
+                  <RefreshCw className="h-4 w-4" aria-hidden />
+                  Try again
+                </Button>
+              ) : null
+            }
+            className={EMPTY_MIN_HEIGHT}
+          />
+        </CardHeader>
+      </Card>
+    )
+  }
+
   return (
     <>
-      <Card className="card-surface transition-all duration-200 hover:shadow-card-hover">
+      <Card
+        className="card-surface transition-all duration-200 hover:shadow-card-hover"
+        aria-label="Your profile information"
+      >
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -89,7 +130,7 @@ export function UserInfoCard({ user, isLoading, onProfileUpdated }: UserInfoCard
               )}
               aria-label="Edit profile"
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" aria-hidden />
               Edit
             </Button>
           </div>

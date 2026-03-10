@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCurrentUser, authKeys } from '@/hooks/useAuth'
 import { useSavedCompanies } from '@/hooks/useCompanies'
 import { useProfileActivity } from '@/hooks/useProfile'
 import { UserProfileLayout } from '@/components/profile'
+import { toast } from 'sonner'
 import { subDays, format } from 'date-fns'
 
 function getDefaultTimeWindow() {
@@ -16,7 +18,12 @@ function getDefaultTimeWindow() {
 
 export function Profile() {
   const queryClient = useQueryClient()
-  const { data: user, isLoading: userLoading } = useCurrentUser()
+  const {
+    data: user,
+    isLoading: userLoading,
+    isError: userError,
+    refetch: refetchUser,
+  } = useCurrentUser()
   const {
     data: savedCompanies = [],
     isLoading: savedLoading,
@@ -31,6 +38,12 @@ export function Profile() {
   } = useProfileActivity(20)
   const timeWindow = getDefaultTimeWindow()
 
+  useEffect(() => {
+    if (userError) toast.error('Could not load your profile. Try again.')
+    if (savedError) toast.error('Could not load saved companies. Try again.')
+    if (activityError) toast.error('Could not load recent activity. Try again.')
+  }, [userError, savedError, activityError])
+
   const handleProfileUpdated = () => {
     queryClient.invalidateQueries({ queryKey: authKeys.user })
   }
@@ -42,6 +55,8 @@ export function Profile() {
     <UserProfileLayout
       user={user}
       userLoading={userLoading}
+      userError={userError}
+      refetchUser={refetchUser}
       savedCompanies={safeSaved}
       savedLoading={savedLoading}
       savedError={savedError}
